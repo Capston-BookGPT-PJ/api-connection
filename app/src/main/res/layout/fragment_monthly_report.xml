@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--스크롤 가능-->
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!--가운데 내용 부분-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="10dp"
+            app:layout_constraintTop_toBottomOf="@id/topBar">
+
+            <!--목표 영역-->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/goal_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_background_15_2"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="10dp"
+                android:paddingBottom="16dp"
+                >
+
+                <!-- 상단 제목 -->
+                <TextView
+                    android:id="@+id/monthly_report_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="7월의 리포트 📊"
+                    android:textSize="23sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="20dp"/>
+
+                <!-- 회색 구분선 -->
+                <View
+                    android:id="@+id/gray_line_1"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:background="#DDDDDD"
+                    app:layout_constraintTop_toBottomOf="@id/monthly_report_title"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- 상단 제목 -->
+                <TextView
+                    android:id="@+id/monthly_total_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="전체 목표 달성률"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    app:layout_constraintTop_toBottomOf="@id/gray_line_1"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="10dp"/>
+
+                <!--진척도 바 -->
+                <FrameLayout
+                    android:id="@+id/goal_total_progressbar_frame"
+                    android:layout_width="300dp"
+                    android:layout_height="20dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/progress_border_background"
+                    app:layout_constraintTop_toBottomOf="@id/monthly_total_title"
+                    app:layout_constraintStart_toStartOf="@id/gray_line_1"
+                    app:layout_constraintEnd_toEndOf="@id/gray_line_1">
+
+                <View
+                    android:id="@+id/goal_total_progressbar_fill"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/progress_fill_background4"/>
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/total_percentage"
+                    android:text="98%"
+                    android:textStyle="bold"
+                    android:textColor="@color/black"
+                    app:layout_constraintStart_toStartOf="@id/goal_total_progressbar_frame"
+                    app:layout_constraintTop_toTopOf="@id/goal_total_progressbar_frame"
+                    app:layout_constraintEnd_toEndOf="@id/goal_total_progressbar_frame"
+                    />
+
+                <!-- 회색 구분선 -->
+                <View
+                    android:id="@+id/gray_line_2"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:background="#DDDDDD"
+                    app:layout_constraintTop_toBottomOf="@id/goal_total_progressbar_frame"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <LinearLayout
+                    android:id="@+id/each_goal_area"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:layout_marginTop="16dp"
+                    android:paddingBottom="16dp"
+                    app:layout_constraintTop_toBottomOf="@id/gray_line_2">
+
+                    <!-- goal1 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginEnd="8dp">
+
+                        <TextView
+                            android:id="@+id/m_goal_number_books_title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/goal1"
+                            android:textColor="#000000"
+                            android:textSize="15sp" />
+
+                        <FrameLayout
+                            android:id="@+id/m_goal_1_progressbar_frame"
+                            android:layout_width="match_parent"
+                            android:layout_height="15dp"
+                            android:layout_marginTop="4dp"
+                            android:background="@drawable/progress_border_background">
+
+                            <View
+                                android:id="@+id/m_goal1_progressbar_fill"
+                                android:layout_width="50dp"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/progress_fill_background1" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:id="@+id/m_goal_number_books_text"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/goal__1"
+                            android:textColor="#525252"
+                            android:textSize="13sp"
+                            android:gravity="end"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+
+                    <!-- goal2 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginEnd="8dp">
+
+                        <TextView
+                            android:id="@+id/m_goal_review_title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/goal2"
+                            android:textColor="#000000"
+                            android:textSize="15sp" />
+
+                        <FrameLayout
+                            android:id="@+id/m_goal_2_progressbar_frame"
+                            android:layout_width="match_parent"
+                            android:layout_height="15dp"
+                            android:layout_marginTop="4dp"
+                            android:background="@drawable/progress_border_background">
+
+                            <View
+                                android:id="@+id/m_goal2_progressbar_fill"
+                                android:layout_width="50dp"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/progress_fill_background2" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:id="@+id/m_goal_review_text"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/goal__2"
+                            android:textColor="#525252"
+                            android:textSize="13sp"
+                            android:gravity="end"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+
+                    <!-- goal3 -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/m_goal_time_title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/goal3"
+                            android:textColor="#000000"
+                            android:textSize="15sp" />
+
+                        <FrameLayout
+                            android:id="@+id/m_goal_3_progressbar_frame"
+                            android:layout_width="match_parent"
+                            android:layout_height="15dp"
+                            android:layout_marginTop="4dp"
+                            android:background="@drawable/progress_border_background">
+
+                            <View
+                                android:id="@+id/m_goal3_progressbar_fill"
+                                android:layout_width="50dp"
+                                android:layout_height="match_parent"
+                                android:background="@drawable/progress_fill_background3" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:id="@+id/m_goal_time_text"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/goal__3"
+                            android:textColor="#525252"
+                            android:textSize="13sp"
+                            android:gravity="end"
+                            android:layout_marginTop="4dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 회색 구분선 -->
+                <View
+                    android:id="@+id/gray_line_3"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:background="#DDDDDD"
+                    app:layout_constraintTop_toBottomOf="@id/each_goal_area"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+                <!-- 책 선택 -->
+                <LinearLayout
+                    android:id="@+id/book_image_container"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"
+                    android:paddingBottom="16dp"
+                    app:layout_constraintTop_toBottomOf="@id/gray_line_3"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:clipChildren="false">
+
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:overScrollMode="never"
+                        android:scrollbars="none"
+                        android:clipChildren="false"
+                        >
+
+                        <LinearLayout
+                            android:id="@+id/book_list_container"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:clipChildren="false"
+                            />
+                    </HorizontalScrollView>
+                </LinearLayout>
+
+                <!-- 회색 구분선 -->
+                <View
+                    android:id="@+id/gray_line_4"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:background="#DDDDDD"
+                    app:layout_constraintTop_toBottomOf="@id/book_image_container"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

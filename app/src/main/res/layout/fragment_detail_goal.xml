@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--스크롤 가능-->
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!--가운데 내용 부분-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="10dp"
+            app:layout_constraintTop_toBottomOf="@id/topBar">
+
+            <!--목표 영역-->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/goal_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_background_15_2"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="10dp">
+
+                <!-- 상단 제목 -->
+                <TextView
+                    android:id="@+id/reading_goal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reading_goal"
+                    android:textSize="23sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="20dp"
+                    />
+
+                <!-- 목표 설정/수정 버튼 -->
+                <TextView
+                    android:id="@+id/btn_set_goal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="목표 설정"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:background="@drawable/round_background_20"
+                    android:backgroundTint="#A6FFBCE1"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+
+
+                <TextView
+                    android:id="@+id/cheer_message"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="지금까지 잘해왔어요! 남은 절반도 화이팅! 💪"
+                    android:gravity="center"
+                    android:textSize="16sp"
+                    android:textColor="#000000"
+                    app:layout_constraintTop_toBottomOf="@id/reading_goal"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginRight="20dp"
+                    android:layout_marginTop="10dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:background="@drawable/round_background_8"
+                    android:backgroundTint="#DDDDDD"/>
+
+                <!-- 좌측 원형 목표 -->
+                <RelativeLayout
+                    android:id="@+id/circle_group"
+                    android:layout_width="158dp"
+                    android:layout_height="156dp"
+                    app:layout_constraintTop_toBottomOf="@id/cheer_message"
+                    app:layout_constraintStart_toStartOf="parent"
+                    android:layout_marginTop="13dp"
+                    android:layout_marginStart="20dp">
+
+                    <ImageView
+                        android:id="@+id/ellipse_goal"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/ellipse_goal" />
+
+                    <ImageView
+                        android:id="@+id/ellipse_5"
+                        android:layout_width="142dp"
+                        android:layout_height="142dp"
+                        android:layout_alignTop="@id/ellipse_goal"
+                        android:layout_alignStart="@id/ellipse_goal"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginStart="60dp"
+                        android:src="@drawable/ellipse_5" />
+
+                    <TextView
+                        android:id="@+id/goal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:gravity="center"
+                        android:text="@string/goal_id"
+                        android:textSize="30sp"
+                        android:textColor="#292D32"/>
+                </RelativeLayout>
+
+                <!-- 우측 목표 텍스트 및 진행률 1 -->
+                <TextView
+                    android:id="@+id/goal1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal1"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    app:layout_constraintTop_toTopOf="@id/circle_group"
+                    app:layout_constraintStart_toEndOf="@id/circle_group"
+                    android:layout_marginStart="15dp"/>
+
+                <ImageView
+                    android:id="@+id/goal_1"
+                    android:layout_width="130dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/goal_1"
+                    app:layout_constraintTop_toBottomOf="@id/goal1"
+                    app:layout_constraintStart_toStartOf="@id/goal1"
+                    android:layout_marginTop="6dp"/>
+
+                <TextView
+                    android:id="@+id/goal__1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal__1"
+                    android:textColor="#525252"
+                    android:textSize="13sp"
+                    app:layout_constraintTop_toBottomOf="@id/goal_1"
+                    app:layout_constraintStart_toStartOf="@id/goal_1"
+                    android:layout_marginTop="4dp"/>
+
+                <!-- 목표 2 -->
+                <TextView
+                    android:id="@+id/goal2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal2"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    app:layout_constraintTop_toBottomOf="@id/goal__1"
+                    app:layout_constraintStart_toStartOf="@id/goal__1"
+                    android:layout_marginTop="1dp"/>
+
+                <ImageView
+                    android:id="@+id/goal_2"
+                    android:layout_width="130dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/goal_2"
+                    app:layout_constraintTop_toBottomOf="@id/goal2"
+                    app:layout_constraintStart_toStartOf="@id/goal2"
+                    android:layout_marginTop="6dp"/>
+
+                <TextView
+                    android:id="@+id/goal__2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal__2"
+                    android:textColor="#525252"
+                    android:textSize="13sp"
+                    app:layout_constraintTop_toBottomOf="@id/goal_2"
+                    app:layout_constraintStart_toStartOf="@id/goal_2"
+                    android:layout_marginTop="4dp"/>
+
+                <!-- 목표 3 -->
+                <TextView
+                    android:id="@+id/goal3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal3"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    app:layout_constraintTop_toBottomOf="@id/goal__2"
+                    app:layout_constraintStart_toStartOf="@id/goal__2"
+                    android:layout_marginTop="1dp"/>
+
+                <ImageView
+                    android:id="@+id/goal_3"
+                    android:layout_width="130dp"
+                    android:layout_height="12dp"
+                    android:src="@drawable/goal_3"
+                    app:layout_constraintTop_toBottomOf="@id/goal3"
+                    app:layout_constraintStart_toStartOf="@id/goal3"
+                    android:layout_marginTop="6dp"/>
+
+                <TextView
+                    android:id="@+id/goal__3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal__3"
+                    android:textColor="#525252"
+                    android:textSize="13sp"
+                    app:layout_constraintTop_toBottomOf="@id/goal_3"
+                    app:layout_constraintStart_toStartOf="@id/goal_3"
+                    android:layout_marginTop="4dp"
+                    />
+
+                <!--하단 여백-->
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="10dp"
+                    android:background="@android:color/transparent"
+                    app:layout_constraintTop_toBottomOf="@id/goal__3"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!--목표 영역 1(권수)-->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/goal_number_books"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_background_15_2"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="10dp">
+
+                <!-- 읽은 책 권수 goal1-->
+                <TextView
+                    android:id="@+id/goal_number_books_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal1"
+                    android:textColor="#000000"
+                    android:textSize="20sp"
+                    app:layout_constraintTop_toTopOf="@id/goal_number_books"
+                    app:layout_constraintStart_toStartOf="@id/goal_number_books"
+                    android:layout_marginStart="15dp"/>
+
+                <!-- 임시값: 백에서 받아온 값으로 설정 -->
+
+                <!--진척도 바 -->
+                <FrameLayout
+                    android:id="@+id/goal_1_progressbar_frame"
+                    android:layout_width="300dp"
+                    android:layout_height="20dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/progress_border_background"
+                    app:layout_constraintTop_toBottomOf="@id/goal_number_books_title"
+                    app:layout_constraintStart_toStartOf="@id/goal_number_books_title">
+
+                    <View
+                        android:id="@+id/goal1_progressbar_fill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/progress_fill_background1"/>
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/goal_number_books_text"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal__1"
+                    android:textColor="#525252"
+                    android:textSize="13sp"
+                    app:layout_constraintTop_toBottomOf="@id/goal_1_progressbar_frame"
+                    app:layout_constraintEnd_toEndOf="@id/goal_1_progressbar_frame"
+                    android:layout_marginTop="4dp"/>
+
+                <!-- 책 선택 영역 -->
+                <LinearLayout
+                    android:id="@+id/book_image_container"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintTop_toBottomOf="@id/goal_number_books_text"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:clipChildren="false">
+
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:overScrollMode="never"
+                        android:scrollbars="none"
+                        android:clipChildren="false"
+                        >
+
+                        <LinearLayout
+                            android:id="@+id/book_list_container"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp"
+                            android:clipChildren="false"
+                            />
+                    </HorizontalScrollView>
+
+                </LinearLayout>
+
+                <!--하단 여백-->
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="10dp"
+                    android:background="@android:color/transparent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/book_image_container"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!--목표 영역 2(감상문 개수)-->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/goal_review"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_background_15_2"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="10dp">
+
+                <!-- goal2-->
+                <TextView
+                    android:id="@+id/goal_review_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal2"
+                    android:textColor="#000000"
+                    android:textSize="20sp"
+                    app:layout_constraintTop_toTopOf="@id/goal_review"
+                    app:layout_constraintStart_toStartOf="@id/goal_review"
+                    android:layout_marginStart="15dp"/>
+
+                <!--진척도 바 -->
+                <FrameLayout
+                    android:id="@+id/goal_2_progressbar_frame"
+                    android:layout_width="300dp"
+                    android:layout_height="20dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/progress_border_background"
+                    app:layout_constraintTop_toBottomOf="@id/goal_review_title"
+                    app:layout_constraintStart_toStartOf="@id/goal_review_title">
+
+                    <View
+                        android:id="@+id/goal2_progressbar_fill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/progress_fill_background2"/>
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/goal_review_text"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal__2"
+                    android:textColor="#525252"
+                    android:textSize="13sp"
+                    app:layout_constraintTop_toBottomOf="@id/goal_2_progressbar_frame"
+                    app:layout_constraintEnd_toEndOf="@id/goal_2_progressbar_frame"
+                    android:layout_marginTop="4dp"/>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="12dp"
+                    android:elevation="10dp"
+                    android:backgroundTint="@color/cardBackground"
+                    app:shapeAppearanceOverlay="@style/RoundedCard"
+                    app:layout_constraintTop_toBottomOf="@id/goal_review_text"
+                    app:layout_constraintEnd_toEndOf="@id/goal_review_text"
+                    android:id="@+id/goal2_review_frame"
+                    >
+
+                    <!--작성한 감상문 영역-->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="10dp"
+                        android:orientation="vertical">
+
+                        <!-- 상단 레이아웃 (프로필 사진, 사용자 이름, 리뷰 날짜) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <!-- 프로필 사진 -->
+                            <ImageView
+                                android:id="@+id/profileImage"
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:layout_marginEnd="8dp"
+                                android:src="@drawable/sample_profile"
+                                android:scaleType="centerCrop"
+                                android:background="@drawable/profile_image_background"
+                                android:clipToOutline="true"/>
+
+                            <!-- 사용자 이름 -->
+                            <TextView
+                                android:id="@+id/userName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="User Name"
+                                android:textSize="16sp"
+                                android:textColor="@color/textColor"
+                                android:layout_marginEnd="8dp"/>
+
+                            <!-- 리뷰 날짜 (오른쪽 정렬) 나중에 몇시간 전에 올렸는지 얼마나 지나서 부터 날짜로 변경 할 건지 논의 필요-->
+                            <TextView
+                                android:id="@+id/reviewDate"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="2025-03-08"
+                                android:textSize="12sp"
+                                android:textColor="@color/textColor"
+                                android:layout_weight="1"
+                                />
+                        </LinearLayout>
+
+                        <!-- 리뷰 내용 -->
+                        <TextView
+                            android:id="@+id/reviewContent"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="This is a sample review content."
+                            android:textSize="14sp"
+                            android:textColor="@color/textColor"
+                            android:layout_marginTop="1dp"
+                            android:layout_marginLeft="40dp"/>
+
+
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!--하단 여백-->
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="10dp"
+                    android:background="@android:color/transparent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/goal2_review_frame"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!--목표 영역 3(독서 시간)-->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/goal_time"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/round_background_15_2"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="10dp">
+
+                <!-- goal3-->
+                <TextView
+                    android:id="@+id/goal_time_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal3"
+                    android:textColor="#000000"
+                    android:textSize="20sp"
+                    app:layout_constraintTop_toTopOf="@id/goal_time"
+                    app:layout_constraintStart_toStartOf="@id/goal_time"
+                    android:layout_marginStart="15dp"/>
+
+                <!--진척도 바 -->
+                <FrameLayout
+                    android:id="@+id/goal_3_progressbar_frame"
+                    android:layout_width="300dp"
+                    android:layout_height="20dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/progress_border_background"
+                    app:layout_constraintTop_toBottomOf="@id/goal_time_title"
+                    app:layout_constraintStart_toStartOf="@id/goal_time_title">
+
+                    <View
+                        android:id="@+id/goal3_progressbar_fill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/progress_fill_background3"/>
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/goal_time_text"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/goal__3"
+                    android:textColor="#525252"
+                    android:textSize="13sp"
+                    app:layout_constraintTop_toBottomOf="@id/goal_3_progressbar_frame"
+                    app:layout_constraintEnd_toEndOf="@id/goal_3_progressbar_frame"
+                    android:layout_marginTop="4dp"/>
+
+                <!-- 읽은 시간 그래프 영역 -->
+                <LinearLayout
+                    android:id="@+id/weekly_graph_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:orientation="vertical"
+                    android:layout_marginTop="20dp"
+                    app:layout_constraintTop_toBottomOf="@+id/goal_time_text"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp">
+
+                    <com.github.mikephil.charting.charts.CombinedChart
+                        android:id="@+id/weekly_combined_chart"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@android:color/transparent" />
+
+                    <TextView
+                        android:id="@+id/chart_xText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="07/23"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="bold"/>
+
+                    <!--android:background="@drawable/bg_selected_date"-->
+
+                </LinearLayout>
+
+                <!--하단 여백-->
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:background="@android:color/transparent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/weekly_graph_container"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+            <!--하단 여백-->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/goal_time"
+                app:layout_constraintBottom_toBottomOf="parent"
+                />
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
