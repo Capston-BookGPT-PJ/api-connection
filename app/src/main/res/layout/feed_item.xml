@@ -77,6 +77,13 @@
             android:layout_marginTop="8dp"
             android:layout_marginLeft="40dp"/>
 
+        <!-- 책 정보 -->
+        <include
+            android:id="@+id/bookInfoLayout"
+            layout="@layout/feed_book_info"
+            android:visibility="gone"
+            />
+
         <!--피드 사진-->
         <ImageView
             android:id="@+id/feedImage"
@@ -88,33 +95,6 @@
             android:background="@drawable/round_background_8"
             android:clipToOutline="true"
             />
-
-        <!-- 투표 영역 -->
-        <!--<LinearLayout
-            android:id="@+id/voteLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:visibility="gone"
-            android:layout_marginTop="8dp">
-
-            <Button
-                android:id="@+id/voteOption1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="예"
-                android:backgroundTint="#D32266"/>
-
-            <Button
-                android:id="@+id/voteOption2"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="아니오"
-                android:backgroundTint="#A6A6A6"/>
-        </LinearLayout>-->
 
         <!-- 하단 아이콘 -->
         <LinearLayout
@@ -154,7 +134,7 @@
                 android:layout_marginEnd="8dp"
                 android:scaleType="centerCrop"
                 android:layout_marginStart="8dp"
-                android:background="@drawable/feed_like_button"
+                android:src="@drawable/feed_like_button"
                 android:clipToOutline="true"/>
 
             <!-- 좋아요 갯수 -->

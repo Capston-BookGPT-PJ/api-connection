@@ -26,7 +26,7 @@
                 android:id="@+id/goal_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/round_background_15_2"
+                android:background="@drawable/round_background_12"
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="20dp"
                 android:layout_marginTop="10dp">
@@ -62,123 +62,61 @@
                         android:layout_height="match_parent"
                         android:src="@drawable/ellipse_goal" />
 
-                    <ImageView
-                        android:id="@+id/ellipse_5"
+
+                    <!--진행률 원-->
+                    <com.example.meltingbooks.calendar.view.CircularProgressView
+                        android:id="@+id/circle_progress"
                         android:layout_width="142dp"
                         android:layout_height="142dp"
                         android:layout_alignTop="@id/ellipse_goal"
                         android:layout_alignStart="@id/ellipse_goal"
                         android:layout_marginTop="8dp"
-                        android:layout_marginStart="60dp"
-                        android:src="@drawable/ellipse_5" />
+                        android:layout_marginStart="8dp"
+                        android:background="@android:color/transparent"/>
 
-                    <TextView
-                        android:id="@+id/goal"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerInParent="true"
-                        android:gravity="center"
-                        android:text="@string/goal_id"
-                        android:textSize="30sp"
-                        android:textColor="#292D32"/>
                 </RelativeLayout>
 
-                <!-- 우측 목표 텍스트 및 진행률 1 -->
-                <TextView
-                    android:id="@+id/goal1"
-                    android:layout_width="wrap_content"
+                <!-- 목표 1 -->
+                <com.example.meltingbooks.calendar.view.GoalProgressView
+                    android:id="@+id/goal1_view"
+                    android:layout_width="130dp"
                     android:layout_height="wrap_content"
-                    android:text="@string/goal1"
-                    android:textColor="#000000"
-                    android:textSize="18sp"
                     app:layout_constraintTop_toTopOf="@id/circle_group"
                     app:layout_constraintStart_toEndOf="@id/circle_group"
-                    android:layout_marginStart="15dp"/>
-
-                <ImageView
-                    android:id="@+id/goal_1"
-                    android:layout_width="130dp"
-                    android:layout_height="12dp"
-                    android:src="@drawable/goal_1"
-                    app:layout_constraintTop_toBottomOf="@id/goal1"
-                    app:layout_constraintStart_toStartOf="@id/goal1"
-                    android:layout_marginTop="6dp"/>
-
-                <TextView
-                    android:id="@+id/goal__1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/goal__1"
-                    android:textColor="#525252"
-                    android:textSize="13sp"
-                    app:layout_constraintTop_toBottomOf="@id/goal_1"
-                    app:layout_constraintStart_toStartOf="@id/goal_1"
-                    android:layout_marginTop="4dp"/>
+                    android:layout_marginStart="15dp"
+                    android:layout_marginEnd="8dp"
+                    app:goalTitle="@string/goal1"
+                    app:goalTitleTextSize="18sp"
+                    app:goalUnit="권"
+                    app:progressDrawable="@drawable/progress_fill_background1" />
 
                 <!-- 목표 2 -->
-                <TextView
-                    android:id="@+id/goal2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/goal2"
-                    android:textColor="#000000"
-                    android:textSize="18sp"
-                    app:layout_constraintTop_toBottomOf="@id/goal__1"
-                    app:layout_constraintStart_toStartOf="@id/goal__1"
-                    android:layout_marginTop="1dp"/>
-
-                <ImageView
-                    android:id="@+id/goal_2"
+                <com.example.meltingbooks.calendar.view.GoalProgressView
+                    android:id="@+id/goal2_view"
                     android:layout_width="130dp"
-                    android:layout_height="12dp"
-                    android:src="@drawable/goal_2"
-                    app:layout_constraintTop_toBottomOf="@id/goal2"
-                    app:layout_constraintStart_toStartOf="@id/goal2"
-                    android:layout_marginTop="6dp"/>
-
-                <TextView
-                    android:id="@+id/goal__2"
-                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/goal__2"
-                    android:textColor="#525252"
-                    android:textSize="13sp"
-                    app:layout_constraintTop_toBottomOf="@id/goal_2"
-                    app:layout_constraintStart_toStartOf="@id/goal_2"
-                    android:layout_marginTop="4dp"/>
+                    app:layout_constraintTop_toBottomOf="@id/goal1_view"
+                    app:layout_constraintStart_toStartOf="@id/goal1_view"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="8dp"
+                    app:goalTitle="@string/goal2"
+                    app:goalTitleTextSize="18sp"
+                    app:goalUnit="개"
+                    app:progressDrawable="@drawable/progress_fill_background2" />
 
                 <!-- 목표 3 -->
-                <TextView
-                    android:id="@+id/goal3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/goal3"
-                    android:textColor="#000000"
-                    android:textSize="18sp"
-                    app:layout_constraintTop_toBottomOf="@id/goal__2"
-                    app:layout_constraintStart_toStartOf="@id/goal__2"
-                    android:layout_marginTop="1dp"/>
-
-                <ImageView
-                    android:id="@+id/goal_3"
+                <com.example.meltingbooks.calendar.view.GoalProgressView
+                    android:id="@+id/goal3_view"
                     android:layout_width="130dp"
-                    android:layout_height="12dp"
-                    android:src="@drawable/goal_3"
-                    app:layout_constraintTop_toBottomOf="@id/goal3"
-                    app:layout_constraintStart_toStartOf="@id/goal3"
-                    android:layout_marginTop="6dp"/>
-
-                <TextView
-                    android:id="@+id/goal__3"
-                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/goal__3"
-                    android:textColor="#525252"
-                    android:textSize="13sp"
-                    app:layout_constraintTop_toBottomOf="@id/goal_3"
-                    app:layout_constraintStart_toStartOf="@id/goal_3"
-                    android:layout_marginTop="4dp"
-                    />
+                    app:layout_constraintTop_toBottomOf="@id/goal2_view"
+                    app:layout_constraintStart_toStartOf="@id/goal2_view"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="8dp"
+                    app:goalTitle="@string/goal3"
+                    app:goalTitleTextSize="18sp"
+                    app:goalUnit="시간"
+                    app:progressDrawable="@drawable/progress_fill_background3" />
 
                 <!-- 아이콘 -->
                 <ImageView
@@ -196,7 +134,7 @@
                     android:layout_width="0dp"
                     android:layout_height="10dp"
                     android:background="@android:color/transparent"
-                    app:layout_constraintTop_toBottomOf="@id/goal__3"
+                    app:layout_constraintTop_toBottomOf="@id/goal3_view"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
@@ -209,7 +147,7 @@
                 android:id="@+id/calendar_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/round_background_15_2"
+                android:background="@drawable/round_background_12"
                 android:layout_margin="20dp">
 
                 <!-- 이전 달 버튼 -->
@@ -292,7 +230,7 @@
                 android:id="@+id/goal_setting"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/round_background_15_2"
+                android:background="@drawable/round_background_12"
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="20dp"
                 android:layout_marginTop="10dp">
@@ -345,7 +283,7 @@
             <!--하단 여백-->
             <View
                 android:layout_width="0dp"
-                android:layout_height="10dp"
+                android:layout_height="70dp"
                 android:background="@android:color/transparent"
                 app:layout_constraintTop_toBottomOf="@id/goal_setting"
                 app:layout_constraintStart_toStartOf="parent"

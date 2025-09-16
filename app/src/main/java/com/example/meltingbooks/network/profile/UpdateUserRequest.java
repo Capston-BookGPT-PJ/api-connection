@@ -1,4 +1,4 @@
-package com.example.meltingbooks.network;
+package com.example.meltingbooks.network.profile;
 
 public class UpdateUserRequest {
     private String email;
@@ -6,15 +6,15 @@ public class UpdateUserRequest {
     private String username;
     private String bio;
     private String tagId;
-    private String profileImage; // 일단은 null 또는 기존 값
+    private String profileImageUrl; // 일단은 null 또는 기존 값
 
-    public UpdateUserRequest(String email,String nickname, String username, String bio, String tagId, String profileImage) {
+    public UpdateUserRequest(String email,String nickname, String username, String bio, String tagId, String profileImageUrl) {
         this.email = email;
         this.nickname = nickname;
         this.username = username;
         this.bio = bio;
         this.tagId = tagId;
-        this.profileImage = profileImage;
+        this.profileImageUrl = profileImageUrl;
     }
 
     // Getter & Setter
@@ -32,6 +32,6 @@ public class UpdateUserRequest {
     public String getTagId() { return tagId; }
     public void setTagId(String tagId) { this.tagId = tagId; }
 
-    public String getProfileImage() { return profileImage; }
-    public void setProfileImage(String profileImage) { this.profileImage = profileImage; }
+    public String getProfileImageUrl() { return profileImageUrl; }
+    public void setProfileImageUrl(String profileImage) { this.profileImageUrl = profileImage; }
 }

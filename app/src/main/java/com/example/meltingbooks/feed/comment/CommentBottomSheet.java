@@ -1,7 +1,10 @@
 package com.example.meltingbooks.feed.comment;
 
 import android.app.Dialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,11 +18,20 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.meltingbooks.R;
+import com.example.meltingbooks.network.ApiClient;
+import com.example.meltingbooks.network.ApiResponse;
+import com.example.meltingbooks.network.ApiService;
+import com.example.meltingbooks.network.feed.CommentRequest;
+import com.example.meltingbooks.network.feed.CommentResponse;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class CommentBottomSheet extends BottomSheetDialogFragment {
 
@@ -59,14 +71,16 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
     }
 
     //GroupAdapter 부분
-    public static CommentBottomSheet newInstance(String postId, String postType) {
+    public static CommentBottomSheet newInstance(int postId, String postType) {
         CommentBottomSheet fragment = new CommentBottomSheet();
         Bundle args = new Bundle();
-        args.putString("postId", postId);
+        args.putInt("postId", postId);
         args.putString("postType", postType);
         fragment.setArguments(args);
         return fragment;
     }
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -76,8 +90,6 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
             postType = getArguments().getString("postType");
         }
     }
-
-
 
     @Nullable
     @Override
@@ -96,28 +108,26 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
         commentAdapter = new CommentAdapter(getContext(), commentList);
         commentRecyclerView.setAdapter(commentAdapter);
 
+        if ("feed".equals(postType)) {
+            loadCommentsFromServer();
+        } else {
+            // 기존 group 테스트용 코드 그대로 둠
+            commentList.add(new CommentItem("User1", "멋진 리뷰네요!", R.drawable.sample_profile));
+            commentList.add(new CommentItem("User2", "저도 이 책 좋아해요!", R.drawable.sample_profile));
+        }
+
         // 테스트용 데이터 추가 나중에 서버 연결 필요.
-        commentList.add(new CommentItem("User1", "멋진 리뷰네요!---------------------------------------------------------------------------------------------------------------", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User2", "저도 이 책 좋아해요!", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User1", "멋진 리뷰네요!", R.drawable.sample_profile));
-        /*commentList.add(new CommentItem("User2", "저도 이 책 좋아해요!", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User1", "멋진 리뷰네요!", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User2", "저도 이 책 좋아해요!", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User1", "멋진 리뷰네요!", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User2", "저도 이 책 좋아해요!", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User1", "멋진 리뷰네요!", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User2", "저도 이 책 좋아해요!", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User1", "멋진 리뷰네요!", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User2", "저도 이 책 좋아해요!", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User1", "멋진 리뷰네요!", R.drawable.sample_profile));
-        commentList.add(new CommentItem("User2", "저도 이 책 좋아해요!", R.drawable.sample_profile));*/
+        //commentList.add(new CommentItem("User1", "멋진 리뷰네요!---------------------------------------------------------------------------------------------------------------", R.drawable.sample_profile));
+        //commentList.add(new CommentItem("User2", "저도 이 책 좋아해요!", R.drawable.sample_profile));
+        //commentList.add(new CommentItem("User1", "멋진 리뷰네요!", R.drawable.sample_profile));
+
         commentAdapter.notifyDataSetChanged();
 
         // 댓글 입력 부분 설정
         EditText commentEditText = view.findViewById(R.id.commentEditText);
         ImageView postCommentButton = view.findViewById(R.id.postCommentButton);
 
-        postCommentButton.setOnClickListener(v -> {
+        /**postCommentButton.setOnClickListener(v -> {
             String comment = commentEditText.getText().toString().trim();
             if (!comment.isEmpty()) {
                 // 새 댓글을 리스트에 추가
@@ -130,11 +140,92 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
                     onCommentAddedListener.onCommentAdded(commentList.size());
                 }
             }
+        });**/
+
+        postCommentButton.setOnClickListener(v -> {
+            String commentText = commentEditText.getText().toString().trim();
+            if (!commentText.isEmpty()) {
+                SharedPreferences prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE);
+                String token = prefs.getString("jwt", null);
+                int userId = prefs.getInt("userId", -1); // 기본값 -1
+                if (token == null) return;
+
+                ApiService apiService = ApiClient.getClient(token).create(ApiService.class);
+
+                CommentRequest request = new CommentRequest(commentText);
+
+                apiService.postComment("Bearer " + token, userId, Integer.parseInt(postId), request)
+                        .enqueue(new Callback<ApiResponse<CommentResponse>>() {
+                            @Override
+                            public void onResponse(Call<ApiResponse<CommentResponse>> call, Response<ApiResponse<CommentResponse>> response) {
+                                if (response.isSuccessful() && response.body() != null) {
+                                    CommentResponse newComment = response.body().getData();
+
+                                    // 리스트에 추가
+                                    commentList.add(new CommentItem(
+                                            "User" + newComment.getUserId(), // TODO: 실제 username으로 바꾸기
+                                            newComment.getContent(),
+                                            R.drawable.sample_profile,
+                                            newComment.getFormattedCreatedAt()
+                                    ));
+                                    commentAdapter.notifyDataSetChanged();
+                                    commentEditText.setText("");
+
+                                    if (onCommentAddedListener != null) {
+                                        onCommentAddedListener.onCommentAdded(commentList.size());
+                                    }
+                                } else {
+                                    Log.e("Comment", "댓글 등록 실패: " + response.code());
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<ApiResponse<CommentResponse>> call, Throwable t) {
+                                Log.e("Comment", "댓글 등록 에러: " + t.getMessage());
+                            }
+                        });
+            }
         });
+
 
         return view;
     }
 
+    private void loadCommentsFromServer() {
+        SharedPreferences prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE);
+        String token = prefs.getString("jwt", null);
+        if (token == null) return;
+
+        ApiService apiService = ApiClient.getClient(token).create(ApiService.class);
+
+
+        apiService.getComments("Bearer " + token, Integer.parseInt(postId))
+                .enqueue(new Callback<ApiResponse<List<CommentResponse>>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<List<CommentResponse>>> call,
+                                           Response<ApiResponse<List<CommentResponse>>> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            List<CommentResponse> data = response.body().getData();
+                            commentList.clear();
+                            for (CommentResponse c : data) {
+                                commentList.add(new CommentItem(
+                                        "User" + c.getUserId(),  // TODO: 실제 username API로부터 가져오기
+                                        c.getContent(),
+                                        R.drawable.sample_profile,
+                                        c.getFormattedCreatedAt()
+                                ));
+                            }
+                            commentAdapter.notifyDataSetChanged();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<List<CommentResponse>>> call, Throwable t) {
+                        Log.e("Comment", "댓글 불러오기 실패: " + t.getMessage());
+                    }
+                });
+    }
+
+
 
 }
-

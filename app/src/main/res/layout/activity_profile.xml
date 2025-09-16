@@ -421,7 +421,8 @@
             android:layout_gravity="center"
             android:background="@drawable/transparency"
             app:itemIconTint="@drawable/nav_item_selector"
-            app:menu="@menu/bottom_nav_menu"/>
+            app:menu="@menu/bottom_nav_menu"
+            app:labelVisibilityMode="unlabeled"/>
     </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

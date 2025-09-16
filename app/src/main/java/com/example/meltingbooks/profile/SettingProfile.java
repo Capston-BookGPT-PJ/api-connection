@@ -1,5 +1,6 @@
 package com.example.meltingbooks.profile;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
@@ -12,16 +13,18 @@ import android.widget.TextView;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide; // 이미지 로딩용 (Glide 추가 필요)
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.network.ApiClient;
+import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.ApiService;
-import com.example.meltingbooks.network.UpdateUserRequest;
-import com.example.meltingbooks.network.UserResponse;
-import com.google.gson.Gson;
+import com.example.meltingbooks.network.profile.UpdateUserRequest;
+import com.example.meltingbooks.network.profile.UserResponse;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,6 +51,9 @@ public class SettingProfile extends AppCompatActivity {
     private ApiService apiService;
     private String token;
     private int userId;
+
+    // 프로필 이미지 선택 버튼
+    private ActivityResultLauncher<Intent> imagePickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,17 +92,33 @@ public class SettingProfile extends AppCompatActivity {
         // 기존 프로필 불러오기
         loadUserProfile();
 
-        // 프로필 이미지 선택 버튼
+
+        // onCreate 안에 초기화
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri imageUri = result.getData().getData();
+                        // 여기서 imageUri를 서버 업로드 메서드에 넘기면 돼요
+                        uploadProfileImage(imageUri);
+                    }
+                }
+        );
+
+        // 버튼 클릭 이벤트
         btnProfileImage.setOnClickListener(v -> {
-            // TODO: 갤러리에서 이미지 가져오기 (startActivityForResult 등)
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            imagePickerLauncher.launch(intent);
         });
+
 
         // 저장 버튼 클릭 이벤트
         btnSave.setOnClickListener(v -> saveProfileChanges());
     }
 
     private void loadUserProfile() {
-        Call<UserResponse> getCall = apiService.getUserProfile("Bearer " + token, userId);
+        Call<UserResponse> getCall = apiService.getUser("Bearer " + token, userId);
         getCall.enqueue(new Callback<UserResponse>() {
             @Override
             public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
@@ -109,9 +131,9 @@ public class SettingProfile extends AppCompatActivity {
                     etBio.setText(currentUser.getBio());
 
                     // Glide로 프로필 이미지 표시
-                    if (currentUser.getProfileImage() != null) {
+                    if (currentUser.getProfileImageUrl() != null) {
                         Glide.with(SettingProfile.this)
-                                .load(currentUser.getProfileImage())
+                                .load(currentUser.getProfileImageUrl())
                                 .placeholder(R.drawable.sample_profile) // 기본 이미지
                                 .into(ivProfile);
                     }
@@ -132,39 +154,22 @@ public class SettingProfile extends AppCompatActivity {
             return;
         }
 
-        // 입력값 가져오기
         String nickname = etNickname.getText().toString().trim();
         String tagIdStr = etUserId.getText().toString().trim();
         String bio = etBio.getText().toString().trim();
 
-        // 비어있으면 기존 값 유지
         if (nickname.isEmpty()) nickname = currentUser.getNickname();
         if (tagIdStr.isEmpty()) tagIdStr = String.valueOf(currentUser.getTagId());
         if (bio.isEmpty()) bio = currentUser.getBio();
 
-        String tagId = tagIdStr;
-
-        // email(변경 금지), username, profileImage 는 기존 값 유지
         String email = currentUser.getEmail();
         String username = currentUser.getUsername();
-        String profileImage = currentUser.getProfileImage();
+        // 여기서 profileImage는 굳이 안 바꿔도 됨
+        String profileImage = currentUser.getProfileImageUrl();
 
-        // JSON DTO 생성
-        UpdateUserRequest request = new UpdateUserRequest(email ,nickname, username, bio, tagId, profileImage);
+        UpdateUserRequest request = new UpdateUserRequest(email, nickname, username, bio, tagIdStr, profileImage);
 
-        // 여기서 JSON 찍기
-        Gson gson = new Gson();
-        Log.d("UpdateUserRequest", gson.toJson(request));
-
-
-        // API 호출
-        Call<UserResponse> call = apiService.updateUserProfile(
-                "Bearer " + token,
-                userId,
-                request
-        );
-
-        //수정된 부분 다시 띄움
+        Call<UserResponse> call = apiService.updateUserProfile("Bearer " + token, userId, request);
         call.enqueue(new Callback<UserResponse>() {
             @Override
             public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
@@ -173,7 +178,6 @@ public class SettingProfile extends AppCompatActivity {
                     finish();
                 } else {
                     Toast.makeText(SettingProfile.this, "수정 실패: " + response.code(), Toast.LENGTH_SHORT).show();
-                    Log.e("ProfileEdit", "Response error: " + response.errorBody());
                 }
             }
 
@@ -182,5 +186,53 @@ public class SettingProfile extends AppCompatActivity {
                 Toast.makeText(SettingProfile.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void uploadProfileImage(Uri imageUri) {
+        try {
+            File file = new File(getCacheDir(), "temp_image.jpg");
+            InputStream inputStream = getContentResolver().openInputStream(imageUri);
+            OutputStream outputStream = new FileOutputStream(file);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
+            }
+            outputStream.close();
+            inputStream.close();
+
+            RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
+            MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
+
+            Call<ApiResponse<String>> call = apiService.uploadProfileImage("Bearer " + token, userId, body);
+            call.enqueue(new Callback<ApiResponse<String>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<String>> call, Response<ApiResponse<String>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        String uploadedUrl = response.body().getData();
+
+                        // 임시로 currentUser에만 저장
+                        currentUser.setProfileImageUrl(uploadedUrl);
+
+                        // 미리보기만 바꿔줌
+                        Glide.with(SettingProfile.this)
+                                .load(uploadedUrl)
+                                .placeholder(R.drawable.sample_profile)
+                                .into(ivProfile);
+
+                        Toast.makeText(SettingProfile.this, "이미지가 선택되었습니다. 저장을 눌러 반영하세요.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(SettingProfile.this, "이미지 업로드 실패", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<String>> call, Throwable t) {
+                    Toast.makeText(SettingProfile.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

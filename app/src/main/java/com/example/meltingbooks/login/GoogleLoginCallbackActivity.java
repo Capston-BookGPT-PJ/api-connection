@@ -9,7 +9,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.meltingbooks.calendar.CalendarActivity;
 import com.example.meltingbooks.feed.FeedActivity;
+import com.example.meltingbooks.profile.ProfileActivity;
 
 public class GoogleLoginCallbackActivity extends AppCompatActivity {
 

@@ -1,2 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <declare-styleable name="GoalProgressView">
+        <attr name="goalTitle" format="string" />
+        <attr name="goalSubText" format="string" />
+        <attr name="progressDrawable" format="reference" />
+        <attr name="goalUnit" format="string" /> <!-- 권 / 개 / 시간 -->
+        <attr name="goalTitleTextSize" format="dimension" /><!--제목 크기-->
+    </declare-styleable>
+</resources>

@@ -13,13 +13,19 @@ import java.util.List;
 public class BookListHelper {
 
     public static class BookItem {
-        public int imageResId;
+        private String imageUrl; // URL에서 불러올 경우
+        private int imageResId;  // 리소스에서 불러올 경우
         public boolean isRead;
         public boolean isSelected = false;
 
-        public BookItem(int imageResId, boolean isRead) {
+        public BookItem(String imageUrl, boolean isSelected) {
+            this.imageUrl = imageUrl;
+            this.isSelected = isSelected;
+        }
+
+        public BookItem(int imageResId, boolean isSelected) {
             this.imageResId = imageResId;
-            this.isRead = isRead;
+            this.isSelected = isSelected;
         }
     }
 

@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
 
 import java.util.List;
@@ -37,7 +38,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         holder.commentUserName.setText(comment.getUserName());
         holder.commentContent.setText(comment.getContent());
         holder.commentProfileImage.setImageResource(comment.getProfileImageResId());  // 예시로 이미지 리소스 ID 사용
+        holder.commentDate.setText(comment.getCommentDate()); // 작성일 표시
     }
+
 
     @Override
     public int getItemCount() {
@@ -46,7 +49,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     public static class CommentViewHolder extends RecyclerView.ViewHolder {
 
-        TextView commentUserName, commentContent;
+        TextView commentUserName, commentContent, commentDate;
         ImageView commentProfileImage;
 
         public CommentViewHolder(@NonNull View itemView) {
@@ -54,6 +57,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             commentUserName = itemView.findViewById(R.id.commentUserName);
             commentContent = itemView.findViewById(R.id.commentContent);
             commentProfileImage = itemView.findViewById(R.id.commentProfileImage);
+            commentDate = itemView.findViewById(R.id.commentDate);
         }
     }
 }

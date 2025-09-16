@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -26,7 +27,7 @@
                 android:id="@+id/goal_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/round_background_15_2"
+                android:background="@drawable/round_background_12"
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="20dp"
                 android:layout_marginTop="10dp"
@@ -75,6 +76,7 @@
                     android:layout_marginTop="10dp"/>
 
                 <!--진척도 바 -->
+
                 <FrameLayout
                     android:id="@+id/goal_total_progressbar_frame"
                     android:layout_width="300dp"
@@ -85,11 +87,11 @@
                     app:layout_constraintStart_toStartOf="@id/gray_line_1"
                     app:layout_constraintEnd_toEndOf="@id/gray_line_1">
 
-                <View
-                    android:id="@+id/goal_total_progressbar_fill"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/progress_fill_background4"/>
+                    <View
+                        android:id="@+id/goal_total_progressbar_fill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/progress_fill_background4"/>
                 </FrameLayout>
 
                 <TextView
@@ -129,126 +131,42 @@
                     app:layout_constraintTop_toBottomOf="@id/gray_line_2">
 
                     <!-- goal1 -->
-                    <LinearLayout
+                    <com.example.meltingbooks.calendar.view.GoalProgressView
+                        android:id="@+id/goal1_view"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:layout_marginEnd="8dp">
+                        app:goalTitle="목표 권수"
+                        app:goalUnit="권"
+                        app:goalTitleTextSize="15sp"
+                        android:layout_marginEnd="8dp"
+                        app:progressDrawable="@drawable/progress_fill_background1" />
 
-                        <TextView
-                            android:id="@+id/m_goal_number_books_title"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/goal1"
-                            android:textColor="#000000"
-                            android:textSize="15sp" />
-
-                        <FrameLayout
-                            android:id="@+id/m_goal_1_progressbar_frame"
-                            android:layout_width="match_parent"
-                            android:layout_height="15dp"
-                            android:layout_marginTop="4dp"
-                            android:background="@drawable/progress_border_background">
-
-                            <View
-                                android:id="@+id/m_goal1_progressbar_fill"
-                                android:layout_width="50dp"
-                                android:layout_height="match_parent"
-                                android:background="@drawable/progress_fill_background1" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:id="@+id/m_goal_number_books_text"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/goal__1"
-                            android:textColor="#525252"
-                            android:textSize="13sp"
-                            android:gravity="end"
-                            android:layout_marginTop="4dp" />
-                    </LinearLayout>
 
                     <!-- goal2 -->
-                    <LinearLayout
+                    <com.example.meltingbooks.calendar.view.GoalProgressView
+                        android:id="@+id/goal2_view"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:layout_marginEnd="8dp">
-
-                        <TextView
-                            android:id="@+id/m_goal_review_title"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/goal2"
-                            android:textColor="#000000"
-                            android:textSize="15sp" />
-
-                        <FrameLayout
-                            android:id="@+id/m_goal_2_progressbar_frame"
-                            android:layout_width="match_parent"
-                            android:layout_height="15dp"
-                            android:layout_marginTop="4dp"
-                            android:background="@drawable/progress_border_background">
-
-                            <View
-                                android:id="@+id/m_goal2_progressbar_fill"
-                                android:layout_width="50dp"
-                                android:layout_height="match_parent"
-                                android:background="@drawable/progress_fill_background2" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:id="@+id/m_goal_review_text"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/goal__2"
-                            android:textColor="#525252"
-                            android:textSize="13sp"
-                            android:gravity="end"
-                            android:layout_marginTop="4dp" />
-                    </LinearLayout>
+                        app:goalTitle="목표 감상문"
+                        app:goalUnit="개"
+                        android:layout_marginEnd="8dp"
+                        app:goalTitleTextSize="15sp"
+                        app:progressDrawable="@drawable/progress_fill_background2" />
 
                     <!-- goal3 -->
-                    <LinearLayout
+                    <com.example.meltingbooks.calendar.view.GoalProgressView
+                        android:id="@+id/goal3_view"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="vertical">
+                        app:goalTitle="목표 시간"
+                        app:goalTitleTextSize="15sp"
+                        app:goalUnit="시간"
+                        android:layout_marginEnd="8dp"
+                        app:progressDrawable="@drawable/progress_fill_background3" />
 
-                        <TextView
-                            android:id="@+id/m_goal_time_title"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/goal3"
-                            android:textColor="#000000"
-                            android:textSize="15sp" />
-
-                        <FrameLayout
-                            android:id="@+id/m_goal_3_progressbar_frame"
-                            android:layout_width="match_parent"
-                            android:layout_height="15dp"
-                            android:layout_marginTop="4dp"
-                            android:background="@drawable/progress_border_background">
-
-                            <View
-                                android:id="@+id/m_goal3_progressbar_fill"
-                                android:layout_width="50dp"
-                                android:layout_height="match_parent"
-                                android:background="@drawable/progress_fill_background3" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:id="@+id/m_goal_time_text"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/goal__3"
-                            android:textColor="#525252"
-                            android:textSize="13sp"
-                            android:gravity="end"
-                            android:layout_marginTop="4dp" />
-                    </LinearLayout>
                 </LinearLayout>
 
                 <!-- 회색 구분선 -->

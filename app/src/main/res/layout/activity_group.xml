@@ -307,12 +307,12 @@
                 android:id="@+id/groupRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/round_background_15"
                 android:layout_margin="12dp"
+                android:background="@drawable/round_background_15"
                 android:clipToOutline="true"
-                android:padding="8dp"
                 android:clipToPadding="false"
-                android:nestedScrollingEnabled="false"/>
+                android:nestedScrollingEnabled="false"
+                android:padding="8dp" />
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
@@ -349,7 +349,9 @@
             android:layout_height="match_parent"
             android:background="@drawable/transparency"
             app:itemIconTint="@drawable/nav_item_selector"
-            app:menu="@menu/bottom_nav_menu"/>
+            app:menu="@menu/bottom_nav_menu"
+            app:labelVisibilityMode="unlabeled"
+            />
     </RelativeLayout>
 
     <!-- 메뉴 영역 스크롤 가능하게 감싸기 -->

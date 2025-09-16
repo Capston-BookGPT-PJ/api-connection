@@ -3,6 +3,7 @@ package com.example.meltingbooks.feed;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -31,6 +32,11 @@ import androidx.core.content.ContextCompat;
 
 import com.example.meltingbooks.BuildConfig;
 import com.example.meltingbooks.R;
+import com.example.meltingbooks.network.ApiClient;
+import com.example.meltingbooks.network.ApiResponse;
+import com.example.meltingbooks.network.ApiService;
+import com.example.meltingbooks.network.feed.ReviewRequest;
+import com.example.meltingbooks.network.feed.ReviewResponse;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -38,17 +44,31 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
+// Retrofit은 Retrofit 요청용
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+// OkHttp는 OkHttp 요청용
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import okhttp3.Response;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+//import okhttp3.ResponseBody;
+//import okhttp3.Call;       // 여기서 okhttp3.Call
+//import okhttp3.Callback;   // 여기서 okhttp3.Callback
+
+
 
 public class FeedWriteActivity extends AppCompatActivity {
     private String apiKey;  // apiKey는 이제 onCreate()에서 초기화
@@ -73,6 +93,8 @@ public class FeedWriteActivity extends AppCompatActivity {
 
     // ChatGPT API client setup
     private OkHttpClient client;
+
+    private Uri selectedImageUri;
 
 
     @Override
@@ -140,8 +162,8 @@ public class FeedWriteActivity extends AppCompatActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        Uri imageUri = result.getData().getData();
-                        imageView.setImageURI(imageUri);
+                        selectedImageUri = result.getData().getData();
+                        imageView.setImageURI(selectedImageUri);
                     }
                 });
 
@@ -220,6 +242,51 @@ public class FeedWriteActivity extends AppCompatActivity {
         });
 
         checkPermissions();
+
+        btnUpload.setOnClickListener(v -> {
+            SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
+            String token = prefs.getString("jwt", null);
+            int userId = prefs.getInt("userId", -1);
+
+            if (token == null || userId == -1) {
+                Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String content = etInput.getText().toString().trim();
+            if (content.isEmpty()) {
+                Toast.makeText(this, "내용을 입력하세요.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            ReviewRequest request = new ReviewRequest(1, content, 5); // bookId=1, rating=5 예시
+            ApiService apiService = ApiClient.getClient(token).create(ApiService.class);
+
+            Call<ApiResponse<ReviewResponse>> call = apiService.createReview("Bearer " + token, userId, request);
+            call.enqueue(new Callback<ApiResponse<ReviewResponse>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<ReviewResponse>> call, Response<ApiResponse<ReviewResponse>> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        ReviewResponse review = response.body().getData();
+                        int reviewId = review.getReviewId();
+
+                        if (selectedImageUri != null) {
+                            uploadReviewImage(apiService, token, reviewId, selectedImageUri);
+                        } else {
+                            Toast.makeText(FeedWriteActivity.this, "리뷰 작성 완료!", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+                    } else {
+                        Toast.makeText(FeedWriteActivity.this, "리뷰 작성 실패", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<ReviewResponse>> call, Throwable t) {
+                    Toast.makeText(FeedWriteActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
 
     }
 
@@ -402,9 +469,9 @@ public class FeedWriteActivity extends AppCompatActivity {
                 .post(body)
                 .build();
 
-        client.newCall(request).enqueue(new Callback() {
+        client.newCall(request).enqueue(new okhttp3.Callback() { // 반드시 okhttp3.Callback 사용
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            public void onFailure(@NonNull okhttp3.Call call, @NonNull IOException e) {
                 // 요청 실패 처리
                 runOnUiThread(() -> {
                     summarizingImageView.setVisibility(View.GONE);  // 요약 중 이미지 숨기기
@@ -413,7 +480,7 @@ public class FeedWriteActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+            public void onResponse(@NonNull okhttp3.Call call, @NonNull okhttp3.Response response) throws IOException {
                 String responseBody = response.body().string();
                 Log.d("API_RESPONSE", responseBody);  // 응답 로깅
 
@@ -441,4 +508,44 @@ public class FeedWriteActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void uploadReviewImage(ApiService apiService, String token, int reviewId, Uri imageUri) {
+        try {
+            File file = new File(getCacheDir(), "temp_review.jpg");
+            InputStream inputStream = getContentResolver().openInputStream(imageUri);
+            OutputStream outputStream = new FileOutputStream(file);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
+            }
+            outputStream.close();
+            inputStream.close();
+
+            RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
+            MultipartBody.Part body = MultipartBody.Part.createFormData("files", file.getName(), requestFile);
+
+            Call<ApiResponse<List<String>>> call = apiService.uploadReviewImage("Bearer " + token, reviewId, body);
+            call.enqueue(new Callback<ApiResponse<List<String>>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<List<String>>> call, Response<ApiResponse<List<String>>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        Toast.makeText(FeedWriteActivity.this, "리뷰 & 이미지 업로드 완료!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else {
+                        Toast.makeText(FeedWriteActivity.this, "이미지 업로드 실패", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<List<String>>> call, Throwable t) {
+                    Toast.makeText(FeedWriteActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
