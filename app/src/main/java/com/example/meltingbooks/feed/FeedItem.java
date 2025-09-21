@@ -1,0 +1,138 @@
+package com.example.meltingbooks.feed;
+
+import com.example.meltingbooks.network.book.Book;
+
+public class FeedItem {
+    private String userName;//유저 이름 닉네임!!
+    private String tagId;
+    private String reviewContent;//감상문
+    private String reviewDate;//작성 날짜
+    private boolean liked; //좋아요 하트 모양 표시
+
+    private String imageUrl;  // 이미지 URL 추가
+
+    private String profileImageUrl; //프로필 이미지 URL
+    //private boolean hasVote;  // 투표 기능 활성화 여부
+    //private List<String> pollOptions; 투표 항목 리스트 추가
+    //private int selectedOption; // 사용자가 선택한 옵션 (없으면 -1)
+    //private String postId; , String profileImageUrl
+
+    //feed와 group 구분 코드
+    private int postId;      // 댓글 조회/등록용 ID
+    private String postType;    // "feed" 또는 "group"
+
+
+    //책 정보 통째로 보관
+    private Book book;
+    private Integer bookId;  //책 ID
+
+    public Book getBook() {
+        return book;
+    }
+
+    public void setBook(Book book) {
+        this.book = book;
+    }
+
+    public Integer getBookId() {
+        return bookId;
+    }
+
+    public void setBookId(Integer bookId) {
+        this.bookId = bookId;
+    }
+
+    private int commentCount;     // 댓글 수
+    private int likeCount;        // 좋아요 수
+
+
+    public FeedItem(String userName, String reviewContent, String reviewDate,
+                    String imageUrl, String profileImageUrl, Integer bookId,
+                    int commentCount, int likeCount, String tagId) {
+        this.userName = userName;
+        this.reviewContent = reviewContent;
+        this.reviewDate = reviewDate;
+        this.imageUrl = imageUrl;
+        this.profileImageUrl = profileImageUrl;
+        this.bookId = bookId;
+        this.commentCount = commentCount;
+        this.likeCount = likeCount;
+        this.tagId = tagId;
+    }
+
+    //기존 생성자 (댓글/좋아요 없는 버전)도 유지
+    public FeedItem(String userName, String reviewContent, String reviewDate,
+                    String imageUrl, String profileImageUrl, Integer bookId) {
+        this(userName, reviewContent, reviewDate, imageUrl, profileImageUrl, bookId, 0, 0,null);
+    }
+
+
+    //getter and setter
+    public String getUserName() {
+        return userName;
+    }
+
+    public String getReviewContent() {
+        return reviewContent;
+    }
+
+    public String getReviewDate() {
+        return reviewDate;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public int getPostId() {
+        return postId;
+    }
+
+    public void setPostId(int postId) {
+        this.postId = postId;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public String getPostType() {
+        return postType;
+    }
+
+    public void setPostType(String postType) {
+        this.postType = postType;
+    }
+    //public boolean hasVote() { return hasVote; }
+    //public List<String> getPollOptions() { return pollOptions; }
+    //public int getSelectedOption() { return selectedOption; }
+    //public void setSelectedOption(int selectedOption) { this.selectedOption = selectedOption; }
+
+
+    public int getCommentCount() {
+        return commentCount;
+    }
+
+    public void setCommentCount(int commentCount) {
+        this.commentCount = commentCount;
+    }
+
+    public int getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public boolean isLiked() { return liked; }
+    public void setLiked(boolean liked) { this.liked = liked; }
+}
