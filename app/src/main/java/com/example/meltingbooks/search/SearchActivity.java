@@ -68,7 +68,7 @@ public class SearchActivity extends AppCompatActivity {
     private List<Review> fullReviewList;
     private List<Review> filteredReviewList;
     private SearchReviewAdapter reviewAdapter;
-    private View barReview;
+    //private View barReview;
 
     // 🔹 그룹 관련 변수
     private GroupResponseAdapter groupAdapter;
@@ -118,10 +118,10 @@ public class SearchActivity extends AppCompatActivity {
             performSearch();
         });
 
-        findViewById(R.id.btnReview).setOnClickListener(v -> {
+        /*findViewById(R.id.btnReview).setOnClickListener(v -> {
             currentTab = "review";
             performSearch();
-        });
+        });*/
 
         findViewById(R.id.btnUser).setOnClickListener(v -> {
             currentTab = "user";
@@ -147,7 +147,7 @@ public class SearchActivity extends AppCompatActivity {
 
         // Bar 초기화
         barBook = findViewById(R.id.barBook);
-        barReview = findViewById(R.id.barReview);
+        //barReview = findViewById(R.id.barReview);
         barUser = findViewById(R.id.barUser);
         barGroup = findViewById(R.id.barGroup);
         barHashtag = findViewById(R.id.barHashtag);
@@ -267,7 +267,7 @@ public class SearchActivity extends AppCompatActivity {
                 popularGroupsRecyclerView.setVisibility(View.GONE);
                 searchHashtagRecyclerView.setVisibility(View.GONE);
                 barBook.setVisibility(View.VISIBLE);
-                barReview.setVisibility(View.GONE);
+                //barReview.setVisibility(View.GONE);
                 barUser.setVisibility(View.GONE);
                 barGroup.setVisibility(View.GONE);
                 barHashtag.setVisibility(View.GONE);
@@ -318,7 +318,7 @@ public class SearchActivity extends AppCompatActivity {
 
                 break;
 
-            case "review":
+            /**case "review":
                 bookRecyclerView.setVisibility(View.GONE);
                 searchReviewRecyclerView.setVisibility(View.VISIBLE);
                 popularUsersRecyclerView.setVisibility(View.GONE);
@@ -346,7 +346,7 @@ public class SearchActivity extends AppCompatActivity {
                 }
 
                 reviewAdapter.notifyDataSetChanged();
-                break;
+                break;*/
 
             //⭐case user 부분 전체 수정
             case "user":
@@ -356,7 +356,7 @@ public class SearchActivity extends AppCompatActivity {
                 popularGroupsRecyclerView.setVisibility(View.GONE);
                 searchHashtagRecyclerView.setVisibility(View.GONE);
                 barBook.setVisibility(View.GONE);
-                barReview.setVisibility(View.GONE);
+                //barReview.setVisibility(View.GONE);
                 barUser.setVisibility(View.VISIBLE);
                 barGroup.setVisibility(View.GONE);
                 barHashtag.setVisibility(View.GONE);
@@ -425,7 +425,7 @@ public class SearchActivity extends AppCompatActivity {
                 popularGroupsRecyclerView.setVisibility(View.VISIBLE);
                 searchHashtagRecyclerView.setVisibility(View.GONE);
                 barBook.setVisibility(View.GONE);
-                barReview.setVisibility(View.GONE);
+                //barReview.setVisibility(View.GONE);
                 barUser.setVisibility(View.GONE);
                 barGroup.setVisibility(View.VISIBLE);
                 barHashtag.setVisibility(View.GONE);
@@ -442,7 +442,7 @@ public class SearchActivity extends AppCompatActivity {
                 popularGroupsRecyclerView.setVisibility(View.GONE);
                 searchHashtagRecyclerView.setVisibility(View.VISIBLE);
                 barBook.setVisibility(View.GONE);
-                barReview.setVisibility(View.GONE);
+                //barReview.setVisibility(View.GONE);
                 barUser.setVisibility(View.GONE);
                 barGroup.setVisibility(View.GONE);
                 barHashtag.setVisibility(View.VISIBLE);

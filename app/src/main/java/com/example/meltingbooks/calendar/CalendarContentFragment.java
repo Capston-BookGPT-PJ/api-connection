@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 
@@ -19,11 +20,15 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.meltingbooks.R;
+import com.example.meltingbooks.calendar.utils.BookListHelper;
 import com.example.meltingbooks.calendar.utils.ProgressBarUtil;
 import com.example.meltingbooks.calendar.view.CircularProgressView;
 import com.example.meltingbooks.calendar.view.GoalProgressView;
+import com.example.meltingbooks.calendar.utils.BookListHelper;
+import com.example.meltingbooks.calendar.utils.BookListHelper.BookItem;
 
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 public class CalendarContentFragment extends Fragment {
@@ -106,7 +111,12 @@ public class CalendarContentFragment extends Fragment {
         CircularProgressView circleProgress = view.findViewById(R.id.circle_progress);
         ProgressBarUtil.setCircularProgress(circleProgress, totalProgress);
 
+        // 책 리스트 UI 생성
+        setupBooks(view);
+
         return view;
+
+
     }
 
     //달력 생성 알고리즘
@@ -224,4 +234,17 @@ public class CalendarContentFragment extends Fragment {
         }
 
     }
+
+    private List<BookItem> bookItems = new ArrayList<>();
+
+    private void setupBooks(View view) {
+        LinearLayout container = view.findViewById(R.id.book_list_container);
+
+        // 샘플 데이터
+        bookItems.clear();
+        bookItems.add(new BookListHelper.BookItem(R.drawable.book_image_1, false));
+
+        BookListHelper.setupBooks(getContext(), container, bookItems, true);
+    }
+
 }
