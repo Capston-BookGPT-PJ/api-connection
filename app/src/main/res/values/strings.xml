@@ -1,0 +1,59 @@
+<resources>
+    <string name="app_name">MeltingBooks</string>
+    <string name="reading_goal">목표 달성 현황</string>
+    <string name="goal_id">52%</string>
+    <string name="goal1">목표 권수</string>
+    <string name="goal__1">2권/3권</string>
+    <string name="goal2">목표 감상문</string>
+    <string name="goal__2">1개/3개</string>
+    <string name="goal3">목표 시간</string>
+    <string name="goal__3">4.5시간/15시간</string>
+
+    <!--독서 그룹 게시글 카테고리-->
+    <string-array name="groupPost_categories">
+        <item>게시글 유형</item>
+        <item>토론</item>
+        <item>감상문 공유</item>
+        <item>독서 목표 공유</item>
+        <item>자유 주제</item>
+        <item>공지 사항</item>
+    </string-array>
+
+    <!--독서 새 그룹 만들기 카테고리-->
+    <!-- 대분류 -->
+    <string-array name="group_category_main">
+        <item>카테고리 선택하기</item>
+        <item>장르</item>
+        <item>목적</item>
+        <item>관심사</item>
+    </string-array>
+
+    <!-- 장르 세부 분류 -->
+    <string-array name="group_category_genre">
+        <item>소설</item>
+        <item>비소설</item>
+        <item>에세이/시집</item>
+        <item>기타</item>
+    </string-array>
+
+    <!-- 목적 세부 분류 -->
+    <string-array name="group_category_purpose">
+        <item>시험/자격증 준비</item>
+        <item>직무/커리어 향상</item>
+        <item>문화/예술 탐구</item>
+        <item>독서 목표 달성</item>
+        <item>토론</item>
+        <item>기타</item>
+    </string-array>
+
+    <!-- 관심사 세부 분류 -->
+    <string-array name="group_category_interest">
+        <item>환경</item>
+        <item>심리학</item>
+        <item>여행/세계문화</item>
+        <item>기타</item>
+    </string-array>
+
+
+
+</resources>
