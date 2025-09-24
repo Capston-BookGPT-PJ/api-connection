@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    >
+
+    <!-- 프로필 이미지 -->
+    <ImageView
+        android:id="@+id/commentProfileImage"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/sample_profile"
+        android:scaleType="centerCrop"
+        android:background="@drawable/profile_image_background"
+        android:clipToOutline="true"/>
+
+    <!-- 댓글 내용 및 사용자 이름 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+        <!-- 댓글 상단부-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/commentUserName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="User Name"
+                android:textStyle="bold"
+                android:textColor="@color/black"/>
+
+            <TextView
+                android:id="@+id/commentDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="comment date"
+                android:layout_marginLeft="10dp"
+                android:textColor="#666666"/>
+        </LinearLayout>
+
+        <!--댓글 내용부-->
+        <TextView
+            android:id="@+id/commentContent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="This is a sample comment."
+            android:textColor="@color/black"
+            android:textSize="16dp"/>
+
+        <!--댓글 하단부-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
+
+            <TextView
+                android:id="@+id/WriteReply_Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="답글 달기"
+                android:padding="14dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:textColor="#666666"
+                />
+
+            <TextView
+                android:id="@+id/ViewReply_Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="답글 보기"
+                android:padding="14dp"
+                android:textColor="#666666"
+                />
+
+            <TextView
+                android:id="@+id/Reply_Count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="(2)"
+                android:textColor="#666666"
+                />
+
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>
