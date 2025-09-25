@@ -1,0 +1,670 @@
+package com.example.meltingbooks.search;
+
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Build;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.example.meltingbooks.feed.FeedWriteActivity;
+import com.example.meltingbooks.network.ApiClient;
+import com.example.meltingbooks.network.ApiResponse;
+import com.example.meltingbooks.network.book.Book;
+import com.example.meltingbooks.Hashtag;
+import com.example.meltingbooks.R;
+import com.example.meltingbooks.User;
+import com.example.meltingbooks.browse.BrowseUsersAdapter;
+import com.example.meltingbooks.network.book.BookApi;
+import com.example.meltingbooks.network.book.BookCreateRequest;
+import com.example.meltingbooks.network.browse.HashtagController;
+import com.example.meltingbooks.network.browse.HashtagResponse;
+import com.example.meltingbooks.network.browse.PopularUser;
+import com.example.meltingbooks.network.browse.UserController;
+import com.example.meltingbooks.network.feed.FeedPageResponse;
+import com.example.meltingbooks.network.feed.FeedResponse;
+import com.example.meltingbooks.network.group.GroupAllList;
+import com.example.meltingbooks.network.group.GroupResponseAdapter;
+import com.example.meltingbooks.group.profile.GroupProfileActivity;
+import com.example.meltingbooks.group.profile.GroupProfileItem;
+import com.example.meltingbooks.network.book.BookController;
+import com.example.meltingbooks.network.group.GroupController;
+import com.example.meltingbooks.network.group.GroupSingleList;
+import com.example.meltingbooks.network.group.GroupResponse;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class SearchActivity extends AppCompatActivity {
+
+    private EditText searchInput;
+    private ImageButton searchIcon;
+
+
+    // 탭 관련 RecyclerView
+    private RecyclerView bookRecyclerView;
+    private RecyclerView popularUsersRecyclerView;
+    private RecyclerView popularGroupsRecyclerView;
+    private RecyclerView searchHashtagRecyclerView;
+
+    private String currentTab = "book"; // 기본 탭
+
+    // 🔹 책 관련 변수
+    private SearchBookAdapter bookAdapter;
+    private List<Book> filteredBookList;
+    private View barBook;
+    private BookController bookController;
+
+    // 🔹 선택된 책 정보 뷰
+    private View bookInfoSelected;
+    private ImageView bookCover;
+    private TextView bookInfoTitle, bookInfoAuthor, bookInfoPublisher, bookInfoCategory;
+    // 🔹 리뷰 관련 변수
+    private RecyclerView reviewRecyclerView;
+    private SearchBookReviewAdapter reviewAdapter;
+    private List<FeedResponse> reviewList;
+
+    // 선택한 책 bookId와 별점(전달용)
+    private int selectedBookId = -1;
+    private int selectedBookRating = 0;
+
+
+    // 🔹 그룹 관련 변수
+    private GroupResponseAdapter groupAdapter;
+    private List<GroupResponse> fullGroupList;
+    private List<GroupResponse> filteredGroupList;
+
+    private View barGroup;
+
+    // 🔹 사용자 관련 변수
+    private BrowseUsersAdapter userAdapter;
+    private List<PopularUser> fullUserList; //인기 유저 모델로 수정
+    private List<PopularUser> filteredUserList; //인기 유저 모델로 수정
+    private View barUser;
+
+    //해시태그 관련 변수
+    private List<Hashtag> fullHashtagList;
+    private List<Hashtag> filteredHashtagList;
+    private SearchHashtagAdapter hashtagAdapter;
+    private View barHashtag;
+
+
+    // 선택된 해시태그 관련 뷰
+    private LinearLayout hashTagInfoSelected;
+    private ImageView searchItemIcon;
+    private TextView searchItemText;
+    private RecyclerView reviewRecyclerView2;
+
+    // 해시태그 리뷰 리스트 & 어댑터
+    private List<FeedResponse> reviewList2;
+    private SearchHashtagReviewAdapter reviewAdapter2;
+
+    private String token;
+
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_search);
+
+        //토큰 받아오기
+        SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
+       token = prefs.getString("jwt", null);
+        int userId = prefs.getInt("userId", -1);
+
+        if (token == null || userId == -1) {
+            Log.e("SearchActivity", "토큰 또는 사용자 ID가 없습니다.");
+        } else {
+            // 서버에서 해시태그 불러오기
+            loadAllHashtags(token);
+        }
+
+
+        // 상태바 색상 조정
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.white));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            View decor = getWindow().getDecorView();
+            decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
+
+        searchInput = findViewById(R.id.searchInput);
+        searchIcon = findViewById(R.id.searchIcon);
+
+        //검색 카테고리 버튼 클릭 탭
+        findViewById(R.id.btnBook).setOnClickListener(v -> {
+            currentTab = "book";
+            performSearch();
+        });
+
+        findViewById(R.id.btnUser).setOnClickListener(v -> {
+            currentTab = "user";
+            performSearch();
+        });
+
+        findViewById(R.id.btnGroup).setOnClickListener(v -> {
+            currentTab = "group";
+            performSearch();
+        });
+
+        findViewById(R.id.btnHashtag).setOnClickListener(v -> {
+            currentTab = "hashtag";
+            performSearch();
+        });
+
+        // RecyclerView 초기화
+        bookRecyclerView = findViewById(R.id.bookRecyclerView);
+        popularUsersRecyclerView = findViewById(R.id.popularUsersRecyclerView);
+        popularGroupsRecyclerView = findViewById(R.id.popularGroupsRecyclerView);
+        searchHashtagRecyclerView = findViewById(R.id.searchHashtagRecyclerView);
+
+        // Bar 초기화
+        barBook = findViewById(R.id.barBook);
+        barUser = findViewById(R.id.barUser);
+        barGroup = findViewById(R.id.barGroup);
+        barHashtag = findViewById(R.id.barHashtag);
+
+        // 선택된 책 관련 뷰
+        bookInfoSelected = findViewById(R.id.bookInfoSelected);
+        bookCover = findViewById(R.id.bookCover);
+        bookInfoTitle = findViewById(R.id.bookInfoTitle);
+        bookInfoAuthor = findViewById(R.id.bookInfoAuthor);
+        bookInfoPublisher = findViewById(R.id.bookInfoPublisher);
+        bookInfoCategory = findViewById(R.id.bookInfoCategory);
+        reviewRecyclerView = findViewById(R.id.reviewRecyclerView);
+
+        reviewList = new ArrayList<>();
+        reviewAdapter = new SearchBookReviewAdapter(reviewList);
+        reviewRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        reviewRecyclerView.setAdapter(reviewAdapter);
+
+
+        // 🔹 책 RecyclerView 세팅
+        bookController = new BookController(this); // context 전달
+        filteredBookList = new ArrayList<>();
+        bookAdapter = new SearchBookAdapter(this, filteredBookList);
+
+        bookRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        bookRecyclerView.setAdapter(bookAdapter);
+
+
+        // 책 클릭 리스너
+        bookAdapter.setOnItemClickListener(book -> {
+            // 도서 정보 세팅
+            bookInfoTitle.setText(book.getTitle());
+            bookInfoAuthor.setText(book.getAuthor());
+            bookInfoPublisher.setText(book.getPublisher());
+            bookInfoCategory.setText(book.getCategoryName());
+            Glide.with(this).load(book.getCover()).into(bookCover);
+
+            // UI 전환
+            bookRecyclerView.setVisibility(View.GONE);
+            bookInfoSelected.setVisibility(View.VISIBLE);
+            //reviewRecyclerView.setVisibility(View.VISIBLE);
+
+            // 서버에 Book 생성 요청
+            createBookOnServer(book);
+        });
+
+
+        // 🔹 사용자 RecyclerView 세팅
+        popularUsersRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        filteredUserList = new ArrayList<>();
+        //fullUserList = createDummyUsers(); ⭐ 삭제
+        userAdapter = new BrowseUsersAdapter(filteredUserList);
+        popularUsersRecyclerView.setAdapter(userAdapter);
+        //filteredUserList.addAll(fullUserList); ⭐ 삭제
+
+
+        // 🔹 그룹 RecyclerView 세팅
+        popularGroupsRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        filteredGroupList = new ArrayList<>();
+        fullGroupList = new ArrayList<>();
+
+        groupAdapter = new GroupResponseAdapter(this, filteredGroupList, groupResponse -> {
+            String imageUrl = groupResponse.getGroupImageUrl();
+            if (imageUrl == null || imageUrl.isEmpty()) imageUrl = "";
+
+            GroupProfileItem profileItem = new GroupProfileItem(
+                    groupResponse.getName(),
+                    imageUrl,
+                    groupResponse.getCategory(),
+                    "그룹 소개",          // IntroTitle 고정
+                    groupResponse.getDescription()  // IntroDetail
+            );
+
+            Intent intent = new Intent(SearchActivity.this, GroupProfileActivity.class);
+            intent.putExtra("groupId", groupResponse.getId());
+            startActivity(intent);
+        });
+
+        popularGroupsRecyclerView.setAdapter(groupAdapter);
+
+
+        // 선택된 해시태그 관련 뷰
+        hashTagInfoSelected = findViewById(R.id.hashTagInfoSelected);
+        searchItemIcon = findViewById(R.id.searchItemIcon);
+        searchItemText = findViewById(R.id.searchItemText);
+        reviewRecyclerView2 = findViewById(R.id.reviewRecyclerView2);
+
+        fullHashtagList = new ArrayList<>();
+        filteredHashtagList = new ArrayList<>();
+
+
+        // 리뷰용 리스트 & 어댑터 초기화
+        reviewList2 = new ArrayList<>();
+        reviewAdapter2 = new SearchHashtagReviewAdapter(reviewList2);
+
+        // 해시태그 RecyclerView 세팅
+        filteredHashtagList = new ArrayList<>();
+        hashtagAdapter = new SearchHashtagAdapter(filteredHashtagList);
+        searchHashtagRecyclerView.setAdapter(hashtagAdapter);
+
+        // RecyclerView 설정
+        reviewRecyclerView2.setLayoutManager(new LinearLayoutManager(this));
+        reviewRecyclerView2.setAdapter(reviewAdapter2);
+        searchHashtagRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+
+        // 클릭 리스너 연결
+        hashtagAdapter.setOnItemClickListener(hashtag -> {
+            // 해시태그 목록은 숨기고
+            searchHashtagRecyclerView.setVisibility(View.GONE);
+            // 선택된 해시태그 영역은 보이게
+            hashTagInfoSelected.setVisibility(View.VISIBLE);
+
+            searchItemText.setText(hashtag.getTag());
+
+            // 리뷰 불러오기
+            HashtagController hashtagController = new HashtagController(token);
+            hashtagController.fetchReviewsByHashtag(hashtag.getTag(), new Callback<ApiResponse<FeedPageResponse>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<FeedPageResponse>> call, Response<ApiResponse<FeedPageResponse>> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        List<FeedResponse> reviews = response.body().getData().getContent();
+                        //reviewAdapter.updateReviews(reviews);   // 리뷰 리사이클러뷰 갱신
+                        reviewList2.clear();
+                        reviewList2.addAll(reviews);
+                        reviewAdapter2.notifyDataSetChanged();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<FeedPageResponse>> call, Throwable t) {
+                    Log.e("SearchActivity", "해시태그 리뷰 불러오기 실패", t);
+                }
+            });
+        });
+
+
+        // 검색 아이콘 클릭 시 실행
+        searchIcon.setOnClickListener(v -> performSearch());
+
+        // 키보드에서 검색 버튼 눌렀을 때 실행
+        searchInput.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                performSearch();
+                return true;
+            }
+            return false;
+        });
+    }
+
+
+    private void performSearch() {
+        String query = searchInput.getText().toString().trim();
+        Log.d("SearchActivity", "Search query: '" + query + "'");
+
+        switch (currentTab) {
+            case "book":
+                bookRecyclerView.setVisibility(View.VISIBLE);
+                popularUsersRecyclerView.setVisibility(View.GONE);
+                popularGroupsRecyclerView.setVisibility(View.GONE);
+                searchHashtagRecyclerView.setVisibility(View.GONE);
+                barBook.setVisibility(View.VISIBLE);
+                barUser.setVisibility(View.GONE);
+                barGroup.setVisibility(View.GONE);
+                barHashtag.setVisibility(View.GONE);
+
+                // 재검색
+                bookInfoSelected.setVisibility(View.GONE);
+                //reviewRecyclerView.setVisibility(View.GONE);
+
+                if (!query.isEmpty()) {
+                    // 서버에서 검색
+                    bookController.searchBooks(query, new Callback<List<Book>>() {
+                        @Override
+                        public void onResponse(Call<List<Book>> call, Response<List<Book>> response) {
+                            Log.d("SearchActivity", "서버 응답 성공: " + response.code());
+
+                            if (response.isSuccessful() && response.body() != null) {
+                                Log.d("SearchActivity", "받은 책 개수: " + response.body().size());
+                                filteredBookList.clear();
+                                filteredBookList.addAll(response.body());
+                                bookAdapter.notifyDataSetChanged();
+                            } else {
+                                Log.d("SearchActivity", "응답은 왔지만 body 없음");
+                                filteredBookList.clear();
+                                bookAdapter.notifyDataSetChanged();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<List<Book>> call, Throwable t) {
+                            t.printStackTrace();
+                            Toast.makeText(SearchActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    // 검색어가 비었으면 초기 전체 목록 다시 표시
+                    bookController.fetchBooks(new Callback<List<Book>>() {
+                        @Override
+                        public void onResponse(Call<List<Book>> call, Response<List<Book>> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                filteredBookList.clear();
+                                filteredBookList.addAll(response.body());
+                                bookAdapter.notifyDataSetChanged();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<List<Book>> call, Throwable t) {
+                            t.printStackTrace();
+                        }
+                    });
+                }
+
+                break;
+
+
+            //⭐case user 부분 전체 수정
+            case "user":
+                bookRecyclerView.setVisibility(View.GONE);
+                popularUsersRecyclerView.setVisibility(View.VISIBLE);
+                popularGroupsRecyclerView.setVisibility(View.GONE);
+                searchHashtagRecyclerView.setVisibility(View.GONE);
+                barBook.setVisibility(View.GONE);
+                barUser.setVisibility(View.VISIBLE);
+                barGroup.setVisibility(View.GONE);
+                barHashtag.setVisibility(View.GONE);
+
+                filteredUserList.clear();
+                /*
+                SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
+
+                String token = prefs.getString("jwt", null);
+
+                if (token == null) {
+                    Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
+                    return;
+                }*/
+
+                UserController userController = new UserController(token);
+
+                if (!TextUtils.isEmpty(query)) {
+                    // 검색어가 있으면 서버에서 검색
+                    userController.searchUsers(query, new Callback<List<PopularUser>>() {
+                        @Override
+                        public void onResponse(Call<List<PopularUser>> call, Response<List<PopularUser>> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                filteredUserList.addAll(response.body());
+                                userAdapter.notifyDataSetChanged();
+                            } else {
+                                Toast.makeText(SearchActivity.this, "검색 실패", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<List<PopularUser>> call, Throwable t) {
+                            Toast.makeText(SearchActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    // 검색어 없으면 인기 유저 가져오기
+                    userController.fetchPopularUsers(new UserController.PopularUsersCallback() {
+                        @Override
+                        public void onSuccess(List<PopularUser> users) {
+                            // 응답 로그 출력
+                            Log.d("BrowseActivity", "Fetched popular users: " + users.size());
+                            for (PopularUser user : users) {
+                                Log.d("BrowseActivity",
+                                        "User -> id: " + user.getId() +
+                                                ", nickname: " + user.getNickname() +
+                                                ", bio: " + user.getBio());
+                            }
+
+                            runOnUiThread(() -> {
+                                // 어댑터 새로 안만들고 데이터 갱신
+                                userAdapter.updateUsers(users);
+                            });
+                        }
+                        @Override
+                        public void onError(String errorMessage) {
+                            Log.e("BrowseActivity", "Failed to load popular users: " + errorMessage);
+                        }
+                    });
+                }
+                break;
+
+
+            case "group":
+                bookRecyclerView.setVisibility(View.GONE);
+                popularUsersRecyclerView.setVisibility(View.GONE);
+                popularGroupsRecyclerView.setVisibility(View.VISIBLE);
+                searchHashtagRecyclerView.setVisibility(View.GONE);
+                barBook.setVisibility(View.GONE);
+                barUser.setVisibility(View.GONE);
+                barGroup.setVisibility(View.VISIBLE);
+                barHashtag.setVisibility(View.GONE);
+
+
+                fetchGroupsFromServer(query); // 서버 검색 호출
+                break;
+
+
+            case "hashtag":
+                bookRecyclerView.setVisibility(View.GONE);
+                popularUsersRecyclerView.setVisibility(View.GONE);
+                popularGroupsRecyclerView.setVisibility(View.GONE);
+                searchHashtagRecyclerView.setVisibility(View.VISIBLE);
+                barBook.setVisibility(View.GONE);
+                barUser.setVisibility(View.GONE);
+                barGroup.setVisibility(View.GONE);
+                barHashtag.setVisibility(View.VISIBLE);
+                //재검색
+                hashTagInfoSelected.setVisibility(View.GONE);
+
+                filteredHashtagList.clear();
+                if (TextUtils.isEmpty(query)) {
+                    filteredHashtagList.addAll(fullHashtagList);
+                } else {
+                    for (Hashtag tag : fullHashtagList) {
+                        if (tag.getTag().toLowerCase().contains(query.toLowerCase())) {
+                            filteredHashtagList.add(tag);
+                        }
+                    }
+                }
+
+                if (filteredHashtagList.isEmpty()) {
+                    Toast.makeText(this, "검색 결과가 없습니다.", Toast.LENGTH_SHORT).show();
+                }
+
+                hashtagAdapter.notifyDataSetChanged();
+                break;
+        }
+    }
+
+
+    // 서버에 책 생성 + 리뷰 불러오기
+    private void createBookOnServer(Book searchResult) {
+        // 서버는 BookCreateRequest 사용
+        String token = getSharedPreferences("auth", MODE_PRIVATE).getString("jwt", null);
+        if (token == null) return;
+
+        BookCreateRequest request = new BookCreateRequest(
+                searchResult.getTitle(),
+                searchResult.getAuthor(),
+                searchResult.getPublisher(),
+                searchResult.getPubDate(),
+                searchResult.getIsbn(),
+                searchResult.getIsbn13(),
+                searchResult.getCover(),
+                searchResult.getLink(),
+                searchResult.getCategoryName(),
+                searchResult.getItemPage()
+        );
+
+        // BookApi 사용
+        BookApi bookApi = ApiClient.getClient(token).create(BookApi.class);
+        bookApi.createBook("Bearer " + token, request).enqueue(new Callback<Book>() {
+            @Override
+            public void onResponse(Call<Book> call, Response<Book> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Book createdBook = response.body();
+                    selectedBookId = createdBook.getBookId();
+                    Log.d("SearchActivity", "Book created: " + createdBook.getTitle());
+
+                    // bookId로 리뷰 불러오기
+                    fetchReviewsByBook(selectedBookId);
+                } else {
+                    Toast.makeText(SearchActivity.this, "책 생성 실패", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Book> call, Throwable t) {
+                Toast.makeText(SearchActivity.this, "서버 통신 실패", Toast.LENGTH_SHORT).show();
+                Log.e("SearchActivity", "Book creation error", t);
+            }
+        });
+    }
+
+    // 특정 책 리뷰 불러오기
+    private void fetchReviewsByBook(int bookId) {
+        bookController.fetchReviewsByBook(bookId, new Callback<ApiResponse<List<FeedResponse>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<FeedResponse>>> call,
+                                   Response<ApiResponse<List<FeedResponse>>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<FeedResponse> reviews = response.body().getData();
+                    reviewList.clear();
+                    reviewList.addAll(reviews);
+                    reviewAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<List<FeedResponse>>> call, Throwable t) {
+                Log.e("SearchActivity", "리뷰 불러오기 실패", t);
+            }
+        });
+    }
+
+
+    //그룹 전체 조회-> GroupAllList 사용
+    private void fetchGroupsFromServer(String keyword) {
+        GroupController groupController = new GroupController(this);
+
+        groupController.searchGroups(keyword, null, new Callback<GroupAllList>() {
+            @Override
+            public void onResponse(Call<GroupAllList> call, Response<GroupAllList> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    fullGroupList.clear();
+                    filteredGroupList.clear();
+
+                    List<GroupResponse> allGroups = response.body().getData();
+                    fullGroupList.addAll(allGroups);
+                    filteredGroupList.addAll(allGroups);
+                    groupAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<GroupAllList> call, Throwable t) {
+                t.printStackTrace();
+                Toast.makeText(SearchActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    /*
+    private void fetchHashtagsFromServer(String token, String query) {
+        HashtagController hashtagController = new HashtagController(token);
+
+        hashtagController.fetchPopularHashtags(new Callback<ApiResponse<List<HashtagResponse>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<HashtagResponse>>> call, Response<ApiResponse<List<HashtagResponse>>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<HashtagResponse> hashtags = response.body().getData();
+
+                    filteredHashtagList.clear();
+                    for (HashtagResponse h : hashtags) {
+                        filteredHashtagList.add(new Hashtag(h.getTag())); // 앱 내부 Hashtag 객체로 변환
+                    }
+                    hashtagAdapter.notifyDataSetChanged();
+
+                    searchHashtagRecyclerView.setVisibility(View.VISIBLE);
+                    hashTagInfoSelected.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<List<HashtagResponse>>> call, Throwable t) {
+                Log.e("SearchActivity", "해시태그 검색 실패", t);
+            }
+        });
+    }*/
+
+    private void loadAllHashtags(String token) {
+        HashtagController hashtagController = new HashtagController(token);
+
+        hashtagController.fetchPopularHashtags(new Callback<ApiResponse<List<HashtagResponse>>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<HashtagResponse>>> call,
+                                   Response<ApiResponse<List<HashtagResponse>>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    List<HashtagResponse> hashtags = response.body().getData();
+
+                    fullHashtagList.clear();
+                    for (HashtagResponse hr : hashtags) {
+                        fullHashtagList.add(new Hashtag(hr.getTag()));
+                    }
+
+                    // 처음에는 전체 리스트 보여주기
+                    filteredHashtagList.clear();
+                    filteredHashtagList.addAll(fullHashtagList);
+                    hashtagAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<List<HashtagResponse>>> call, Throwable t) {
+                Log.e("SearchActivity", "해시태그 전체 불러오기 실패", t);
+            }
+        });
+    }
+
+
+}
