@@ -1,7 +1,7 @@
 // Retrofit 인터페이스
 package com.example.meltingbooks.network;
 
-import com.example.meltingbooks.network.Browse.HashtagResponse;
+import com.example.meltingbooks.network.browse.HashtagResponse;
 import com.example.meltingbooks.network.feed.CommentRequest;
 import com.example.meltingbooks.network.feed.CommentResponse;
 import com.example.meltingbooks.network.feed.FeedPageResponse;
@@ -46,13 +46,8 @@ public interface ApiService {
             @Path("userId") int userId
     );
 
+
     // 사용자 프로필 수정 API
-    /**@PUT("/api/users/{id}")
-    Call<UserResponse> updateUserProfile(
-            @Header("Authorization") String token,
-            @Path("id") int userId,
-            @Body UpdateUserRequest request
-    );*/
     @PUT("/api/profile/{userId}")
     Call<UserResponse> updateUserProfile(
             @Header("Authorization") String token,
@@ -75,15 +70,6 @@ public interface ApiService {
             @Path("userId") int userId,
             @Part MultipartBody.Part file
     );
-
-    //피드 조회
-    /**@GET("api/feeds")
-    Call<ApiResponse<List<FeedResponse>>> getUserFeeds(
-            @Header("Authorization") String token,
-            @Query("userId") int userId,
-            @Query("page") int page,
-            @Query("size") int size
-    );*/
 
     //피드 조회 페이징 방식
     @GET("/api/feeds")

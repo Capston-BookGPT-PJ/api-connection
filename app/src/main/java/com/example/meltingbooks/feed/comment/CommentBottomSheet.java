@@ -163,9 +163,9 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
 
                                     // 리스트에 추가
                                     commentList.add(new CommentItem(
-                                            "User" + newComment.getUserId(), // TODO: 실제 username으로 바꾸기
+                                            newComment.getNickname(),
                                             newComment.getContent(),
-                                            R.drawable.sample_profile,
+                                            newComment.getUserProfileImage(),
                                             newComment.getFormattedCreatedAt()
                                     ));
                                     commentAdapter.notifyDataSetChanged();
@@ -209,9 +209,9 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
                             commentList.clear();
                             for (CommentResponse c : data) {
                                 commentList.add(new CommentItem(
-                                        "User" + c.getUserId(),  // TODO: 실제 username API로부터 가져오기
+                                        c.getNickname(),  // TODO: 실제 username API로부터 가져오기
                                         c.getContent(),
-                                        R.drawable.sample_profile,
+                                        c.getUserProfileImage(),
                                         c.getFormattedCreatedAt()
                                 ));
                             }

@@ -16,20 +16,22 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.feed.FeedDetailActivity;
+import com.example.meltingbooks.feed.FeedItem;
 import com.example.meltingbooks.network.feed.FeedResponse;
 
 import java.util.List;
 
 public class BrowseReviewAdapter extends RecyclerView.Adapter<BrowseReviewAdapter.ReviewViewHolder> {
 
-    private List<FeedResponse> reviewList;
+    private List<FeedItem> reviewList;
+    private final Context context;
     private ActivityResultLauncher<Intent> detailLauncher;
 
-    public BrowseReviewAdapter(List<FeedResponse> reviewList) {
+    public BrowseReviewAdapter(Context context, List<FeedItem> reviewList) {
+        this.context = context;
         this.reviewList = reviewList;
     }
-
-    public void updateReviews(List<FeedResponse> newReviewList) {
+    public void updateReviews(List<FeedItem> newReviewList) {
         this.reviewList.clear();
         this.reviewList.addAll(newReviewList); // FeedPageResponse.getContent()로 받은 리스트 전달
         notifyDataSetChanged();
@@ -60,48 +62,34 @@ public class BrowseReviewAdapter extends RecyclerView.Adapter<BrowseReviewAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ReviewViewHolder holder, int position) {
-        FeedResponse feed = reviewList.get(position);
+       // FeedResponse feed = reviewList.get(position);
+        FeedItem feed = reviewList.get(position);
 
-        // 닉네임
-        String nickname = feed.getNickname();
-        if (nickname == null || nickname.isEmpty()) {
-            nickname = "익명";
-        }
-        holder.userName.setText(nickname);
+        holder.userName.setText(feed.getUserName());
+        holder.reviewContent.setText(feed.getReviewContent());
+        holder.reviewDate.setText(feed.getReviewDate());
 
-        // 리뷰 날짜
-        holder.reviewDate.setText(feed.getFormattedCreatedAt());
-
-        // 리뷰 내용
-        holder.reviewContent.setText(feed.getContent());
-
-        // 프로필 이미지
-        String profileUrl = feed.getUserProfileImage();
-        if (profileUrl != null && !profileUrl.isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                    .load(profileUrl)
-                    .placeholder(R.drawable.sample_profile)
-                    .error(R.drawable.sample_profile)
-                    .circleCrop()
+        // 프로필 표시
+        if (feed.getProfileImageUrl() != null && !feed.getProfileImageUrl().isEmpty()) {
+            holder.profileImage.setVisibility(View.VISIBLE);
+            Glide.with(context)
+                    .load(feed.getProfileImageUrl())
+                    .placeholder(R.drawable.sample_profile) // 로딩 중 기본 이미지
+                    .error(R.drawable.sample_profile)       // 실패 시 기본 이미지
                     .into(holder.profileImage);
         } else {
-            holder.profileImage.setImageResource(R.drawable.sample_profile);
-            holder.profileImage.setVisibility(View.VISIBLE);
+            holder.profileImage.setVisibility(View.VISIBLE); // GONE 대신 보이게
+            holder.profileImage.setImageResource(R.drawable.sample_profile); // 기본 이미지 적용
         }
 
         // ⭐ 리뷰 별점
-        Integer ratingValue = feed.getRating(); // Integer 타입일 경우
-        if (ratingValue == null) {
-            ratingValue = 0; // 기본 0점
-        }
-        holder.bookRatingBar.setRating(ratingValue); // RatingBar에 세팅
+        holder.bookRatingBar.setRating(feed.getRating() != null ? feed.getRating() : 0);
 
 
         // ⭐ 아이템 전체 클릭 시에도 동일하게
         holder.itemView.setOnClickListener(v -> {
-            Context context = v.getContext();
             Intent intent = new Intent(context, FeedDetailActivity.class);
-            intent.putExtra("postId", feed.getReviewId());
+            intent.putExtra("feedItem", feed); // FeedItem 통째로 전달
             context.startActivity(intent);
         });
 

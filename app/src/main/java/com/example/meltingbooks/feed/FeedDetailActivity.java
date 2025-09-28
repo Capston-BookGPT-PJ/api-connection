@@ -35,7 +35,9 @@ import com.example.meltingbooks.network.feed.FeedResponse;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -48,7 +50,8 @@ public class FeedDetailActivity extends AppCompatActivity {
     private String token;
     private ApiService apiService;
     //현재 피드
-    private FeedResponse currentFeed;
+    //private FeedResponse currentFeed;
+    private FeedItem currentFeed;
 
     private ImageView profileImage, feedImage, shareButton, likeButton, postCommentButton;
     private TextView userName,reviewDate, reviewContent, hashtagContent, commentCount, likeCount;
@@ -87,6 +90,7 @@ public class FeedDetailActivity extends AppCompatActivity {
         }
 
 
+        /*
         Intent intent = getIntent();
         postId = intent.getIntExtra("postId", -1);
         FeedResponse feedItem = (FeedResponse) intent.getSerializableExtra("feedItem");
@@ -94,6 +98,15 @@ public class FeedDetailActivity extends AppCompatActivity {
         if (feedItem != null) {
             currentFeed = feedItem;
             bindDataToViews(currentFeed);
+        }*/
+
+        // FeedAdpater.java에서 FeedItem 받아오기
+        currentFeed = (FeedItem) getIntent().getSerializableExtra("feedItem");
+        postId = currentFeed.getPostId();
+        if (currentFeed == null) {
+            Toast.makeText(this, "게시글 정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
         }
 
         // 초기화
@@ -103,7 +116,15 @@ public class FeedDetailActivity extends AppCompatActivity {
         setupListeners();
 
         // 데이터 로드
-        fetchFeedDetail();
+        //fetchFeedDetail();
+
+        // 데이터 바인딩
+        bindDataToViews(currentFeed);
+
+        // 댓글 불러오기
+        fetchComments();
+
+
     }
 
 
@@ -212,6 +233,7 @@ public class FeedDetailActivity extends AppCompatActivity {
         postCommentButton.setOnClickListener(v -> postComment());
     }
 
+    /*
     // --- 데이터 로드 및 UI 업데이트 ---
     private void fetchFeedDetail() {
         // ✅ SharedPreferences에서 userId를 가져옵니다. (initializeApiClients에서 이미 했으므로 여기서는 사용만)
@@ -234,35 +256,37 @@ public class FeedDetailActivity extends AppCompatActivity {
                 finish();
             }
         });
-    }
+    }*/
 
 
-    private void bindDataToViews(FeedResponse feed) {
+    private void bindDataToViews(FeedItem feed) {
         // 게시글 수정 / 삭제 버튼
-        btnEditPost.setVisibility(feed.getUserId() == currentUserId ? View.VISIBLE : View.GONE);
-        btnDeletePost.setVisibility(feed.getUserId() == currentUserId ? View.VISIBLE : View.GONE);
+        //btnEditPost.setVisibility(feed.getUserId() == currentUserId ? View.VISIBLE : View.GONE);
+        //btnDeletePost.setVisibility(feed.getUserId() == currentUserId ? View.VISIBLE : View.GONE);
 
         // 기본 정보
-        //userName.setText(feed.getUsername());
-        reviewContent.setText(feed.getContent());
-        reviewDate.setText(feed.getFormattedCreatedAt());
+        userName.setText(feed.getUserName());
+        reviewContent.setText(feed.getReviewContent());
+        reviewDate.setText(feed.getReviewDate());
         commentCount.setText(String.valueOf(feed.getCommentCount()));
         likeCount.setText(String.valueOf(feed.getLikeCount()));
-
-        // 좋아요 상태
         likeButton.setImageResource(feed.isLiked() ? R.drawable.feed_like_full : R.drawable.feed_like_button);
 
         // 프로필 이미지
-        if (feed.getUserProfileImage() != null && !feed.getUserProfileImage().isEmpty()) {
-            Glide.with(this).load(feed.getUserProfileImage()).into(profileImage);
+        if (feed.getProfileImageUrl() != null && !feed.getProfileImageUrl().isEmpty()) {
+            Glide.with(this)
+                    .load(feed.getProfileImageUrl())
+                    .placeholder(R.drawable.sample_profile)
+                    .error(R.drawable.sample_profile)
+                    .into(profileImage);
         } else {
             profileImage.setImageResource(R.drawable.sample_profile);
         }
 
         // 피드 이미지
-        if (feed.getReviewImageUrls() != null && !feed.getReviewImageUrls().isEmpty()) {
+        if (feed.getImageUrl() != null && !feed.getImageUrl().isEmpty()) {
             feedImage.setVisibility(View.VISIBLE);
-            Glide.with(this).load(feed.getReviewImageUrls().get(0)).into(feedImage);
+            Glide.with(this).load(feed.getImageUrl()).into(feedImage);
         } else {
             feedImage.setVisibility(View.GONE);
         }
@@ -271,7 +295,15 @@ public class FeedDetailActivity extends AppCompatActivity {
         if (feed.getHashtags() != null && !feed.getHashtags().isEmpty()) {
             hashtagContent.setVisibility(View.VISIBLE);
             StringBuilder sb = new StringBuilder();
-            for (String tag : feed.getHashtags()) sb.append(tag).append(" ");
+            // 중복 제거를 위해 Set 사용
+            Set<String> uniqueTags = new LinkedHashSet<>(feed.getHashtags()); // 순서 유지
+
+            for (String tag : uniqueTags) {
+                if (!tag.startsWith("#")) {
+                    sb.append("#");
+                }
+                sb.append(tag).append(" ");
+            }
             hashtagContent.setText(sb.toString().trim());
         } else {
             hashtagContent.setVisibility(View.GONE);
@@ -321,9 +353,9 @@ public class FeedDetailActivity extends AppCompatActivity {
 
                             for (CommentResponse c : responseList) {
                                 commentList.add(new CommentItem(
-                                        c.getNickname(),   // ✅ 실제 작성자 닉네임 사용
+                                        c.getNickname(),
                                         c.getContent(),
-                                        R.drawable.sample_profile,  // TODO: c.getUserProfileImage() 있으면 넣기
+                                        c.getUserProfileImage(),   // ✅ 서버 값 사용
                                         c.getFormattedCreatedAt()
                                 ));
                             }

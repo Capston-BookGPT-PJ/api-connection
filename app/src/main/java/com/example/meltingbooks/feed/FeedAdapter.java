@@ -211,7 +211,11 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
             holder.hashtagContent.setVisibility(View.VISIBLE);
             StringBuilder sb = new StringBuilder();
             for (String tag : hashtags) {
-                sb.append("#").append(tag).append(" ");
+                // 이미 #로 시작하면 그대로, 아니면 붙이기
+                if (!tag.startsWith("#")) {
+                    sb.append("#");
+                }
+                sb.append(tag).append(" ");
             }
             holder.hashtagContent.setText(sb.toString().trim());
         } else {
@@ -221,13 +225,17 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
 
         //더보기
         holder.readMore.setOnClickListener(v -> {
+            /*
             Context context = v.getContext();
             Intent intent = new Intent(v.getContext(), FeedDetailActivity.class);
-
-            // Adapter의 필드를 안전하게 사용
             intent.putExtra("postId", item.getPostId());
-            //context.startActivity(intent);
             detailLauncher.launch(intent);
+
+             */
+            Context context = v.getContext();
+            Intent intent = new Intent(context, FeedDetailActivity.class);
+            intent.putExtra("feedItem", item); // FeedItem 전달
+            context.startActivity(intent);      // 그냥 startActivity 사용
         });
     }
 

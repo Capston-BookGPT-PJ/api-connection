@@ -1,4 +1,4 @@
-package com.example.meltingbooks.browse;
+package com.example.meltingbooks.search;
 
 import android.content.Context;
 import android.content.Intent;
@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -19,26 +20,26 @@ import com.example.meltingbooks.network.feed.FeedResponse;
 
 import java.util.List;
 
-public class HashtagReviewsAdapter extends RecyclerView.Adapter<HashtagReviewsAdapter.ReviewViewHolder> {
+public class SearchBookReviewAdapter extends RecyclerView.Adapter<SearchBookReviewAdapter.ReviewViewHolder> {
 
     private List<FeedItem> reviewList;
     private final Context context;
 
-
-    public HashtagReviewsAdapter(Context context, List<FeedItem> reviewList) {
-    this.context = context;
-    this.reviewList = reviewList;
-}
+    // ✅ 클래스명과 일치하게 수정
+    public SearchBookReviewAdapter(Context context, List<FeedItem> reviewList) {
+        this.context = context;
+        this.reviewList = reviewList;
+    }
     public void updateReviews(List<FeedItem> newReviewList) {
         this.reviewList.clear();
-        this.reviewList.addAll(newReviewList); // FeedPageResponse.getContent()로 받은 리스트 전달
+        this.reviewList.addAll(newReviewList);
         notifyDataSetChanged();
     }
-
 
     public static class ReviewViewHolder extends RecyclerView.ViewHolder {
         ImageView profileImage;
         TextView userName, reviewDate, reviewContent;
+        RatingBar bookRatingBar;
 
         public ReviewViewHolder(View itemView) {
             super(itemView);
@@ -46,19 +47,20 @@ public class HashtagReviewsAdapter extends RecyclerView.Adapter<HashtagReviewsAd
             userName = itemView.findViewById(R.id.userName);
             reviewDate = itemView.findViewById(R.id.reviewDate);
             reviewContent = itemView.findViewById(R.id.reviewContent);
+            bookRatingBar = itemView.findViewById(R.id.bookRatingBar);
         }
     }
 
     @NonNull
     @Override
     public ReviewViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.browse_hashtag_review_item, parent, false);
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.browse_book_review_item, parent, false);
         return new ReviewViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ReviewViewHolder holder, int position) {
-        //FeedResponse feed = reviewList.get(position);
         FeedItem feed = reviewList.get(position);
 
         holder.userName.setText(feed.getUserName());
@@ -78,7 +80,9 @@ public class HashtagReviewsAdapter extends RecyclerView.Adapter<HashtagReviewsAd
             holder.profileImage.setImageResource(R.drawable.sample_profile); // 기본 이미지 적용
         }
 
-        // ⭐ 아이템 전체 클릭 시에도 동일하게
+        // 리뷰 별점
+        holder.bookRatingBar.setRating(feed.getRating() != null ? feed.getRating() : 0);
+
         // 클릭 시 FeedDetailActivity
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, FeedDetailActivity.class);
@@ -92,4 +96,3 @@ public class HashtagReviewsAdapter extends RecyclerView.Adapter<HashtagReviewsAd
         return reviewList.size();
     }
 }
-

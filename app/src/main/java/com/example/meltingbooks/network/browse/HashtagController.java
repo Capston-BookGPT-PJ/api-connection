@@ -1,14 +1,10 @@
-package com.example.meltingbooks.network.Browse;
+package com.example.meltingbooks.network.browse;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.net.Uri;
 import android.util.Log;
 
 import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.ApiService;
-import com.example.meltingbooks.network.book.BookApi;
 import com.example.meltingbooks.network.feed.FeedPageResponse;
 
 import java.util.List;

@@ -2,9 +2,11 @@ package com.example.meltingbooks.feed;
 
 import com.example.meltingbooks.network.book.Book;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class FeedItem {
+public class FeedItem implements Serializable {
+    private int userId; // 글 작성자 ID
     private String userName;//유저 이름 닉네임!!
     private String tagId;
     private String reviewContent;//감상문
@@ -28,26 +30,13 @@ public class FeedItem {
     private Book book;
     private Integer bookId;  //책 ID
 
-    public Book getBook() {
-        return book;
-    }
-
-    public void setBook(Book book) {
-        this.book = book;
-    }
-
-    public Integer getBookId() {
-        return bookId;
-    }
-
-    public void setBookId(Integer bookId) {
-        this.bookId = bookId;
-    }
 
     private int commentCount;     // 댓글 수
     private int likeCount;        // 좋아요 수
 
     private List<String> hashtags;
+
+    private Integer rating;
 
 
     public FeedItem(String userName, String reviewContent, String reviewDate,
@@ -86,10 +75,50 @@ public class FeedItem {
         this(userName, reviewContent, reviewDate, imageUrl, profileImageUrl, bookId, 0, 0,null);
     }
 
+    public FeedItem() {
+        // 기본 생성자: 필드 초기화 필요 시 여기서 초기화
+    }
+
+    //별점 추가 버전
+    public FeedItem(String userName, String reviewContent, String reviewDate,
+                    String imageUrl, String profileImageUrl, Integer bookId,
+                    int commentCount, int likeCount, String tagId, List<String> hashtags, Integer rating) {
+        this.userName = userName;
+        this.reviewContent = reviewContent;
+        this.reviewDate = reviewDate;
+        this.imageUrl = imageUrl;
+        this.profileImageUrl = profileImageUrl;
+        this.bookId = bookId;
+        this.commentCount = commentCount;
+        this.likeCount = likeCount;
+        this.tagId = tagId;
+        this.hashtags = hashtags;
+        this.rating = rating;
+    }
+
+    // 브라우징 리뷰 생성자
+    public FeedItem(String userName, String reviewContent, String reviewDate, String profileImageUrl, Integer rating) {
+        this.userName = userName;
+        this.reviewContent = reviewContent;
+        this.reviewDate = reviewDate;
+        this.profileImageUrl = profileImageUrl;
+        this.rating = rating;
+    }
 
     //getter and setter
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
     public String getUserName() {
         return userName;
+    }
+    // ✅ Setter 추가
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public String getReviewContent() {
@@ -158,6 +187,21 @@ public class FeedItem {
 
     public boolean isLiked() { return liked; }
     public void setLiked(boolean liked) { this.liked = liked; }
+    public Book getBook() {
+        return book;
+    }
+
+    public void setBook(Book book) {
+        this.book = book;
+    }
+
+    public Integer getBookId() {
+        return bookId;
+    }
+
+    public void setBookId(Integer bookId) {
+        this.bookId = bookId;
+    }
 
 
     // ✅ 해시태그 게터/세터 추가
@@ -169,5 +213,12 @@ public class FeedItem {
         this.hashtags = hashtags;
     }
 
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer hashtags) {
+        this.rating = rating;
+    }
 
 }

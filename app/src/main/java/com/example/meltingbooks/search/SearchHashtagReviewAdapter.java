@@ -1,4 +1,4 @@
-package com.example.meltingbooks.browse;
+package com.example.meltingbooks.search;
 
 import android.content.Context;
 import android.content.Intent;
@@ -19,16 +19,16 @@ import com.example.meltingbooks.network.feed.FeedResponse;
 
 import java.util.List;
 
-public class HashtagReviewsAdapter extends RecyclerView.Adapter<HashtagReviewsAdapter.ReviewViewHolder> {
+public class SearchHashtagReviewAdapter extends RecyclerView.Adapter<SearchHashtagReviewAdapter.ReviewViewHolder> {
 
     private List<FeedItem> reviewList;
     private final Context context;
 
+    public SearchHashtagReviewAdapter(Context context, List<FeedItem> reviewList) {
+        this.context = context;
+        this.reviewList = reviewList;
+    }
 
-    public HashtagReviewsAdapter(Context context, List<FeedItem> reviewList) {
-    this.context = context;
-    this.reviewList = reviewList;
-}
     public void updateReviews(List<FeedItem> newReviewList) {
         this.reviewList.clear();
         this.reviewList.addAll(newReviewList); // FeedPageResponse.getContent()로 받은 리스트 전달
@@ -58,12 +58,12 @@ public class HashtagReviewsAdapter extends RecyclerView.Adapter<HashtagReviewsAd
 
     @Override
     public void onBindViewHolder(@NonNull ReviewViewHolder holder, int position) {
-        //FeedResponse feed = reviewList.get(position);
         FeedItem feed = reviewList.get(position);
 
         holder.userName.setText(feed.getUserName());
         holder.reviewContent.setText(feed.getReviewContent());
         holder.reviewDate.setText(feed.getReviewDate());
+
 
         // 프로필 표시
         if (feed.getProfileImageUrl() != null && !feed.getProfileImageUrl().isEmpty()) {
@@ -78,7 +78,6 @@ public class HashtagReviewsAdapter extends RecyclerView.Adapter<HashtagReviewsAd
             holder.profileImage.setImageResource(R.drawable.sample_profile); // 기본 이미지 적용
         }
 
-        // ⭐ 아이템 전체 클릭 시에도 동일하게
         // 클릭 시 FeedDetailActivity
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, FeedDetailActivity.class);

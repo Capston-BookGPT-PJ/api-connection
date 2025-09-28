@@ -37,10 +37,15 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         CommentItem comment = commentList.get(position);
         holder.commentUserName.setText(comment.getUserName());
         holder.commentContent.setText(comment.getContent());
-        holder.commentProfileImage.setImageResource(comment.getProfileImageResId());  // 예시로 이미지 리소스 ID 사용
         holder.commentDate.setText(comment.getCommentDate()); // 작성일 표시
-    }
 
+        // ✅ 프로필 이미지 (Glide로 URL 처리)
+        Glide.with(holder.itemView.getContext())
+                .load(comment.getProfileImageUrl()) // String URL
+                .placeholder(R.drawable.sample_profile) // 로딩 중 기본 이미지
+                .error(R.drawable.sample_profile)       // 실패 시 기본 이미지
+                .into(holder.commentProfileImage);
+    }
 
     @Override
     public int getItemCount() {

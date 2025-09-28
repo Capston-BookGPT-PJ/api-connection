@@ -88,6 +88,7 @@
         <activity android:name=".profile.ProfileActivity" android:windowSoftInputMode="adjustPan"/>
         <activity android:name=".profile.SettingProfile" android:windowSoftInputMode="adjustResize" android:exported="true"/>
         <activity android:name=".profile.SettingApp" android:windowSoftInputMode="adjustResize" android:exported="true"/>
+        <activity android:name=".profile.FollowListActivity" android:windowSoftInputMode="adjustResize" android:exported="true"/>
 
         <!-- 그룹 관련 액티비티 -->
         <activity android:name=".group.GroupFeedActivity" android:windowSoftInputMode="adjustResize" android:exported="true"/>

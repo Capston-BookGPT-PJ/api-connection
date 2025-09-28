@@ -2,7 +2,6 @@ package com.example.meltingbooks.browse;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -12,8 +11,6 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -21,12 +18,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.meltingbooks.base.BaseActivity;
+import com.example.meltingbooks.feed.FeedItem;
+import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.ApiResponse;
-import com.example.meltingbooks.network.Browse.HashtagController;
-import com.example.meltingbooks.network.Browse.HashtagResponse;
+import com.example.meltingbooks.network.ApiService;
+import com.example.meltingbooks.network.browse.HashtagController;
+import com.example.meltingbooks.network.browse.HashtagResponse;
 import com.example.meltingbooks.network.book.Book;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.network.book.BookController;
+import com.example.meltingbooks.network.browse.PopularUser;
+import com.example.meltingbooks.network.browse.UserController;
 import com.example.meltingbooks.network.feed.FeedPageResponse;
 import com.example.meltingbooks.network.feed.FeedResponse;
 
@@ -37,6 +39,7 @@ import com.google.android.flexbox.FlexboxLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -51,26 +54,32 @@ public class BrowseActivity extends BaseActivity {
     private RecyclerView reviewRecyclerView;
     private BrowseBookAdapter bookAdapter;
     private BrowseReviewAdapter reviewAdapter;
-    private HashtagReviewsAdapter hashtagAdapter;
+
     private List<Book> bookList = new ArrayList<>();
+    private Map<Integer, List<FeedItem>> reviewMapByBookId = new HashMap<>();
+
 
     private View hashtagLayout;
-    private View usersLayout;
     private FlexboxLayout hashtagFlexbox;
     private RecyclerView hashtagRecyclerView;
+    private HashtagReviewsAdapter hashtagAdapter;
 
+    private View usersLayout;
     private RecyclerView usersRecyclerView;
     private BrowseUsersAdapter userAdapter;
     private List<User> popularUserList = new ArrayList<>();
 
-    //  변경 후
-    private HashMap<Integer, List<FeedResponse>> reviewMapByBookId = new HashMap<>();
 
+    //private HashMap<Integer, List<FeedResponse>> reviewMapByBookId = new HashMap<>();
 
-    // BrowseActivity 멤버 변수
     // 현재 선택된 태그 저장
     private TextView selectedTagView = null;
 
+    //private List<List<String>> reviewListByBook = new ArrayList<>();
+
+    private String token;
+    private int userId;
+    private ApiService apiService; // 클래스 멤버로 선언
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,14 +87,6 @@ public class BrowseActivity extends BaseActivity {
         setContentView(R.layout.activity_browse);
         setupBottomNavigation();
 
-        // 상태바 색상 설정
-        /**if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-         getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.white));
-         }
-         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-         View decor = getWindow().getDecorView();
-         decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-         }*/
 
         // UI 연결
         search = findViewById(R.id.search);
@@ -99,10 +100,14 @@ public class BrowseActivity extends BaseActivity {
         hashtagFlexbox = hashtagLayout.findViewById(R.id.hashtagFlexbox);
         hashtagRecyclerView = findViewById(R.id.hashtagRecyclerView);
 
-        // 인기 사용자
+        //⭐ 인기 유저 수정 부분
         usersLayout = findViewById(R.id.usersLayout);
         usersRecyclerView = findViewById(R.id.popularUsersRecyclerView);
         usersRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        //⭐빈 어댑터 먼저 세팅
+        userAdapter = new BrowseUsersAdapter(new ArrayList<>());
+        usersRecyclerView.setAdapter(userAdapter);
+
 
         // 인기 책 ViewPager
         bookAdapter = new BrowseBookAdapter(this, bookList);
@@ -112,22 +117,21 @@ public class BrowseActivity extends BaseActivity {
         /// 인기 책 리뷰 RecyclerView
         LinearLayoutManager reviewLayoutManager = new LinearLayoutManager(this);
         reviewRecyclerView.setLayoutManager(reviewLayoutManager);
-        reviewAdapter = new BrowseReviewAdapter(new ArrayList<>());
+        reviewAdapter = new BrowseReviewAdapter(this, new ArrayList<>());
         reviewRecyclerView.setAdapter(reviewAdapter);
         reviewRecyclerView.setNestedScrollingEnabled(false);
 
         // 해시태그 리뷰 RecyclerView
         LinearLayoutManager hashtagLayoutManager = new LinearLayoutManager(this);
         hashtagRecyclerView.setLayoutManager(hashtagLayoutManager);
-        hashtagAdapter = new HashtagReviewsAdapter(new ArrayList<>());
+        hashtagAdapter = new HashtagReviewsAdapter(this, new ArrayList<>());
         hashtagRecyclerView.setAdapter(hashtagAdapter);
-        // hashtagRecyclerView.setNestedScrollingEnabled(false);
 
 
         // SharedPreferences에서 토큰과 사용자 ID 가져오기
         SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
-        String token = prefs.getString("jwt", null);
-        int userId = prefs.getInt("userId", -1);
+        token = prefs.getString("jwt", null);
+        userId = prefs.getInt("userId", -1);
 
         if (token == null || userId == -1) {
             Log.e("BrowseActivity", "토큰 또는 사용자 ID가 없습니다.");
@@ -136,10 +140,15 @@ public class BrowseActivity extends BaseActivity {
             setupHashtags(token);
         }
 
+        apiService = ApiClient.getClient(token).create(ApiService.class);
+
         //인기 책 목록 가져오기
         loadPopularBooks();
         //책 리뷰 갱신
         setupPageChangeListener();
+
+        //⭐인기 유저 조회
+        loadPopularUsers();
 
         // 탭 클릭 리스너
         TextView popularBooks = findViewById(R.id.popularBooks);
@@ -189,52 +198,77 @@ public class BrowseActivity extends BaseActivity {
                             @Override
                             public void onResponse(Call<ApiResponse<List<FeedResponse>>> call, Response<ApiResponse<List<FeedResponse>>> response) {
                                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                                    List<FeedResponse> reviews = response.body().getData();  // 여기서 data 추출
-                                    reviewMapByBookId.put(book.getBookId(), reviews);
+                                    List<FeedResponse> bookReviews = response.body().getData();
+                                    if (bookReviews == null || bookReviews.isEmpty()) return;
 
-                                    // 첫 페이지면 바로 리뷰 갱신
-                                    if (bookViewPager.getCurrentItem() == bookList.indexOf(book)) {
-                                        reviewAdapter.updateReviews(reviews);
-                                    }
+                                    // Feed API 호출 → 유저 정보 포함
+                                    Call<ApiResponse<FeedPageResponse>> feedCall =
+                                            apiService.getUserFeeds("Bearer " + token, userId, 0, 10);
+
+                                    feedCall.enqueue(new Callback<ApiResponse<FeedPageResponse>>() {
+                                        @Override
+                                        public void onResponse(Call<ApiResponse<FeedPageResponse>> call,
+                                                               Response<ApiResponse<FeedPageResponse>> response) {
+                                            if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                                                FeedPageResponse pageResponse = response.body().getData();
+                                                List<FeedResponse> feeds = pageResponse.getContent();
+
+                                                List<FeedItem> mappedFeeds = new ArrayList<>();
+
+                                                for (FeedResponse feed : feeds) {
+                                                    for (FeedResponse bookReview : bookReviews) {
+                                                        if (feed.getReviewId() == bookReview.getReviewId()) {
+                                                            String firstImage = (feed.getReviewImageUrls() != null && !feed.getReviewImageUrls().isEmpty())
+                                                                    ? feed.getReviewImageUrls().get(0)
+                                                                    : null;
+
+                                                            FeedItem feedItem = new FeedItem(
+                                                                    feed.getNickname(),
+                                                                    feed.getContent(),
+                                                                    feed.getFormattedCreatedAt(),
+                                                                    firstImage,
+                                                                    feed.getUserProfileImage(),
+                                                                    feed.getBookId(),
+                                                                    feed.getCommentCount(),
+                                                                    feed.getLikeCount(),
+                                                                    feed.getTagId(),
+                                                                    feed.getHashtags(),
+                                                                    feed.getRating()
+                                                            );
+
+                                                            feedItem.setPostId(feed.getReviewId());
+                                                            feedItem.setPostType("feed");
+
+                                                            mappedFeeds.add(feedItem);
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+
+                                                reviewMapByBookId.put(book.getBookId(), mappedFeeds);
+
+                                                // 현재 페이지면 바로 갱신
+                                                if (bookViewPager.getCurrentItem() == bookList.indexOf(book)) {
+                                                    reviewAdapter.updateReviews(mappedFeeds);
+                                                }
+                                            } else {
+                                                Log.e("Feed", "Feed 응답 비정상: " + response.message());
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onFailure(Call<ApiResponse<FeedPageResponse>> call, Throwable t) {
+                                            Log.e("Feed", "Feed API 실패: " + t.getMessage());
+                                        }
+                                    });
                                 }
                             }
-
                             @Override
                             public void onFailure(Call<ApiResponse<List<FeedResponse>>> call, Throwable t) {
                                 Log.e("BrowseActivity", "책별 리뷰 불러오기 실패", t);
                             }
                         });
                     }
-
-                    /*FeedPageResponse 버전
-                    // 2. 각 책별 리뷰 불러오기
-                    for (Book book : bookList) {
-                        bookController.fetchReviewsByBook(book.getBookId(),
-                                new Callback<ApiResponse<FeedPageResponse>>() {
-                                    @Override
-                                    public void onResponse(Call<ApiResponse<FeedPageResponse>> call,
-                                                           Response<ApiResponse<FeedPageResponse>> response) {
-                                        if (response.isSuccessful() && response.body() != null
-                                                && response.body().isSuccess() && response.body().getData() != null) {
-
-                                            FeedPageResponse pageResponse = response.body().getData();
-                                            List<FeedResponse> reviews = pageResponse.getContent(); // FeedPageResponse에서 content 추출
-                                            reviewMapByBookId.put(book.getBookId(), reviews);
-
-                                            // 첫 페이지면 바로 리뷰 갱신
-                                            if (bookViewPager.getCurrentItem() == bookList.indexOf(book)) {
-                                                reviewAdapter.updateReviews(reviews);
-                                            }
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onFailure(Call<ApiResponse<FeedPageResponse>> call, Throwable t) {
-                                        Log.e("BrowseActivity", "책별 리뷰 불러오기 실패", t);
-                                    }
-                                });
-                    }*/
-
                 } else {
                     Log.e("BrowseActivity", "인기 책 불러오기 실패: " + response.message());
                 }
@@ -254,7 +288,8 @@ public class BrowseActivity extends BaseActivity {
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 Book book = bookList.get(position);
-                List<FeedResponse> reviews = reviewMapByBookId.get(book.getBookId());
+                //List<FeedResponse> reviews = reviewMapByBookId.get(book.getBookId());
+                List<FeedItem> reviews = reviewMapByBookId.get(book.getBookId());
                 reviewAdapter.updateReviews(reviews != null ? reviews : new ArrayList<>());
             }
         });
@@ -314,7 +349,8 @@ public class BrowseActivity extends BaseActivity {
                                     public void onResponse(Call<ApiResponse<FeedPageResponse>> call, Response<ApiResponse<FeedPageResponse>> response) {
                                         if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                                             FeedPageResponse pageResponse = response.body().getData();
-                                            List<FeedResponse> reviews = (pageResponse != null && pageResponse.getContent() != null)
+
+                                            /*List<FeedResponse> reviews = (pageResponse != null && pageResponse.getContent() != null)
                                                     ? pageResponse.getContent() : new ArrayList<>();
 
                                             Log.d("HashtagClick", "Fetched reviews count: " + reviews.size());
@@ -324,7 +360,59 @@ public class BrowseActivity extends BaseActivity {
                                                 hashtagRecyclerView.setVisibility(View.VISIBLE);
                                             } else {
                                                 hashtagRecyclerView.setVisibility(View.GONE);
-                                            }
+                                            }*/
+
+                                            List<FeedResponse> hashtagReviews = (pageResponse != null && pageResponse.getContent() != null)
+                                                    ? pageResponse.getContent() : new ArrayList<>();
+
+                                            // Feed API 호출 → 유저 정보 포함
+                                            Call<ApiResponse<FeedPageResponse>> feedCall = apiService.getUserFeeds("Bearer " + token, userId, 0, 50);
+                                            feedCall.enqueue(new Callback<ApiResponse<FeedPageResponse>>() {
+                                                @Override
+                                                public void onResponse(Call<ApiResponse<FeedPageResponse>> call, Response<ApiResponse<FeedPageResponse>> response) {
+                                                    if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                                                        FeedPageResponse feedPage = response.body().getData();
+                                                        List<FeedResponse> feeds = feedPage.getContent();
+                                                        List<FeedItem> feedItems = new ArrayList<>();
+
+                                                        // ID 기준 매핑
+                                                        for (FeedResponse feed : feeds) {
+                                                            for (FeedResponse hashtagReview : hashtagReviews) {
+                                                                if (feed.getReviewId() == hashtagReview.getReviewId()) {
+                                                                    String firstImage = (feed.getReviewImageUrls() != null && !feed.getReviewImageUrls().isEmpty())
+                                                                            ? feed.getReviewImageUrls().get(0)
+                                                                            : null;
+
+                                                                    FeedItem feedItem = new FeedItem(
+                                                                            feed.getNickname(),
+                                                                            feed.getContent(),
+                                                                            feed.getCreatedAt(),
+                                                                            firstImage,
+                                                                            feed.getUserProfileImage(),
+                                                                            feed.getBookId(),
+                                                                            feed.getCommentCount(),
+                                                                            feed.getLikeCount(),
+                                                                            feed.getTagId(),
+                                                                            feed.getHashtags()
+                                                                    );
+                                                                    feedItem.setPostId(feed.getReviewId());
+                                                                    feedItem.setPostType("feed");
+                                                                    feedItems.add(feedItem);
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+
+                                                        hashtagAdapter.updateReviews(feedItems);
+                                                        hashtagRecyclerView.setVisibility(feedItems.isEmpty() ? View.GONE : View.VISIBLE);
+                                                    }
+                                                }
+
+                                                @Override
+                                                public void onFailure(Call<ApiResponse<FeedPageResponse>> call, Throwable t) {
+                                                    Log.e("BrowseActivity", "Feed API 실패", t);
+                                                }
+                                            });
                                         }
                                     }
 
@@ -357,16 +445,6 @@ public class BrowseActivity extends BaseActivity {
             }
         });
 
-
-        // 예시 사용자 데이터
-        popularUserList.add(new User("김감성", "시를 사랑해요", R.drawable.sample_profile2));
-        popularUserList.add(new User("북마스터", "매일 3권 독서", R.drawable.sample_profile2));
-        popularUserList.add(new User("나무늘보", "천천히 읽어요", R.drawable.sample_profile2));
-        popularUserList.add(new User("책벌레", "모든 책은 친구", R.drawable.sample_profile2));
-
-        userAdapter = new BrowseUsersAdapter(popularUserList);
-        usersRecyclerView.setAdapter(userAdapter);
-
         //검색 실행
         search.setOnClickListener(v -> {
             Intent intent = new Intent(BrowseActivity.this, SearchActivity.class);
@@ -374,6 +452,38 @@ public class BrowseActivity extends BaseActivity {
         });
 
 
+    }
+
+    //⭐인기 유저 조회
+    private void loadPopularUsers() {
+        SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
+        String token = prefs.getString("jwt", null);
+        if (token == null) return;
+
+        UserController userController = new UserController(token);
+        userController.fetchPopularUsers(new UserController.PopularUsersCallback() {
+            @Override
+            public void onSuccess(List<PopularUser> users) {
+                // 응답 로그 출력
+                Log.d("BrowseActivity", "Fetched popular users: " + users.size());
+                for (PopularUser user : users) {
+                    Log.d("BrowseActivity",
+                            "User -> id: " + user.getId() +
+                                    ", nickname: " + user.getNickname() +
+                                    ", bio: " + user.getBio());
+                }
+
+                runOnUiThread(() -> {
+                    // 어댑터 새로 안만들고 데이터 갱신
+                    userAdapter.updateUsers(users);
+                });
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                Log.e("BrowseActivity", "Failed to load popular users: " + errorMessage);
+            }
+        });
     }
 
 

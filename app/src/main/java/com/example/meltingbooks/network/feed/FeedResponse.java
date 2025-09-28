@@ -76,6 +76,7 @@ public class FeedResponse  implements Serializable {
     public void setCommentCount(int commentCount) {
         this.commentCount = commentCount;
     }
+
     // --- Book Getter/Setter ---
     public Book getBook() { return book; }
     public void setBook(Book book) { this.book = book; }

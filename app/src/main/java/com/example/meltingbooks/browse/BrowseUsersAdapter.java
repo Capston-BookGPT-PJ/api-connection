@@ -1,25 +1,28 @@
 package com.example.meltingbooks.browse;
 
 import android.content.Intent;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.meltingbooks.profile.ProfileActivity;
+import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
-import com.example.meltingbooks.User;
+import com.example.meltingbooks.network.browse.PopularUser;
+import com.example.meltingbooks.profile.ProfileActivity;
+
+import java.util.List;
 
 public class BrowseUsersAdapter extends RecyclerView.Adapter<BrowseUsersAdapter.ViewHolder> {
 
-    private List<User> userList;
+    private List<PopularUser> userList;
 
-    public BrowseUsersAdapter(List<User> userList) {
+    public BrowseUsersAdapter(List<PopularUser> userList) {
         this.userList = userList;
     }
 
@@ -45,17 +48,31 @@ public class BrowseUsersAdapter extends RecyclerView.Adapter<BrowseUsersAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull BrowseUsersAdapter.ViewHolder holder, int position) {
-        User user = userList.get(position);
-        holder.userName.setText(user.getName());
-        holder.userIntro.setText(user.getIntro());
-        holder.userImage.setImageResource(user.getImageResId());
+        PopularUser user = userList.get(position);
+        holder.userName.setText(user.getNickname());
+        holder.userIntro.setText(user.getBio() != null ? user.getBio() : "");
 
-        // ⭐ userImage 클릭 이벤트 추가
+        if (user.getProfileImageUrl() != null) {
+            Glide.with(holder.itemView.getContext())
+                    .load(user.getProfileImageUrl())
+                    .placeholder(R.drawable.sample_profile2)
+                    .into(holder.userImage);
+        } else {
+            holder.userImage.setImageResource(R.drawable.sample_profile2);
+        }
+
         holder.userImage.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), ProfileActivity.class);
-            // intent.putExtra("userId", user.getId()); // 필요하면 유저 ID 전달
+            intent.putExtra("userId", user.getId());
             v.getContext().startActivity(intent);
         });
+
+    }
+
+    public void updateUsers(List<PopularUser> newUsers) {
+        this.userList.clear();
+        this.userList.addAll(newUsers);
+        notifyDataSetChanged();
     }
 
     @Override

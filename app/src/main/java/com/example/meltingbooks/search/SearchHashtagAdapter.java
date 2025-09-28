@@ -16,6 +16,15 @@ import java.util.List;
 public class SearchHashtagAdapter extends RecyclerView.Adapter<SearchHashtagAdapter.ViewHolder> {
 
     private List<Hashtag> hashtagList;
+    private OnItemClickListener listener;
+
+    public interface OnItemClickListener {
+        void onItemClick(Hashtag hashtag);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
 
     public SearchHashtagAdapter(List<Hashtag> hashtagList) {
         this.hashtagList = hashtagList;
@@ -42,6 +51,9 @@ public class SearchHashtagAdapter extends RecyclerView.Adapter<SearchHashtagAdap
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Hashtag hashtag = hashtagList.get(position);
         holder.searchItemText.setText(hashtag.getTag());
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onItemClick(hashtag);
+        });
     }
 
     @Override

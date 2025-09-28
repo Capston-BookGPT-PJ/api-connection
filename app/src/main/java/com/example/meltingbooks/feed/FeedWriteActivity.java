@@ -374,6 +374,8 @@ public class FeedWriteActivity extends AppCompatActivity {
                 for (String part : parts) {
                     part = part.trim();
                     if (!part.isEmpty()) {
+                        // 연속된 # 제거 후 하나만 붙이기
+                        part = part.replaceAll("^#+", ""); // 시작 부분의 # 제거
                         hashtags.add("#" + part); // 다시 # 붙이기
                     }
                 }
