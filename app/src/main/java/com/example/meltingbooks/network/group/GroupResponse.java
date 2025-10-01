@@ -1,0 +1,30 @@
+package com.example.meltingbooks.network.group;
+
+import java.io.Serializable;
+
+public class GroupResponse implements Serializable {
+    private int id;
+    private String name;
+    private String description;
+    private String groupImageUrl;
+    private int ownerId;
+    private String category;
+    private int memberCount;
+    private String createdAt;
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public String getDescription() { return description; }
+    public String getGroupImageUrl() { return groupImageUrl; }
+    public int getOwnerId() { return ownerId; }
+    public String getCategory() { return category; }
+    public int getMemberCount() { return memberCount; }
+    public String getCreatedAt() { return createdAt; }
+
+
+    // Setter
+    public void setName(String name) { this.name = name; }
+    public void setDescription(String description) { this.description = description; }
+    public void setGroupImageUrl(String groupImageUrl) { this.groupImageUrl = groupImageUrl; }
+    public void setCategory(String category) { this.category = category; }
+}
