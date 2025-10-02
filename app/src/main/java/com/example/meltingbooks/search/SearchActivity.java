@@ -24,19 +24,15 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.meltingbooks.feed.FeedItem;
-import com.example.meltingbooks.feed.FeedWriteActivity;
 import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.ApiService;
 import com.example.meltingbooks.network.book.Book;
 import com.example.meltingbooks.Hashtag;
 import com.example.meltingbooks.R;
-import com.example.meltingbooks.User;
 import com.example.meltingbooks.browse.BrowseUsersAdapter;
-import com.example.meltingbooks.network.book.BookApi;
-import com.example.meltingbooks.network.book.BookCreateRequest;
+import com.example.meltingbooks.network.book.BookResponse;
 import com.example.meltingbooks.network.browse.HashtagController;
 import com.example.meltingbooks.network.browse.HashtagResponse;
 import com.example.meltingbooks.network.browse.PopularUser;
@@ -49,7 +45,6 @@ import com.example.meltingbooks.group.profile.GroupProfileActivity;
 import com.example.meltingbooks.group.profile.GroupProfileItem;
 import com.example.meltingbooks.network.book.BookController;
 import com.example.meltingbooks.network.group.GroupController;
-import com.example.meltingbooks.network.group.GroupSingleList;
 import com.example.meltingbooks.network.group.GroupResponse;
 
 import java.util.ArrayList;
@@ -165,6 +160,19 @@ public class SearchActivity extends AppCompatActivity {
 
         // 기존 findViewById 코드 외에 추가
         layoutBookOptions = findViewById(R.id.layout_book_options);
+
+        layoutBookOptions.setOnCheckedChangeListener((group, checkedId) -> {
+            if (filteredBookList == null || filteredBookList.isEmpty()) return;
+
+            if (checkedId == R.id.radio_book1) { // 평점순
+                sortBooksByRating();
+            } else if (checkedId == R.id.radio_book2) { // 출판일
+                sortBooksByPubDate();
+            } else if (checkedId == R.id.radio_book3) { // 인기순
+                sortBooksByPopularity();
+            }
+        });
+
 
 
         //검색 카테고리 버튼 클릭 탭 추가
@@ -428,15 +436,16 @@ public class SearchActivity extends AppCompatActivity {
 
                 if (!query.isEmpty()) {
                     // 서버에서 검색
-                    bookController.searchBooks(query, new Callback<List<Book>>() {
+                    bookController.searchBooks(query, new Callback<BookResponse>() {
                         @Override
-                        public void onResponse(Call<List<Book>> call, Response<List<Book>> response) {
+                        public void onResponse(Call<BookResponse> call, Response<BookResponse> response) {
                             Log.d("SearchActivity", "서버 응답 성공: " + response.code());
 
                             if (response.isSuccessful() && response.body() != null) {
-                                Log.d("SearchActivity", "받은 책 개수: " + response.body().size());
+                                Log.d("SearchActivity", "받은 책 개수: " + response.body());
+                                List<Book> books = response.body().getData(); // data 꺼내기
                                 filteredBookList.clear();
-                                filteredBookList.addAll(response.body());
+                                filteredBookList.addAll(books);
                                 bookAdapter.notifyDataSetChanged();
                             } else {
                                 Log.d("SearchActivity", "응답은 왔지만 body 없음");
@@ -446,26 +455,9 @@ public class SearchActivity extends AppCompatActivity {
                         }
 
                         @Override
-                        public void onFailure(Call<List<Book>> call, Throwable t) {
+                        public void onFailure(Call<BookResponse> call, Throwable t) {
                             t.printStackTrace();
                             Toast.makeText(SearchActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else {
-                    // 검색어가 비었으면 초기 전체 목록 다시 표시
-                    bookController.fetchBooks(new Callback<List<Book>>() {
-                        @Override
-                        public void onResponse(Call<List<Book>> call, Response<List<Book>> response) {
-                            if (response.isSuccessful() && response.body() != null) {
-                                filteredBookList.clear();
-                                filteredBookList.addAll(response.body());
-                                bookAdapter.notifyDataSetChanged();
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Call<List<Book>> call, Throwable t) {
-                            t.printStackTrace();
                         }
                     });
                 }
@@ -618,134 +610,7 @@ public class SearchActivity extends AppCompatActivity {
         }
     }
 
-/*
-    // 서버에 책 생성 + 리뷰 불러오기
-    private void createBookOnServer(Book searchResult) {
-        // 서버는 BookCreateRequest 사용
-        String token = getSharedPreferences("auth", MODE_PRIVATE).getString("jwt", null);
-        if (token == null) return;
 
-        BookCreateRequest request = new BookCreateRequest(
-                searchResult.getTitle(),
-                searchResult.getAuthor(),
-                searchResult.getPublisher(),
-                searchResult.getPubDate(),
-                searchResult.getIsbn(),
-                searchResult.getIsbn13(),
-                searchResult.getCover(),
-                searchResult.getLink(),
-                searchResult.getCategoryName(),
-                searchResult.getItemPage()
-        );
-
-        // BookApi 사용
-        BookApi bookApi = ApiClient.getClient(token).create(BookApi.class);
-        bookApi.createBook("Bearer " + token, request).enqueue(new Callback<Book>() {
-            @Override
-            public void onResponse(Call<Book> call, Response<Book> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    Book createdBook = response.body();
-                    selectedBookId = createdBook.getBookId();
-                    Log.d("SearchActivity", "Book created: " + createdBook.getTitle());
-
-                    // bookId로 리뷰 불러오기
-                    fetchReviewsByBook(selectedBookId);
-                } else {
-                    Toast.makeText(SearchActivity.this, "책 생성 실패", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<Book> call, Throwable t) {
-                Toast.makeText(SearchActivity.this, "서버 통신 실패", Toast.LENGTH_SHORT).show();
-                Log.e("SearchActivity", "Book creation error", t);
-            }
-        });
-    }
-
-    // 특정 책 리뷰 불러오기
-    // 특정 책 리뷰 불러오기 (Feed API와 매핑 포함)
-    private void fetchReviewsByBook(int bookId) {
-        bookController.fetchReviewsByBook(bookId, new Callback<ApiResponse<List<FeedResponse>>>() {
-            @Override
-            public void onResponse(Call<ApiResponse<List<FeedResponse>>> call,
-                                   Response<ApiResponse<List<FeedResponse>>> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    List<FeedResponse> bookReviews = response.body().getData();
-                    if (bookReviews == null || bookReviews.isEmpty()) return;
-
-                    // Feed API 호출 → 유저 정보 포함
-                    Call<ApiResponse<FeedPageResponse>> feedCall =
-                            apiService.getUserFeeds("Bearer " + token, userId, 0, 10);
-
-                    feedCall.enqueue(new Callback<ApiResponse<FeedPageResponse>>() {
-                        @Override
-                        public void onResponse(Call<ApiResponse<FeedPageResponse>> call,
-                                               Response<ApiResponse<FeedPageResponse>> response) {
-                            if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
-                                FeedPageResponse pageResponse = response.body().getData();
-                                List<FeedResponse> feeds = pageResponse.getContent();
-
-                                List<FeedItem> mappedFeeds = new ArrayList<>();
-
-                                // bookReviews 와 feed API 응답을 reviewId 기준으로 매핑
-                                for (FeedResponse feed : feeds) {
-                                    for (FeedResponse bookReview : bookReviews) {
-                                        if (feed.getReviewId() == bookReview.getReviewId()) {
-                                            String firstImage = (feed.getReviewImageUrls() != null && !feed.getReviewImageUrls().isEmpty())
-                                                    ? feed.getReviewImageUrls().get(0)
-                                                    : null;
-
-                                            FeedItem feedItem = new FeedItem(
-                                                    feed.getNickname(),
-                                                    feed.getContent(),
-                                                    feed.getFormattedCreatedAt(),
-                                                    firstImage,
-                                                    feed.getUserProfileImage(),
-                                                    feed.getBookId(),
-                                                    feed.getCommentCount(),
-                                                    feed.getLikeCount(),
-                                                    feed.getTagId(),
-                                                    feed.getHashtags(),
-                                                    feed.getRating()
-                                            );
-
-                                            feedItem.setPostId(feed.getReviewId());
-                                            feedItem.setPostType("feed");
-
-                                            mappedFeeds.add(feedItem);
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                // 📌 어댑터 갱신
-                                reviewList.clear();
-                                reviewList.addAll(mappedFeeds);
-                                reviewAdapter.notifyDataSetChanged();
-
-                                // ✅ 리뷰 RecyclerView 보여주기
-                                reviewRecyclerView.setVisibility(mappedFeeds.isEmpty() ? View.GONE : View.VISIBLE);
-                            } else {
-                                Log.e("Feed", "Feed 응답 비정상: " + response.message());
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Call<ApiResponse<FeedPageResponse>> call, Throwable t) {
-                            Log.e("Feed", "Feed API 실패: " + t.getMessage());
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ApiResponse<List<FeedResponse>>> call, Throwable t) {
-                Log.e("BrowseActivity", "책 리뷰 불러오기 실패: " + t.getMessage());
-            }
-        });
-    }
-*/
 // 인기순 리뷰 (책 제한 없음)
 private void fetchPopularReviews() {
     Call<ApiResponse<FeedPageResponse>> feedCall =
@@ -838,35 +703,6 @@ private void fetchPopularReviews() {
         });
     }
 
-
-    /*
-    private void fetchHashtagsFromServer(String token, String query) {
-        HashtagController hashtagController = new HashtagController(token);
-
-        hashtagController.fetchPopularHashtags(new Callback<ApiResponse<List<HashtagResponse>>>() {
-            @Override
-            public void onResponse(Call<ApiResponse<List<HashtagResponse>>> call, Response<ApiResponse<List<HashtagResponse>>> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                    List<HashtagResponse> hashtags = response.body().getData();
-
-                    filteredHashtagList.clear();
-                    for (HashtagResponse h : hashtags) {
-                        filteredHashtagList.add(new Hashtag(h.getTag())); // 앱 내부 Hashtag 객체로 변환
-                    }
-                    hashtagAdapter.notifyDataSetChanged();
-
-                    searchHashtagRecyclerView.setVisibility(View.VISIBLE);
-                    hashTagInfoSelected.setVisibility(View.GONE);
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ApiResponse<List<HashtagResponse>>> call, Throwable t) {
-                Log.e("SearchActivity", "해시태그 검색 실패", t);
-            }
-        });
-    }*/
-
     private void loadAllHashtags(String token) {
         HashtagController hashtagController = new HashtagController(token);
 
@@ -899,7 +735,67 @@ private void fetchPopularReviews() {
     //카테고리 정렬 추가
     private void showRadioGroupForTab(String tab) {
         layoutBookOptions.setVisibility(tab.equals("book") ? View.VISIBLE : View.GONE);
+    }
 
+    //도서 평점순 정렬
+    private void sortBooksByRating() {
+        String query = searchInput.getText().toString().trim();
+        if (TextUtils.isEmpty(query)) return;
+
+        bookController.searchBooksWithSort(query, "rating", new Callback<BookResponse>() {
+            @Override
+            public void onResponse(Call<BookResponse> call, Response<BookResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Book> books = response.body().getData();
+                    filteredBookList.clear();
+                    filteredBookList.addAll(books);
+                    bookAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<BookResponse> call, Throwable t) {
+                t.printStackTrace();
+                Toast.makeText(SearchActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    //도서 인기순 정렬
+    private void sortBooksByPopularity() {
+        String query = searchInput.getText().toString().trim();
+        if (TextUtils.isEmpty(query)) return;
+
+        bookController.searchBooksWithSort(query, "popular", new Callback<BookResponse>() {
+            @Override
+            public void onResponse(Call<BookResponse> call, Response<BookResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Book> books = response.body().getData();
+                    filteredBookList.clear();
+                    filteredBookList.addAll(books);
+                    bookAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<BookResponse> call, Throwable t) {
+                t.printStackTrace();
+                Toast.makeText(SearchActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    //도서 출판일 순
+    private void sortBooksByPubDate() {
+        if (filteredBookList == null || filteredBookList.isEmpty()) return;
+
+        Collections.sort(filteredBookList, (b1, b2) -> {
+            // pubDate: "2025-04-10"
+            return b2.getPubDate().compareTo(b1.getPubDate()); // 최신순
+        });
+
+        bookAdapter.notifyDataSetChanged();
     }
 
 

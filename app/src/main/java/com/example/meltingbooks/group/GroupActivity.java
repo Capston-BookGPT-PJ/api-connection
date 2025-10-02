@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -24,13 +23,12 @@ import com.example.meltingbooks.group.profile.GroupProfileItem;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.ApiResponse;
-import com.example.meltingbooks.network.ApiService;
 import com.example.meltingbooks.network.group.GroupAllList;
 import com.example.meltingbooks.network.group.GroupApi;
 import com.example.meltingbooks.network.group.GroupController;
 import com.example.meltingbooks.network.group.GroupResponse;
 import com.example.meltingbooks.network.group.GroupResponseAdapter;
-import com.example.meltingbooks.network.group.GroupSingleList;
+import com.example.meltingbooks.network.group.GroupPostResponse;
 import com.example.meltingbooks.network.group.MyGroup;
 import com.example.meltingbooks.search.SearchActivity;
 
@@ -209,9 +207,9 @@ public class GroupActivity extends BaseActivity {
                         ImageButton button = groupButtons.get(i);
 
                         // 그룹 이미지 적용
-                        groupApi.getGroupById(groupId).enqueue(new Callback<GroupSingleList>() {
+                        groupApi.getGroupById(groupId).enqueue(new Callback<GroupPostResponse>() {
                             @Override
-                            public void onResponse(Call<GroupSingleList> call, Response<GroupSingleList> response) {
+                            public void onResponse(Call<GroupPostResponse> call, Response<GroupPostResponse> response) {
                                 if (response.isSuccessful() && response.body() != null) {
                                     String imageUrl = response.body().getData().getGroupImageUrl();
 
@@ -245,7 +243,7 @@ public class GroupActivity extends BaseActivity {
                                 }
                             }
                             @Override
-                            public void onFailure(Call<GroupSingleList> call, Throwable t) {
+                            public void onFailure(Call<GroupPostResponse> call, Throwable t) {
                                 Log.e("GroupProfile", "그룹 조회 실패", t);
                             }
                         });

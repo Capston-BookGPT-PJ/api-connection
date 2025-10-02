@@ -156,14 +156,14 @@ public interface ApiService {
     // 책별 리뷰 조회
     @GET("/api/reviews/book/{bookId}")
     Call<ApiResponse<List<FeedResponse>>> getReviewsByBook(
-            @Path("bookId") int bookId
+            @Path("bookId") Integer bookId
     );
 
     /*FeedPageResponse 버전
      // 책별 리뷰 조회
     @GET("/api/reviews/book/{bookId}")
     Call<ApiResponse<FeedPageResponse>> getReviewsByBook(
-            @Path("bookId") int bookId
+            @Path("bookId") Integer bookId
     );*/
 
 

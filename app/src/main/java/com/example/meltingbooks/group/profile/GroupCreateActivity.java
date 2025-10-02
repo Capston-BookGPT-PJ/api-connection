@@ -25,7 +25,7 @@ import com.example.meltingbooks.R;
 import com.example.meltingbooks.network.group.Group;
 import com.example.meltingbooks.network.group.GroupApi;
 import com.example.meltingbooks.network.ApiClient;
-import com.example.meltingbooks.network.group.GroupSingleList;
+import com.example.meltingbooks.network.group.GroupPostResponse;
 import com.example.meltingbooks.network.group.GroupResponse;
 
 import retrofit2.Call;
@@ -197,9 +197,9 @@ public class GroupCreateActivity extends AppCompatActivity {
         GroupApi groupApi = ApiClient.getClient(token).create(GroupApi.class);
 
         // 그룹 단일 타입-> GroupSingleList 사용
-        groupApi.createGroup(group).enqueue(new retrofit2.Callback<GroupSingleList>() {
+        groupApi.createGroup(group).enqueue(new retrofit2.Callback<GroupPostResponse>() {
             @Override
-            public void onResponse(Call<GroupSingleList> call, Response<GroupSingleList> response) {
+            public void onResponse(Call<GroupPostResponse> call, Response<GroupPostResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     GroupResponse groupResponse = response.body().getData(); // 🔹 바로 객체 접근
 
@@ -218,7 +218,7 @@ public class GroupCreateActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<GroupSingleList> call, Throwable t) {
+            public void onFailure(Call<GroupPostResponse> call, Throwable t) {
                 Toast.makeText(GroupCreateActivity.this, "에러: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });

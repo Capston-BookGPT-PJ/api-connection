@@ -19,9 +19,7 @@ import android.widget.Toast;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import android.widget.ImageView;
 
-import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.base.BaseActivity;
 import com.example.meltingbooks.group.goal.GroupGoalSetting;
@@ -39,13 +37,11 @@ import com.example.meltingbooks.network.group.GroupApi;
 import com.example.meltingbooks.network.group.GroupController;
 import com.example.meltingbooks.network.group.GroupFeedResponse;
 import com.example.meltingbooks.network.group.GroupResponse;
-import com.example.meltingbooks.network.group.GroupSingleList;
+import com.example.meltingbooks.network.group.GroupPostResponse;
 import com.example.meltingbooks.network.group.MyGroup;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -225,11 +221,11 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
 
                     // 각 내 그룹의 프로필 API 조회
                     for (MyGroup g : myGroups) {
-                        groupApi.getGroupById(g.getGroupId()).enqueue(new Callback<GroupSingleList>() {
+                        groupApi.getGroupById(g.getGroupId()).enqueue(new Callback<GroupPostResponse>() {
                             @Override
-                            public void onResponse(Call<GroupSingleList> call, Response<GroupSingleList> res) {
+                            public void onResponse(Call<GroupPostResponse> call, Response<GroupPostResponse> res) {
                                 if (res.isSuccessful() && res.body() != null) {
-                                    GroupSingleList groupDetail = res.body();
+                                    GroupPostResponse groupDetail = res.body();
 
                                     // 내 그룹 RecyclerView에 추가
                                     GroupListItem item = new GroupListItem(
@@ -250,7 +246,7 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
                             }
 
                             @Override
-                            public void onFailure(Call<GroupSingleList> call, Throwable t) {
+                            public void onFailure(Call<GroupPostResponse> call, Throwable t) {
                                 Log.e("GroupAPI", "그룹 프로필 조회 실패", t);
                             }
                         });
@@ -266,9 +262,9 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
 
 
         // 그룹 멤버 조회
-        groupApi.getGroupById(groupId).enqueue(new Callback<GroupSingleList>() {
+        groupApi.getGroupById(groupId).enqueue(new Callback<GroupPostResponse>() {
             @Override
-            public void onResponse(Call<GroupSingleList> call, Response<GroupSingleList> response) {
+            public void onResponse(Call<GroupPostResponse> call, Response<GroupPostResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     GroupResponse groupData = response.body().getData();
                     int groupId = groupData.getId();
@@ -298,7 +294,7 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
             }
 
             @Override
-            public void onFailure(Call<GroupSingleList> call, Throwable t) {
+            public void onFailure(Call<GroupPostResponse> call, Throwable t) {
                 Log.e("GroupAPI", "그룹 멤버 조회 실패", t);
             }
         });
@@ -544,9 +540,9 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
     private void fetchGroupInfo() {
         GroupController groupController = new GroupController(this);
 
-        groupController.getGroupById(groupId, new Callback<GroupSingleList>() {
+        groupController.getGroupById(groupId, new Callback<GroupPostResponse>() {
             @Override
-            public void onResponse(Call<GroupSingleList> call, Response<GroupSingleList> response) {
+            public void onResponse(Call<GroupPostResponse> call, Response<GroupPostResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
                     groupInfo = response.body().getData();
 
@@ -566,7 +562,7 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
 
 
             @Override
-            public void onFailure(Call<GroupSingleList> call, Throwable t) {
+            public void onFailure(Call<GroupPostResponse> call, Throwable t) {
                 t.printStackTrace();
                 Toast.makeText(GroupFeedActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
             }

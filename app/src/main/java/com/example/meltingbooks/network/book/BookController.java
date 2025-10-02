@@ -46,15 +46,15 @@ public class BookController {
     }
 
     // 책 검색
-    public void searchBooks(String keyword, Callback<List<Book>> callback) {
+    public void searchBooks(String keyword, Callback<BookResponse> callback) {
         if (bookApi == null) return;
 
-        Call<List<Book>> call = bookApi.searchBooks(keyword);
+        Call<BookResponse> call = bookApi.searchBooks(keyword);
         call.enqueue(callback);
     }
 
     // bookId로 책 상세 조회
-    public void getBookDetail(int bookId, Callback<Book> callback) {
+    public void getBookDetail(Integer bookId, Callback<Book> callback) {
         if (bookApi == null) return;
 
         Call<Book> call = bookApi.getBookDetail(null, bookId);
@@ -79,7 +79,7 @@ public class BookController {
 
 
     // ⭐ 책별 리뷰 가져오기
-    public void fetchReviewsByBook(int bookId, Callback<ApiResponse<List<FeedResponse>>> callback) {
+    public void fetchReviewsByBook(Integer bookId, Callback<ApiResponse<List<FeedResponse>>> callback) {
         if (apiService == null) return;
         apiService.getReviewsByBook(bookId).enqueue(callback);
     }
@@ -88,11 +88,16 @@ public class BookController {
 
     /*FeedPageResponse 사용버전
     // ⭐ 책별 리뷰 가져오기
-    public void fetchReviewsByBook(int bookId,
+    public void fetchReviewsByBook(Integer bookId,
                                    Callback<ApiResponse<FeedPageResponse>> callback) {
         if (apiService == null) return;
 
         Call<ApiResponse<FeedPageResponse>> call = apiService.getReviewsByBook(bookId);
         call.enqueue(callback);
     }*/
+
+    public void searchBooksWithSort(String keyword, String sort, Callback<BookResponse> callback) {
+        bookApi.searchBooksBySort(keyword, sort).enqueue(callback); // Retrofit API 호출
+    }
+
 }

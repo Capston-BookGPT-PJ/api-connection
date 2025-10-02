@@ -16,9 +16,8 @@ import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.group.GroupActivity;
-import com.example.meltingbooks.group.GroupFeedActivity;
 import com.example.meltingbooks.network.group.GroupController;
-import com.example.meltingbooks.network.group.GroupSingleList;
+import com.example.meltingbooks.network.group.GroupPostResponse;
 import com.example.meltingbooks.network.group.GroupResponse;
 
 import retrofit2.Call;
@@ -78,9 +77,9 @@ public class GroupProfileActivity extends AppCompatActivity {
     private void fetchGroupInfo() {
         GroupController groupController = new GroupController(this);
 
-        groupController.getGroupById(groupId, new Callback<GroupSingleList>() {
+        groupController.getGroupById(groupId, new Callback<GroupPostResponse>() {
             @Override
-            public void onResponse(Call<GroupSingleList> call, Response<GroupSingleList> response) {
+            public void onResponse(Call<GroupPostResponse> call, Response<GroupPostResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
                     GroupResponse group = response.body().getData();
                     updateUI(group);
@@ -91,7 +90,7 @@ public class GroupProfileActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<GroupSingleList> call, Throwable t) {
+            public void onFailure(Call<GroupPostResponse> call, Throwable t) {
                 t.printStackTrace();
                 Toast.makeText(GroupProfileActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
             }

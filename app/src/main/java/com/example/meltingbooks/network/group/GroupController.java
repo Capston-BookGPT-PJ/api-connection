@@ -34,9 +34,9 @@ public class GroupController {
     public void createGroup(Group group, OnGroupActionCallback callback) {
         if (groupApi == null) return;
 
-        groupApi.createGroup(group).enqueue(new Callback<GroupSingleList>() {
+        groupApi.createGroup(group).enqueue(new Callback<GroupPostResponse>() {
             @Override
-            public void onResponse(Call<GroupSingleList> call, Response<GroupSingleList> response) {
+            public void onResponse(Call<GroupPostResponse> call, Response<GroupPostResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     callback.onSuccess(response.body());
                 } else {
@@ -45,7 +45,7 @@ public class GroupController {
             }
 
             @Override
-            public void onFailure(Call<GroupSingleList> call, Throwable t) {
+            public void onFailure(Call<GroupPostResponse> call, Throwable t) {
                 callback.onFailure("서버 연결 실패");
             }
         });
@@ -56,9 +56,9 @@ public class GroupController {
     public void updateGroup(int groupId, Group updatedGroup, OnGroupActionCallback callback) {
         if (groupApi == null) return;
 
-        groupApi.updateGroup(groupId, updatedGroup).enqueue(new Callback<GroupSingleList>() {
+        groupApi.updateGroup(groupId, updatedGroup).enqueue(new Callback<GroupPostResponse>() {
             @Override
-            public void onResponse(Call<GroupSingleList> call, Response<GroupSingleList> response) {
+            public void onResponse(Call<GroupPostResponse> call, Response<GroupPostResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     callback.onSuccess(response.body());
                 } else {
@@ -67,7 +67,7 @@ public class GroupController {
             }
 
             @Override
-            public void onFailure(Call<GroupSingleList> call, Throwable t) {
+            public void onFailure(Call<GroupPostResponse> call, Throwable t) {
                 callback.onFailure("서버 연결 실패");
             }
         });
@@ -111,10 +111,10 @@ public class GroupController {
     }
 
     // 단일 그룹 조회->그룹 프로필 조회
-    public void getGroupById(int groupId, Callback<GroupSingleList> callback) {
+    public void getGroupById(int groupId, Callback<GroupPostResponse> callback) {
         if (groupApi == null) return;
 
-        Call<GroupSingleList> call = groupApi.getGroupById(groupId);
+        Call<GroupPostResponse> call = groupApi.getGroupById(groupId);
         call.enqueue(callback);
     }
 

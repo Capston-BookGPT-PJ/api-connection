@@ -3,7 +3,7 @@ package com.example.meltingbooks.network.book;
 import java.io.Serializable;
 
 public class Book implements Serializable {
-    private int bookId;
+    private Integer bookId; //null 허용
     private String title;
     private String cover;
     private String author;
@@ -37,11 +37,11 @@ public class Book implements Serializable {
 
 
     // bookId의 Getter/Setter 추가
-    public int getBookId() {
+    public Integer getBookId() {
         return bookId;
     }
 
-    public void setBookId(int bookId) {
+    public void setBookId(Integer bookId) {
         this.bookId = bookId;
     }
 

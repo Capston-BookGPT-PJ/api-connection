@@ -121,13 +121,16 @@ public class GroupDetailActivity extends AppCompatActivity {
 
         // GroupFeedAdpater.java에서 GroupFeedItem 받아오기
         currentFeed = (GroupFeedItem) getIntent().getSerializableExtra("groupFeedItem");
-        postId = currentFeed.getPostId();
-        groupId = currentFeed.getGroupId();
+
         if (currentFeed == null) {
             Toast.makeText(this, "게시글 정보를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
+
+        postId = currentFeed.getPostId();
+        groupId = currentFeed.getGroupId();
+
 
         // 초기화
         setupRecyclerView();
@@ -139,23 +142,6 @@ public class GroupDetailActivity extends AppCompatActivity {
 
         // 댓글 불러오기
         fetchComments();
-
-        /*
-
-
-
-
-
-        // 🔸 댓글 추가 이벤트
-        postCommentButton.setOnClickListener(v -> {
-            String comment = commentEditText.getText().toString().trim();
-            if (!comment.isEmpty()) {
-                commentList.add(new GroupCommentItem("현재 사용자", comment, R.drawable.sample_profile));
-                commentAdapter.notifyItemInserted(commentList.size() - 1);
-                commentRecyclerView.scrollToPosition(commentList.size() - 1);
-                commentEditText.setText("");
-            }
-        });*/
     }
 
 

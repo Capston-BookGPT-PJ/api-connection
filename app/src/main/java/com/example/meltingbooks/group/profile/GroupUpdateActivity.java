@@ -24,10 +24,6 @@ import com.example.meltingbooks.group.GroupActivity;
 import com.example.meltingbooks.network.group.Group;
 import com.example.meltingbooks.network.group.GroupController;
 import com.example.meltingbooks.network.group.GroupResponse;
-import com.example.meltingbooks.network.group.GroupSingleList;
-
-import retrofit2.Call;
-import retrofit2.Response;
 
 public class GroupUpdateActivity extends AppCompatActivity {
 

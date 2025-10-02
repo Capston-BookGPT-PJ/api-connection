@@ -45,6 +45,7 @@ import com.example.meltingbooks.network.book.Book;
 import com.example.meltingbooks.network.book.BookApi;
 import com.example.meltingbooks.network.book.BookController;
 import com.example.meltingbooks.network.book.BookCreateRequest;
+import com.example.meltingbooks.network.book.BookResponse;
 import com.example.meltingbooks.network.feed.FeedResponse;
 import com.example.meltingbooks.network.feed.ReviewRequest;
 import com.example.meltingbooks.network.feed.ReviewResponse;
@@ -770,18 +771,20 @@ public class FeedWriteActivity extends AppCompatActivity {
                 rvSearchResults.setVisibility(View.VISIBLE);
 
                 if (!query.isEmpty()) {
-                    bookController.searchBooks(query, new Callback<List<Book>>() {
+                    bookController.searchBooks(query, new Callback<BookResponse>() {
                         @Override
-                        public void onResponse(Call<List<Book>> call, Response<List<Book>> response) {
+                        public void onResponse(Call<BookResponse> call, Response<BookResponse> response) {
+
+                            List<Book> books = response.body().getData();
                             filteredBookList.clear();
                             if (response.isSuccessful() && response.body() != null) {
-                                filteredBookList.addAll(response.body());
+                                filteredBookList.addAll(books);
                             }
                             bookAdapter.notifyDataSetChanged();
                         }
 
                         @Override
-                        public void onFailure(Call<List<Book>> call, Throwable t) {
+                        public void onFailure(Call<BookResponse> call, Throwable t) {
                             t.printStackTrace();
                             Toast.makeText(FeedWriteActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
                         }
