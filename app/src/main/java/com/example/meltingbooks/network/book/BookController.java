@@ -45,11 +45,18 @@ public class BookController {
         call.enqueue(callback);
     }
 
-    // 책 검색
-    public void searchBooks(String keyword, Callback<List<Book>> callback) {
+    /** 삭제 필요 public void searchBooks(String keyword, Callback<List<Book>> callback) {
         if (bookApi == null) return;
 
         Call<List<Book>> call = bookApi.searchBooks(keyword);
+        call.enqueue(callback);
+    }*/
+
+    //⭐ 책 검색 변경
+    public void searchBooks(String keyword, Callback<ApiResponse<List<Book>>> callback) {
+        if (bookApi == null) return;
+
+        Call<ApiResponse<List<Book>>> call = bookApi.searchBooks(keyword);
         call.enqueue(callback);
     }
 

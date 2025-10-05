@@ -3,6 +3,7 @@ package com.example.meltingbooks.group;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -21,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.base.BaseActivity;
+import com.example.meltingbooks.calendar.view.GoalProgressView;
 import com.example.meltingbooks.group.goal.GroupGoalSetting;
 import com.example.meltingbooks.group.menu.GroupListAdapter;
 import com.example.meltingbooks.group.menu.GroupListItem;
@@ -151,6 +153,8 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
 
         // 예시 목표 데이터 불러오기
         loadGroupProgress();
+
+
     }
 
     @Override
@@ -166,7 +170,7 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
     }
 
     private void loadGroupProgress() {
-        int targetBooks = 30, targetReviews = 15, targetTime = 100;
+        /**int targetBooks = 30, targetReviews = 15, targetTime = 100;
         int[] memberBooks = {5,3,2}, memberReviews = {1,2,0}, memberTimes = {10,5,3};
 
         int sumBooks=0, sumReviews=0, sumTimes=0;
@@ -181,7 +185,22 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
         if(fragment != null){
             fragment.updateGoalProgress(targetBooks, targetReviews, targetTime,
                     sumBooks, sumReviews, sumTimes);
-        }
+        }*/
+        // 20dp 높이, 제목 텍스트 크기 20sp → px 변환
+        float titlePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 20, getResources().getDisplayMetrics());
+
+        GoalProgressView goal1Detail = findViewById(R.id.goal1_view_detail);
+        goal1Detail.setUnit("권");
+        goal1Detail.setProgressWithGoal(5, 15, 20, titlePx);
+
+        GoalProgressView goal2Detail = findViewById(R.id.goal2_view_detail);
+        goal2Detail.setUnit("개");
+        goal2Detail.setProgressWithGoal(10,30,0, titlePx);
+
+        GoalProgressView goal3Detail = findViewById(R.id.goal3_view_detail);
+        goal3Detail.setUnit("시간");
+        goal3Detail.setProgressWithGoal(3, 20, 20, titlePx);
+
     }
 
     private void showGroupInfo() {

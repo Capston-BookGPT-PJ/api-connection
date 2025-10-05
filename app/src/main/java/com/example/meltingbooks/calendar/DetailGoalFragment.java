@@ -22,7 +22,10 @@ import com.example.meltingbooks.R;
 import com.example.meltingbooks.calendar.utils.BookListHelper;
 import com.example.meltingbooks.calendar.utils.BookListHelper.BookItem;
 import com.example.meltingbooks.calendar.utils.ProgressBarUtil;
+import com.example.meltingbooks.network.log.LogApi;
+import com.example.meltingbooks.network.log.LogController;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -30,9 +33,11 @@ import java.util.ArrayList;
 import com.example.meltingbooks.calendar.view.CircularProgressView;
 import com.example.meltingbooks.calendar.view.GoalProgressView;
 import com.example.meltingbooks.network.ApiClient;
+import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.goal.GoalApi;
 import com.example.meltingbooks.network.goal.GoalController;
 import com.example.meltingbooks.network.goal.GoalResponse;
+import com.example.meltingbooks.network.log.ReadingLogResponse;
 import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.Legend;
@@ -52,6 +57,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -64,6 +70,8 @@ public class DetailGoalFragment extends Fragment {
     private String token;
     private int userId;
     private GoalController goalController;
+
+    private LogController logController;
 
 
     @Override
@@ -88,6 +96,9 @@ public class DetailGoalFragment extends Fragment {
         GoalApi apiService = ApiClient.getClient(token).create(GoalApi.class);
         goalController = new GoalController(apiService);
 
+        LogApi logApi = ApiClient.getClient(token).create(LogApi.class);
+        logController = new LogController(logApi);
+
 
         btnMonthly.setOnClickListener(v -> {
             btnMonthly.setSelected(true);
@@ -104,8 +115,8 @@ public class DetailGoalFragment extends Fragment {
         // 초기값: 월간 불러오기
         loadGoal("MONTHLY");
 
-        //그래프 처리
-        setupWeeklyGraph(view);
+        // 그래프 처리
+        loadWeeklyLogs(userId, view);
 
         // btn_set_goal 클릭 시 SetGoalFragment로 전환
         View SetlGoalButton = view.findViewById(R.id.btn_set_goal);
@@ -123,13 +134,36 @@ public class DetailGoalFragment extends Fragment {
         return view;
     }
 
+    private void loadWeeklyLogs(int userId, View rootView) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREA);
+        Calendar calendar = Calendar.getInstance();
 
+        String to = sdf.format(calendar.getTime()); // 오늘
+        calendar.add(Calendar.DAY_OF_YEAR, -6);     // 7일 전
+        String from = sdf.format(calendar.getTime());
+
+        logController.getLogsByPeriod(token,userId, from, to, new Callback<>() {
+            @Override
+            public void onResponse(Call<ApiResponse<List<ReadingLogResponse>>> call,
+                                   Response<ApiResponse<List<ReadingLogResponse>>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                    // ✅ logs + rootView 같이 넘김
+                    setupWeeklyGraph(response.body().getData(), rootView);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<List<ReadingLogResponse>>> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+    }
     //막대그래프 생성 함수
-    public void setupWeeklyGraph(View view) {
+    public void setupWeeklyGraph(List<ReadingLogResponse> logs, View view) {
         CombinedChart combinedChart = view.findViewById(R.id.weekly_combined_chart);
 
         // 1. 예시 데이터: 최근 7일 읽은 시간 (시간 단위)
-        float[] readingHours = new float[]{1.5f, 0.5f, 2f, 0f, 3f, 1f, 2.5f}; // 지난 7일 데이터
+        //float[] readingHours = new float[]{1.5f, 0.5f, 2f, 0f, 3f, 1f, 2.5f}; // 지난 7일 데이터
         List<BarEntry> barEntries = new ArrayList<>();
         List<Entry> lineEntries = new ArrayList<>();
         List<String> xLabels = new ArrayList<>();
@@ -137,7 +171,36 @@ public class DetailGoalFragment extends Fragment {
         Calendar calendar = Calendar.getInstance(); // 오늘 기준
         SimpleDateFormat sdf = new SimpleDateFormat("d", Locale.KOREA); //날짜
 
+        // 날짜별 읽은 시간 합산용 Map
+        Map<String, Float> logMap = new HashMap<>();
+        for (ReadingLogResponse log : logs) {
+            // minutesRead → 시간 단위 변환
+            float hours = log.getMinutesRead() / 60f;
+            String dateKey = log.getReadAt().substring(0, 10); // yyyy-MM-dd
+            logMap.put(dateKey, logMap.getOrDefault(dateKey, 0f) + hours);
+        }
+
+        float[] readingHours = new float[7];
+
+        // 최근 7일 데이터 채우기
         for (int i = 6; i >= 0; i--) {
+            calendar = Calendar.getInstance();
+            calendar.add(Calendar.DAY_OF_YEAR, -i);
+            String dateKey = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREA).format(calendar.getTime());
+            String label = sdf.format(calendar.getTime());
+
+            float hours = logMap.getOrDefault(dateKey, 0f);
+
+            int index = 6 - i;
+            barEntries.add(new BarEntry(index, hours));
+            lineEntries.add(new Entry(index, hours));
+            xLabels.add(label);
+
+            // ✅ 배열에 값 저장
+            readingHours[index] = hours;
+        }
+
+           /** for (int i = 6; i >= 0; i--) {
             calendar.add(Calendar.DAY_OF_YEAR, -i);
             String label = sdf.format(calendar.getTime()); // 요일
 
@@ -147,7 +210,7 @@ public class DetailGoalFragment extends Fragment {
             xLabels.add(label);
 
             calendar.add(Calendar.DAY_OF_YEAR, i); // 원래 날짜로 되돌림
-        }
+        }*/
 
 
         // 2. 막대그래프
@@ -324,19 +387,19 @@ public class DetailGoalFragment extends Fragment {
         // 목표 1 (책 권수)
         GoalProgressView goal1 = getView().findViewById(R.id.goal1_view);
         goal1.setUnit("권");
-        goal1.setProgressWithGoal(goal.getCompletedBooks(), goal.getTargetBooks());
+        goal1.setProgressWithGoal(goal.getCompletedBooks(), goal.getTargetBooks(),goal.getBookProgress());
 
         // 목표 2 (리뷰 개수)
         GoalProgressView goal2 = getView().findViewById(R.id.goal2_view);
         goal2.setUnit("개");
-        goal2.setProgressWithGoal(goal.getCompletedReviews(), goal.getTargetReviews());
+        goal2.setProgressWithGoal(goal.getCompletedReviews(), goal.getTargetReviews(),goal.getReviewProgress());
 
         // 목표 3 (독서 시간)
         GoalProgressView goal3 = getView().findViewById(R.id.goal3_view);
         goal3.setUnit("시간");
         float completedHours = goal.getCompletedMinutes() / 60f;
         float targetHours = goal.getTargetMinutes() / 60f;
-        goal3.setProgressWithGoal(completedHours, targetHours);
+        goal3.setProgressWithGoal(completedHours, targetHours,goal.getTimeProgress());
 
 
         // 20dp 높이, 제목 텍스트 크기 20sp → px 변환
@@ -344,15 +407,15 @@ public class DetailGoalFragment extends Fragment {
 
         GoalProgressView goal1Detail = getView().findViewById(R.id.goal1_view_detail);
         goal1Detail.setUnit("권");
-        goal1Detail.setProgressWithGoal(goal.getCompletedBooks(), goal.getTargetBooks(), 20, titlePx);
+        goal1Detail.setProgressWithGoal(goal.getCompletedBooks(), goal.getTargetBooks(), 20, titlePx,goal.getBookProgress());
 
         GoalProgressView goal2Detail = getView().findViewById(R.id.goal2_view_detail);
         goal2Detail.setUnit("개");
-        goal2Detail.setProgressWithGoal(goal.getCompletedReviews(), goal.getTargetReviews(), 20, titlePx);
+        goal2Detail.setProgressWithGoal(goal.getCompletedReviews(), goal.getTargetReviews(), 20, titlePx,goal.getReviewProgress());
 
         GoalProgressView goal3Detail = getView().findViewById(R.id.goal3_view_detail);
         goal3Detail.setUnit("시간");
-        goal3Detail.setProgressWithGoal(completedHours, targetHours, 20, titlePx);
+        goal3Detail.setProgressWithGoal(completedHours, targetHours, 20, titlePx,goal.getTimeProgress());
 
         // 책 이미지 (추후 구조 확장 대응)
         /**LinearLayout bookListContainer = getView().findViewById(R.id.book_list_container);
@@ -372,6 +435,8 @@ public class DetailGoalFragment extends Fragment {
             }
         }*/
     }
+
+
 
 }
 

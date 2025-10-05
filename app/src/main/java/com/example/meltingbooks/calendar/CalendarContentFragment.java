@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,13 +30,24 @@ import com.example.meltingbooks.calendar.utils.ProgressBarUtil;
 import com.example.meltingbooks.calendar.view.CircularProgressView;
 import com.example.meltingbooks.calendar.view.GoalProgressView;
 import com.example.meltingbooks.network.ApiClient;
+import com.example.meltingbooks.network.ApiResponse;
+import com.example.meltingbooks.network.book.Book;
+import com.example.meltingbooks.network.book.BookApi;
 import com.example.meltingbooks.network.goal.GoalApi;
 import com.example.meltingbooks.network.goal.GoalController;
 import com.example.meltingbooks.network.goal.GoalResponse;
+import com.example.meltingbooks.network.log.LogApi;
+import com.example.meltingbooks.network.log.LogController;
+import com.example.meltingbooks.network.log.ReadingLogResponse;
+import com.example.meltingbooks.network.book.BookController;
+
 
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Response;
 
 public class CalendarContentFragment extends Fragment {
     public CalendarContentFragment() { }
@@ -52,6 +64,9 @@ public class CalendarContentFragment extends Fragment {
     private int userId;
 
     private GoalController goalController;
+    private LogController logController;
+    private BookController bookController;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -76,6 +91,7 @@ public class CalendarContentFragment extends Fragment {
         if (goalByDate != null) {
             goalByDate.setText(format.format(selectedDate.getTime()));
         }
+
 
         // 이전 달
         view.findViewById(R.id.btnPrev).setOnClickListener(v -> {
@@ -115,11 +131,23 @@ public class CalendarContentFragment extends Fragment {
 
         GoalApi apiService = ApiClient.getClient(token).create(GoalApi.class);
         goalController = new GoalController(apiService);
+
+        // onCreateView()에서
+        LogApi logApi = ApiClient.getClient(token).create(LogApi.class);
+        logController = new LogController(logApi);
+
+        BookApi bookApi = ApiClient.getClient(token).create(BookApi.class);
+        bookController = new BookController(getContext());
+
         // 월간 불러오기
         loadGoal("MONTHLY");
 
         // 책 리스트 UI 생성
         setupBooks(view);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREA);
+        String todayStr = sdf.format(selectedDate.getTime());
+        loadLogsByDate(todayStr);
 
         return view;
     }
@@ -233,6 +261,12 @@ public class CalendarContentFragment extends Fragment {
                 if (goalByDate != null) {
                     goalByDate.setText(format.format(selectedDate.getTime()));
                 }
+
+                // 선택한 날짜의 로그 조회
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREA);
+                String selectedDateStr = sdf.format(selectedDate.getTime());
+                loadLogsByDate(selectedDateStr);
+
             });
 
             calendarGrid.addView(dayView);
@@ -310,19 +344,104 @@ public class CalendarContentFragment extends Fragment {
         // 목표 1 (책 권수)
         GoalProgressView goal1 = getView().findViewById(R.id.goal1_view);
         goal1.setUnit("권");
-        goal1.setProgressWithGoal(goal.getCompletedBooks(), goal.getTargetBooks());
+        goal1.setProgressWithGoal(goal.getCompletedBooks(), goal.getTargetBooks(),goal.getBookProgress());
 
         // 목표 2 (리뷰 개수)
         GoalProgressView goal2 = getView().findViewById(R.id.goal2_view);
         goal2.setUnit("개");
-        goal2.setProgressWithGoal(goal.getCompletedReviews(), goal.getTargetReviews());
+        goal2.setProgressWithGoal(goal.getCompletedReviews(), goal.getTargetReviews(),goal.getReviewProgress());
 
         // 목표 3 (독서 시간)
         GoalProgressView goal3 = getView().findViewById(R.id.goal3_view);
         goal3.setUnit("시간");
         float completedHours = goal.getCompletedMinutes() / 60f;
         float targetHours = goal.getTargetMinutes() / 60f;
-        goal3.setProgressWithGoal(completedHours, targetHours);
+        goal3.setProgressWithGoal(completedHours, targetHours, goal.getTimeProgress());
+    }
+
+    private void loadLogsByDate(String dateStr) {
+        logController.getLogsByPeriod(token, userId, dateStr, dateStr,
+                new retrofit2.Callback<ApiResponse<List<ReadingLogResponse>>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<List<ReadingLogResponse>>> call,
+                                           Response<ApiResponse<List<ReadingLogResponse>>> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            List<ReadingLogResponse> logs = response.body().getData();
+                            displayLog(dateStr, logs);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<List<ReadingLogResponse>>> call, Throwable t) {
+                        Log.e("CalendarContent", "Log fetch failed", t);
+                    }
+                });
+    }
+
+    private void displayLog(String selectedDateStr, List<ReadingLogResponse> logs) {
+        View root = getView();
+        if (root == null) return;
+
+        // 숫자 표시 뷰 참조
+        TextView editPage = root.findViewById(R.id.edit_page);
+        TextView editHour = root.findViewById(R.id.edit_hour);
+        TextView editMinute = root.findViewById(R.id.edit_minute);
+
+        int totalPages = 0;
+        int totalMinutes = 0;
+
+        if (logs != null && !logs.isEmpty()) {
+            for (ReadingLogResponse log : logs) {
+                totalPages += log.getPagesRead();
+                totalMinutes += log.getMinutesRead();
+            }
+        } else {
+            // 기록 없을 때
+            Toast.makeText(getContext(), "기록이 없습니다.", Toast.LENGTH_SHORT).show();
+        }
+
+        // 값 세팅
+        editPage.setText(String.valueOf(totalPages));
+
+        int hour = totalMinutes / 60;
+        int minute = totalMinutes % 60;
+        editHour.setText(String.valueOf(hour));
+        editMinute.setText(String.valueOf(minute));
+
+
+        // 책 표지 처리
+        LinearLayout container = root.findViewById(R.id.book_list_container);
+        container.removeAllViews();
+        bookItems.clear();
+
+        if (logs != null) {
+            for (ReadingLogResponse log : logs) {
+                int bookId = log.getBookId();
+
+                //bookId 기반으로 책 상세 조회
+                bookController.getBookDetail(bookId, new retrofit2.Callback<Book>() {
+                    @Override
+                    public void onResponse(Call<Book> call, Response<Book> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            Book book = response.body();
+                            String coverUrl = book.getCover();
+
+                            // 커버 URL을 BookItem에 넣어주도록 BookListHelper 확장
+                            BookListHelper.BookItem item = new BookListHelper.BookItem(coverUrl, false);
+                            bookItems.add(item);
+
+                            // UI 갱신
+                            BookListHelper.setupBooks(getContext(), container, bookItems, true);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Book> call, Throwable t) {
+                        Log.e("CalendarContent", "책 상세 조회 실패: " + bookId, t);
+                    }
+                });
+            }
+        }
 
     }
 }

@@ -26,25 +26,6 @@
             </intent-filter>
         </activity>
 
-        <!-- LoginActivity에 커스텀 URL 스킴 추가 -->
-        <!--<activity android:name=".login.LoginActivity" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="meltingbooks" android:host="callback" />
-            </intent-filter>
-        </activity>-->
-
-        <!--<activity android:name=".login.LoginActivity" android:exported="true">
-        <intent-filter>
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.DEFAULT" />
-            <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="http" android:host="localhost" />
-        </intent-filter>
-        </activity>-->
-
         <activity android:name=".login.LoginActivity" android:exported="true">
             <intent-filter android:label="login">
                 <action android:name="android.intent.action.VIEW" />
@@ -57,6 +38,7 @@
         </activity>
 
 
+        <activity android:name=".login.SignupActivity" android:exported="true"/>
 
         <!-- 구글 로그인 콜백 Activity -->
         <activity android:name=".login.GoogleLoginCallbackActivity" android:exported="true">
@@ -70,6 +52,32 @@
             </intent-filter>
         </activity>
 
+
+        <!-- 카카오 로그인 콜백 Activity -->
+        <activity android:name=".login.KakaoLoginCallbackActivity"  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+
+                <!-- 서버에서 redirect 시킬 custom scheme 등록 -->
+                <data
+                    android:scheme="meltingbooks" android:host="callback" />
+            </intent-filter>
+        </activity>
+
+        <!--네이버 로그인-->
+        <activity android:name=".login.NaverLoginCallbackActivity"  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+
+                <!-- 서버에서 redirect 시킬 custom scheme 등록 -->
+                <data
+                    android:scheme="meltingbooks" android:host="callback" />
+            </intent-filter>
+        </activity>
 
         <activity android:name=".login.SplashActivity" android:exported="true"/>
 

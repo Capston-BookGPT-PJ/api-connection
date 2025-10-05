@@ -767,19 +767,22 @@ public class FeedWriteActivity extends AppCompatActivity {
                 String query = etBookTitle.getText().toString().trim();
                 rvSearchResults.setVisibility(View.VISIBLE);
 
+                //⭐ 아래 if문 전체 수정
                 if (!query.isEmpty()) {
-                    bookController.searchBooks(query, new Callback<List<Book>>() {
+                    bookController.searchBooks(query, new Callback<ApiResponse<List<Book>>>() {
                         @Override
-                        public void onResponse(Call<List<Book>> call, Response<List<Book>> response) {
+                        public void onResponse(Call<ApiResponse<List<Book>>> call, Response<ApiResponse<List<Book>>> response) {
                             filteredBookList.clear();
-                            if (response.isSuccessful() && response.body() != null) {
-                                filteredBookList.addAll(response.body());
+                            if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                                filteredBookList.addAll(response.body().getData());
+                            } else {
+                                Log.e("BookSearch", "검색 실패: " + response.code() + " / " + response.message());
                             }
                             bookAdapter.notifyDataSetChanged();
                         }
 
                         @Override
-                        public void onFailure(Call<List<Book>> call, Throwable t) {
+                        public void onFailure(Call<ApiResponse<List<Book>>> call, Throwable t) {
                             t.printStackTrace();
                             Toast.makeText(FeedWriteActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
                         }

@@ -283,8 +283,10 @@ public class GroupWriteActivity extends AppCompatActivity {
                             rvSearchResults.setVisibility(View.VISIBLE); // 검색 결과 보여주기
 
                             if (!query.isEmpty()) {
+
                                 // 서버에서 검색
-                                bookController.searchBooks(query, new retrofit2.Callback<List<Book>>() {
+                                /** ⭐바로 하단으로 수정 주석으로 묶은 코드는 삭제
+                                 bookController.searchBooks(query, new retrofit2.Callback<List<Book>>() {
                                     @Override
                                     public void onResponse(retrofit2.Call<List<Book>> call, retrofit2.Response<List<Book>> response) {
                                         Log.d("GroupWriteActivity", "서버 응답 성공: " + response.code());
@@ -306,7 +308,34 @@ public class GroupWriteActivity extends AppCompatActivity {
                                         t.printStackTrace();
                                         Toast.makeText(GroupWriteActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
                                     }
+                                });*/
+
+                                bookController.searchBooks(query, new retrofit2.Callback<ApiResponse<List<Book>>>() {
+                                    @Override
+                                    public void onResponse(retrofit2.Call<ApiResponse<List<Book>>> call,
+                                                           retrofit2.Response<ApiResponse<List<Book>>> response) {
+                                        Log.d("GroupWriteActivity", "서버 응답 성공: " + response.code());
+
+                                        if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                                            Log.d("GroupWriteActivity", "받은 책 개수: " + response.body().getData().size());
+                                            filteredBookList.clear();
+                                            filteredBookList.addAll(response.body().getData());
+                                            bookAdapter.notifyDataSetChanged();
+                                        } else {
+                                            Log.d("GroupWriteActivity", "응답은 왔지만 body 없음 또는 data 없음");
+                                            filteredBookList.clear();
+                                            bookAdapter.notifyDataSetChanged();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(retrofit2.Call<ApiResponse<List<Book>>> call, Throwable t) {
+                                        t.printStackTrace();
+                                        Toast.makeText(GroupWriteActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+                                    }
                                 });
+
+
                             } else {
                                 // 검색어가 비었으면 전체 목록 표시
                                 bookController.fetchBooks(new retrofit2.Callback<List<Book>>() {
@@ -363,6 +392,7 @@ public class GroupWriteActivity extends AppCompatActivity {
 
                             if (!query.isEmpty()) {
                                 // 서버에서 검색
+                                /** ⭐바로 하단으로 수정 주석으로 묶은 코드는 삭제
                                 bookController.searchBooks(query, new retrofit2.Callback<List<Book>>() {
                                     @Override
                                     public void onResponse(retrofit2.Call<List<Book>> call, retrofit2.Response<List<Book>> response) {
@@ -385,7 +415,31 @@ public class GroupWriteActivity extends AppCompatActivity {
                                         t.printStackTrace();
                                         Toast.makeText(GroupWriteActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
                                     }
+                                });*/
+                                bookController.searchBooks(query, new retrofit2.Callback<ApiResponse<List<Book>>>() {
+                                    @Override
+                                    public void onResponse(retrofit2.Call<ApiResponse<List<Book>>> call,
+                                                           retrofit2.Response<ApiResponse<List<Book>>> response) {
+                                        Log.d("GroupWriteActivity", "서버 응답 성공: " + response.code());
+
+                                        if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                                            Log.d("GroupWriteActivity", "받은 책 개수: " + response.body().getData().size());
+                                            filteredBookList.clear();
+                                            filteredBookList.addAll(response.body().getData());
+                                            bookAdapter.notifyDataSetChanged();
+                                        } else {
+                                            Log.d("GroupWriteActivity", "응답은 왔지만 body 없음 또는 data 없음");
+                                            filteredBookList.clear();
+                                            bookAdapter.notifyDataSetChanged();
+                                        }
+                                    }
+                                    @Override
+                                    public void onFailure(retrofit2.Call<ApiResponse<List<Book>>> call, Throwable t) {
+                                        t.printStackTrace();
+                                        Toast.makeText(GroupWriteActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+                                    }
                                 });
+
                             } else {
                                 // 검색어가 비었으면 전체 목록 표시
                                 bookController.fetchBooks(new retrofit2.Callback<List<Book>>() {

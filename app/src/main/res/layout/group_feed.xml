@@ -85,48 +85,51 @@
             android:padding="5dp">
 
             <!-- 공지 -->
+
+            <!-- 기존 group_goal_container ConstraintLayout 대신 -->
             <LinearLayout
                 android:id="@+id/noticeBox"
                 android:layout_width="match_parent"
                 android:layout_height="150dp"
-                android:orientation="vertical"
-                android:background="@drawable/round_background_15"
-                android:padding="10dp"
                 android:layout_margin="12dp"
+                android:background="@drawable/round_background_15"
                 android:clickable="true"
-                android:focusable="true">
+                android:focusable="true"
+                android:orientation="vertical"
+                android:padding="10dp">
 
                 <!-- 공지 제목 -->
+
+                <!-- 공지 내용 입력 -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="공지"
-                    android:textSize="14sp"
                     android:textColor="@color/textColor"
-                    android:textStyle="bold"/>
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
-                <!-- 공지 내용 입력 -->
                 <EditText
                     android:id="@+id/noticeEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@null"
-                    android:textSize="13sp"
-                    android:textColor="@color/textColor"
-                    android:paddingVertical="4dp"
                     android:inputType="textMultiLine"
                     android:maxLines="2"
-                    android:minLines="1" />
+                    android:minLines="1"
+                    android:paddingVertical="4dp"
+                    android:textColor="@color/textColor"
+                    android:textSize="13sp" />
 
                 <!-- 이달의 추천 도서 제목 -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
                     android:text="이달의 추천 도서"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
                     android:textColor="@color/textColor"
-                    android:layout_marginTop="16dp" />
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <!-- 추천 도서 입력 -->
                 <EditText
@@ -134,20 +137,60 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@null"
-                    android:textSize="13sp"
-                    android:textColor="@color/textColor"
-                    android:paddingVertical="4dp"
+                    android:inputType="text"
                     android:maxLines="2"
-                    android:inputType="text" />
+                    android:paddingVertical="4dp"
+                    android:textColor="@color/textColor"
+                    android:textSize="13sp" />
             </LinearLayout>
 
-            <!-- 기존 group_goal_container ConstraintLayout 대신 -->
             <FrameLayout
                 android:id="@+id/group_goal_fragment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="12dp"
-                android:background="@drawable/round_background_15"/>
+                android:background="@drawable/round_background_15">
+
+                <!-- 목표 1 -->
+                <com.example.meltingbooks.calendar.view.GoalProgressView
+                    android:id="@+id/goal1_view"
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginTop="15dp"
+                    app:goalTitle="@string/goal1"
+                    app:goalTitleTextSize="16sp"
+                    app:goalUnit="권"
+                    app:progressDrawable="@drawable/progress_fill_background1" />
+
+                <!-- 목표 2 -->
+                <com.example.meltingbooks.calendar.view.GoalProgressView
+                    android:id="@+id/goal2_view"
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="80dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginStart="15dp"
+                    app:goalTitle="@string/goal2"
+                    app:goalTitleTextSize="16sp"
+                    app:goalUnit="개"
+                    app:progressDrawable="@drawable/progress_fill_background2" />
+
+                <!-- 목표 3 -->
+                <com.example.meltingbooks.calendar.view.GoalProgressView
+                    android:id="@+id/goal3_view"
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="150dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginBottom="15dp"
+                    app:goalTitle="@string/goal3"
+                    app:goalTitleTextSize="16sp"
+                    app:goalUnit="시간"
+                    app:progressDrawable="@drawable/progress_fill_background3" />
+            </FrameLayout>
 
 
             <!--그룹 게시글-->

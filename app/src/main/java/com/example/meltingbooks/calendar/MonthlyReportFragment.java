@@ -195,19 +195,19 @@ public class MonthlyReportFragment extends Fragment {
         // 목표 1 (책 권수)
         GoalProgressView goal1 = getView().findViewById(R.id.goal1_view);
         goal1.setUnit("권");
-        goal1.setProgressWithGoal(goal.getCompletedBooks(), goal.getTargetBooks());
+        goal1.setProgressWithGoal(goal.getCompletedBooks(), goal.getTargetBooks(),goal.getBookProgress());
 
         // 목표 2 (리뷰 개수)
         GoalProgressView goal2 = getView().findViewById(R.id.goal2_view);
         goal2.setUnit("개");
-        goal2.setProgressWithGoal(goal.getCompletedReviews(), goal.getTargetReviews());
+        goal2.setProgressWithGoal(goal.getCompletedReviews(), goal.getTargetReviews(),goal.getReviewProgress());
 
         // 목표 3 (독서 시간)
         GoalProgressView goal3 = getView().findViewById(R.id.goal3_view);
         goal3.setUnit("시간");
         float completedHours = goal.getCompletedMinutes() / 60f;
         float targetHours = goal.getTargetMinutes() / 60f;
-        goal3.setProgressWithGoal(completedHours, targetHours);
+        goal3.setProgressWithGoal(completedHours, targetHours, goal.getTimeProgress());
 
 
         //응원 메시지

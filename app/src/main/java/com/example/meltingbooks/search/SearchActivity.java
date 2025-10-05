@@ -19,6 +19,8 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.meltingbooks.group.write.GroupWriteActivity;
+import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.book.Book;
 import com.example.meltingbooks.Hashtag;
 import com.example.meltingbooks.R;
@@ -252,7 +254,7 @@ public class SearchActivity extends AppCompatActivity {
 
                 if (!query.isEmpty()) {
                     // 서버에서 검색
-                    bookController.searchBooks(query, new Callback<List<Book>>() {
+                    /** ⭐바로 하단으로 수정 주석으로 묶은 코드는 삭제bookController.searchBooks(query, new Callback<List<Book>>() {
                         @Override
                         public void onResponse(Call<List<Book>> call, Response<List<Book>> response) {
                             Log.d("SearchActivity", "서버 응답 성공: " + response.code());
@@ -271,6 +273,29 @@ public class SearchActivity extends AppCompatActivity {
 
                         @Override
                         public void onFailure(Call<List<Book>> call, Throwable t) {
+                            t.printStackTrace();
+                            Toast.makeText(SearchActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
+                        }
+                    });*/
+                    bookController.searchBooks(query, new retrofit2.Callback<ApiResponse<List<Book>>>() {
+                        @Override
+                        public void onResponse(retrofit2.Call<ApiResponse<List<Book>>> call,
+                                               retrofit2.Response<ApiResponse<List<Book>>> response) {
+                            Log.d("GroupWriteActivity", "서버 응답 성공: " + response.code());
+
+                            if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                                Log.d("GroupWriteActivity", "받은 책 개수: " + response.body().getData().size());
+                                filteredBookList.clear();
+                                filteredBookList.addAll(response.body().getData());
+                                bookAdapter.notifyDataSetChanged();
+                            } else {
+                                Log.d("GroupWriteActivity", "응답은 왔지만 body 없음 또는 data 없음");
+                                filteredBookList.clear();
+                                bookAdapter.notifyDataSetChanged();
+                            }
+                        }
+                        @Override
+                        public void onFailure(retrofit2.Call<ApiResponse<List<Book>>> call, Throwable t) {
                             t.printStackTrace();
                             Toast.makeText(SearchActivity.this, "서버 연결 실패", Toast.LENGTH_SHORT).show();
                         }

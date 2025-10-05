@@ -128,7 +128,7 @@ public class GoalResponse {
         this.completedMinutes = completedMinutes;
     }
 
-    public double getBookProgress() {
+    public float getBookProgress() {
         return bookProgress;
     }
 
@@ -136,7 +136,7 @@ public class GoalResponse {
         this.bookProgress = bookProgress;
     }
 
-    public double getReviewProgress() {
+    public float getReviewProgress() {
         return reviewProgress;
     }
 
@@ -144,7 +144,7 @@ public class GoalResponse {
         this.reviewProgress = reviewProgress;
     }
 
-    public double getTimeProgress() {
+    public float getTimeProgress() {
         return timeProgress;
     }
 

@@ -12,8 +12,10 @@ import android.widget.ImageButton;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.base.BaseActivity;
@@ -35,12 +37,19 @@ public class FeedActivity extends BaseActivity {
     private FeedAdapter feedAdapter;
     private List<FeedItem> feedList = new ArrayList<>(); //Null 방지 초기화
 
+    //⭐새로 고침 및 무한 스크롤 관련 변수
+    private SwipeRefreshLayout swipeRefreshLayout; //⭐
+    private int currentPage = 0; //⭐ 페이징 현재 페이지
+    private final int PAGE_SIZE = 10; // ⭐한 페이지에 불러올 항목 수
+    private boolean isLoading = false; //⭐
+    private boolean isLastPage = false; //⭐
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed);
         setupBottomNavigation();
-
 
 
         // 글 작성 화면으로 이동
@@ -73,9 +82,42 @@ public class FeedActivity extends BaseActivity {
             feedAdapter = new FeedAdapter(this, feedList, feedDetailLauncher);
             feedRecyclerView.setAdapter(feedAdapter);
 
+            //⭐ 무한 스크롤 리스너 추가
+            feedRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
 
-            //서버에서 피드 불러오기
-            loadFeeds();
+                    if (layoutManager != null && !isLoading) {
+                        int visibleItemCount = layoutManager.getChildCount();
+                        int totalItemCount = layoutManager.getItemCount();
+                        int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
+
+                        // 마지막 항목에 도달하면 다음 페이지 호출
+                        if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount
+                                && firstVisibleItemPosition >= 0) {
+                            if (!isLastPage) {
+                                currentPage++;
+                                loadFeeds(false); // 다음 페이지 로드
+                            }
+                        }
+                    }
+                }
+            });
+
+            //⭐ 새로고침 관련 뷰
+            swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+
+            //⭐ 새로고침 동작
+            swipeRefreshLayout.setOnRefreshListener(() -> {
+                currentPage = 0;
+                loadFeeds(true); // true: 새로고침
+            });
+
+
+            loadFeeds(false); //⭐ 초기 로딩
+
         }
     }
 
@@ -84,7 +126,7 @@ public class FeedActivity extends BaseActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (intent != null && intent.getBooleanExtra("refreshFeed", false)) {
-            loadFeeds(); // 서버에서 전체 피드 다시 불러오기
+            loadFeeds(false); //⭐ 서버에서 전체 피드 다시 불러오기
         }
     }
 
@@ -92,7 +134,7 @@ public class FeedActivity extends BaseActivity {
 
 
     //서버에서 피드 목록 불러옴
-    private void loadFeeds() {
+    private void loadFeeds(boolean isRefresh) { //⭐boolean isRefresh 추가
         SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
         String token = prefs.getString("jwt", null);
         int userId = prefs.getInt("userId", -1);
@@ -104,19 +146,31 @@ public class FeedActivity extends BaseActivity {
 
         ApiService apiService = ApiClient.getClient(token).create(ApiService.class);
 
+        isLoading = true; // ⭐ 로딩 시작
+
         // ✅ FeedPageResponse로 수정
         Call<ApiResponse<FeedPageResponse>> call =
-                apiService.getUserFeeds("Bearer " + token, userId, 0, 10);
+                apiService.getUserFeeds("Bearer " + token, userId, currentPage, PAGE_SIZE);  // ⭐ 페이지 수 지정해서 불러옴
 
         call.enqueue(new Callback<ApiResponse<FeedPageResponse>>() {
             @Override
             public void onResponse(Call<ApiResponse<FeedPageResponse>> call,
                                    Response<ApiResponse<FeedPageResponse>> response) {
+
+                isLoading = false; // ⭐ 로딩 끝
+                swipeRefreshLayout.setRefreshing(false); //⭐ 새로고침 종료
+
                 if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
                     FeedPageResponse pageResponse = response.body().getData();
                     List<FeedResponse> feeds = pageResponse.getContent();
 
-                    feedList.clear();
+                    //feedList.clear();⭐ 삭제 필요
+
+                    //⭐ 새로고침이면 기존 리스트 초기화
+                    if (isRefresh) {
+                        currentPage = 0;
+                        feedList.clear(); // 새로고침이면 기존 리스트 초기화
+                    }
 
                     for (FeedResponse feed : feeds) {
                         String firstImage = (feed.getReviewImageUrls() != null && !feed.getReviewImageUrls().isEmpty())
@@ -134,7 +188,9 @@ public class FeedActivity extends BaseActivity {
                                 feed.getCommentCount(),
                                 feed.getLikeCount(),
                                 feed.getTagId(),
-                                feed.getHashtags()
+                                feed.getHashtags(),
+                                feed.getShareUrl(), //⭐추가
+                                feed.getUserId() //⭐추가
                         );
 
                         // ✅ 리뷰ID를 postId로 세팅
@@ -145,6 +201,7 @@ public class FeedActivity extends BaseActivity {
                     }
 
                     feedAdapter.notifyDataSetChanged();
+                    isLastPage = pageResponse.isLast(); // ⭐ 마지막 페이지 여부 업데이트
 
                     // ✅ 페이징 정보도 로그 찍기
                     Log.d("Feed", "불러온 리뷰 개수: " + feeds.size());
@@ -158,6 +215,7 @@ public class FeedActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<ApiResponse<FeedPageResponse>> call, Throwable t) {
+                isLoading = false; // ⭐ 실패해도 로딩 끝
                 Log.e("Feed", "Feed API 실패: " + t.getMessage());
             }
         });

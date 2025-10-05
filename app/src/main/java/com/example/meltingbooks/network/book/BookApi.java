@@ -1,5 +1,7 @@
 package com.example.meltingbooks.network.book;
 
+import com.example.meltingbooks.network.ApiResponse;
+
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -13,8 +15,11 @@ public interface BookApi {
     @GET("/api/books")
     Call<List<Book>> getAllBooks();
 
-    @GET("/api/books/search")
-    Call<List<Book>> searchBooks(@Query("keyword") String keyword);
+    /**@GET("/api/books/search")
+    Call<List<Book>> searchBooks(@Query("q") String keyword); 하단 API로 변경*/
+
+    @GET("/api/books/search") //⭐수정
+    Call<ApiResponse<List<Book>>> searchBooks(@Query("q") String keyword);
 
     //bookId로 책 정보 조회
     @GET("/api/books/{bookId}")
