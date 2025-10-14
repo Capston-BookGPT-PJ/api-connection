@@ -15,6 +15,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -196,7 +197,7 @@ public class AddReadingRecordFragment extends Fragment {
 
     }
 
-    private void updateWeekDates() {
+    /**private void updateWeekDates() {
         LinearLayout container = rootView.findViewById(R.id.week_date_container);
         container.removeAllViews();
 
@@ -243,6 +244,62 @@ public class AddReadingRecordFragment extends Fragment {
         }
 
         //주차 UI 갱신 후 현재 선택 날짜 기록도 자동 불러오기
+        loadLogForSelectedDate();
+    }*/
+    private void updateWeekDates() {
+        LinearLayout container = rootView.findViewById(R.id.week_date_container);
+        container.removeAllViews();
+
+        LocalDate sunday = selectedDate.minusDays(selectedDate.getDayOfWeek().getValue() % 7);
+
+        for (int i = 0; i < 7; i++) {
+            LocalDate date = sunday.plusDays(i);
+
+            // 1️⃣ 셀: weight로 폭 분배, padding 제거
+            FrameLayout cell = new FrameLayout(getContext());
+            LinearLayout.LayoutParams cellParams = new LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    1.0f
+            );
+            cell.setLayoutParams(cellParams);
+
+            // 2️⃣ 고정 크기 TextView (원)
+            TextView textView = new TextView(getContext());
+            int circleSizeInDp = 35;
+            int circleSizeInPx = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP, circleSizeInDp, getResources().getDisplayMetrics()
+            );
+
+            FrameLayout.LayoutParams textParams = new FrameLayout.LayoutParams(
+                    circleSizeInPx, circleSizeInPx
+            );
+            textParams.gravity = Gravity.CENTER;
+            textView.setLayoutParams(textParams);
+
+            textView.setText(String.valueOf(date.getDayOfMonth()));
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+            textView.setGravity(Gravity.CENTER);
+
+            // 선택된 날짜
+            if (date.equals(selectedDate)) {
+                textView.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.bg_selected_date));
+                textView.setTextColor(Color.WHITE);
+            } else {
+                textView.setTextColor(Color.BLACK);
+            }
+
+            textView.setOnClickListener(v -> {
+                selectedDate = date;
+                updateWeekDates();
+                clearInputs();
+                loadLogForSelectedDate();
+            });
+
+            cell.addView(textView);
+            container.addView(cell);
+        }
+
         loadLogForSelectedDate();
     }
 

@@ -142,7 +142,7 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-            <!--달력영역-->
+            <!-- 달력영역 -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/calendar_container"
                 android:layout_width="match_parent"
@@ -160,8 +160,7 @@
                     app:layout_constraintTop_toTopOf="parent"
                     android:layout_marginTop="10dp"
                     app:layout_constraintStart_toStartOf="parent"
-                    android:layout_marginStart="16dp"
-                    />
+                    android:layout_marginStart="16dp" />
 
                 <!-- 월 텍스트 -->
                 <TextView
@@ -177,8 +176,7 @@
                     app:layout_constraintBottom_toBottomOf="@id/btnPrev"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:textColor="@color/black"
-                    />
+                    android:textColor="@color/black" />
 
                 <!-- 다음 달 버튼 -->
                 <ImageButton
@@ -203,25 +201,28 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:padding="10dp">
-                </LinearLayout>
+                    android:layout_marginBottom="4dp"
+                    android:paddingHorizontal="0dp"
+                    android:paddingVertical="6dp"
+                    android:padding="10dp"
+                    />
 
                 <!-- 달력 날짜 영역 -->
+                <!-- 날짜 Grid -->
                 <GridLayout
                     android:id="@+id/calendarGrid"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:columnCount="7"
-                    android:rowCount="6"
-                    android:alignmentMode="alignMargins"
-                    android:useDefaultMargins="true"
+                    android:alignmentMode="alignBounds"
+                    android:useDefaultMargins="false"
+                    android:paddingHorizontal="0dp"
+                    android:paddingBottom="10dp"
                     android:padding="10dp"
                     app:layout_constraintTop_toBottomOf="@id/weekdaysRow"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    />
+                    app:layout_constraintEnd_toEndOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

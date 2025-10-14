@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -155,6 +156,137 @@ public class CalendarContentFragment extends Fragment {
 
     //달력 생성 알고리즘
     private void updateCalendar(View view) {
+        LinearLayout weekdaysRow = view.findViewById(R.id.weekdaysRow);
+        weekdaysRow.removeAllViews();
+
+        String[] weekdays = {"S", "M", "T", "W", "T", "F", "S"};
+        for (int i = 0; i < weekdays.length; i++) {
+            TextView dayLabel = new TextView(getContext());
+            dayLabel.setText(weekdays[i]);
+            dayLabel.setTextSize(14);
+            dayLabel.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams params =
+                    new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+            dayLabel.setLayoutParams(params);
+
+            if (i == 0)
+                dayLabel.setTextColor(Color.parseColor("#FC1F8E"));
+            else if (i == 6)
+                dayLabel.setTextColor(Color.parseColor("#1D9BF0"));
+            else
+                dayLabel.setTextColor(Color.BLACK);
+
+            weekdaysRow.addView(dayLabel);
+        }
+
+        calendarGrid.removeAllViews();
+
+        int year = currentCalendar.get(Calendar.YEAR);
+        int month = currentCalendar.get(Calendar.MONTH);
+
+        java.text.SimpleDateFormat monthFormat =
+                new java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.ENGLISH);
+        textMonth.setText(monthFormat.format(currentCalendar.getTime()));
+
+        Calendar tempCal = Calendar.getInstance();
+        tempCal.set(year, month, 1);
+        int startDayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK) - 1;
+        int maxDay = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH);
+
+        // 빈칸 채우기
+        for (int i = 0; i < startDayOfWeek; i++) {
+            TextView emptyView = new TextView(getContext());
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+            params.width = 0;
+            params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            params.columnSpec = GridLayout.spec(i, 1f);
+            params.setMargins(1, 5, 1, 5); // ✅ 수평/수직 간격 줄임
+            emptyView.setLayoutParams(params);
+            calendarGrid.addView(emptyView);
+        }
+
+        for (int day = 1; day <= maxDay; day++) {
+            // ✅ 각 날짜 셀을 감싸는 ConstraintLayout
+            ConstraintLayout cellLayout = new ConstraintLayout(getContext());
+            GridLayout.LayoutParams cellParams = new GridLayout.LayoutParams();
+            cellParams.width = 0;
+            cellParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            cellParams.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+            cellParams.setMargins(1, 5, 1, 5); // ✅ 수평/수직 간격 줄임
+            cellLayout.setLayoutParams(cellParams);
+
+            // ✅ 날짜 TextView 생성
+            TextView dayView = new TextView(getContext());
+            dayView.setId(View.generateViewId());
+            dayView.setText(String.valueOf(day));
+            dayView.setTextSize(16);
+            dayView.setGravity(Gravity.CENTER);
+            dayView.setTextColor(Color.BLACK);
+
+            // ConstraintLayout 안에 넣기 위한 파라미터
+            /**ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(
+                    0, 0
+            );*/
+
+            // ✅ 원 크기 줄이기
+            int circleSizeInDp = 30; // 원하는 원 크기 (기존보다 작게)
+            int circleSizeInPx = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP, circleSizeInDp, getResources().getDisplayMetrics()
+            );
+
+            ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(
+                    circleSizeInPx, circleSizeInPx
+            );
+
+            // ✅ 정사각형 비율 강제
+            params.dimensionRatio = "1:1";
+            params.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
+            params.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
+            params.topToTop = ConstraintLayout.LayoutParams.PARENT_ID;
+            params.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID;
+            dayView.setLayoutParams(params);
+
+            cellLayout.addView(dayView);
+
+            Calendar thisDate = Calendar.getInstance();
+            thisDate.set(year, month, day);
+
+            // ✅ 선택된 날짜 배경
+            if (thisDate.get(Calendar.YEAR) == selectedDate.get(Calendar.YEAR)
+                    && thisDate.get(Calendar.MONTH) == selectedDate.get(Calendar.MONTH)
+                    && thisDate.get(Calendar.DAY_OF_MONTH) == selectedDate.get(Calendar.DAY_OF_MONTH)) {
+                dayView.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.bg_selected_date));
+
+                dayView.setTextColor(Color.WHITE);
+                selectedDayView = dayView;
+            }
+
+            // ✅ 클릭 이벤트
+            dayView.setOnClickListener(v -> {
+                if (selectedDayView != null) {
+                    selectedDayView.setBackground(null);
+                    selectedDayView.setTextColor(Color.BLACK);
+                }
+
+                selectedDayView = (TextView) v;
+                selectedDayView.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.bg_selected_date));
+                selectedDayView.setTextColor(Color.WHITE);
+
+                selectedDate.set(year, month, Integer.parseInt(dayView.getText().toString()));
+
+                SimpleDateFormat format = new SimpleDateFormat("M/d (E)", Locale.KOREA);
+                TextView goalByDate = getActivity().findViewById(R.id.goal_by_date);
+                if (goalByDate != null) goalByDate.setText(format.format(selectedDate.getTime()));
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREA);
+                loadLogsByDate(sdf.format(selectedDate.getTime()));
+            });
+
+            calendarGrid.addView(cellLayout);
+        }
+    }
+
+    /**private void updateCalendar(View view) {
         // 요일 표시
         LinearLayout weekdaysRow = view.findViewById(R.id.weekdaysRow);
         weekdaysRow.removeAllViews();
@@ -273,7 +405,7 @@ public class CalendarContentFragment extends Fragment {
             calendarGrid.addView(dayView);
         }
 
-    }
+    }*/
 
     private List<BookListHelper.BookItem> bookItems = new ArrayList<>();
 
