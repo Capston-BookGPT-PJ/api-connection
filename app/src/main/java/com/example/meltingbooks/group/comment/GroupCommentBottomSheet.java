@@ -23,6 +23,10 @@ import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.ApiService;
 import com.example.meltingbooks.network.feed.CommentRequest;
 import com.example.meltingbooks.network.feed.CommentResponse;
+import com.example.meltingbooks.network.group.GroupApi;
+import com.example.meltingbooks.network.group.GroupCommentPageResponse;
+import com.example.meltingbooks.network.group.GroupCommentRequest;
+import com.example.meltingbooks.network.group.GroupCommentResponse;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
@@ -40,6 +44,7 @@ public class GroupCommentBottomSheet extends BottomSheetDialogFragment {
     private OnCommentAddedListener onCommentAddedListener;
 
     private int postId;
+    private int groupId;
     private String postType;
 
     public interface OnCommentAddedListener {
@@ -66,9 +71,10 @@ public class GroupCommentBottomSheet extends BottomSheetDialogFragment {
         return dialog;
     }
 
-    public static GroupCommentBottomSheet newInstance(int postId, String postType) {
+    public static GroupCommentBottomSheet newInstance(int groupId, int postId, String postType) {
         GroupCommentBottomSheet fragment = new GroupCommentBottomSheet();
         Bundle args = new Bundle();
+        args.putInt("groupId", groupId);
         args.putInt("postId", postId);
         args.putString("postType", postType);
         fragment.setArguments(args);
@@ -79,6 +85,7 @@ public class GroupCommentBottomSheet extends BottomSheetDialogFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
+            groupId = getArguments().getInt("groupId");
             postId = getArguments().getInt("postId");
             postType = getArguments().getString("postType");
         }
@@ -100,7 +107,7 @@ public class GroupCommentBottomSheet extends BottomSheetDialogFragment {
         commentAdapter = new GroupCommentAdapter(getContext(), commentList);
         commentRecyclerView.setAdapter(commentAdapter);
 
-        if ("feed".equals(postType)) {
+        if ("group".equals(postType)) {
             loadCommentsFromServer();
         } else {}
         // 댓글 입력 부분 설정
@@ -116,41 +123,39 @@ public class GroupCommentBottomSheet extends BottomSheetDialogFragment {
                 int userId = prefs.getInt("userId", -1); // 기본값 -1
                 if (token == null) return;
 
-                ApiService apiService = ApiClient.getClient(token).create(ApiService.class);
+                //ApiService apiService = ApiClient.getClient(token).create(ApiService.class);
+                GroupApi groupApi = ApiClient.getClient(token).create(GroupApi.class);
 
-                CommentRequest request = new CommentRequest(commentText);
+                GroupCommentRequest request = new GroupCommentRequest(commentText);
 
-                apiService.postComment("Bearer " + token, userId, postId, request)
-                        .enqueue(new Callback<ApiResponse<CommentResponse>>() {
+                groupApi.createGroupComment("Bearer " + token, groupId, postId, request)
+                        .enqueue(new Callback<ApiResponse<GroupCommentResponse>>() {
                             @Override
-                            public void onResponse(Call<ApiResponse<CommentResponse>> call, Response<ApiResponse<CommentResponse>> response) {
+                            public void onResponse(Call<ApiResponse<GroupCommentResponse>> call, Response<ApiResponse<GroupCommentResponse>> response) {
                                 if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                                    CommentResponse newComment = response.body().getData();
+                                    GroupCommentResponse newComment = response.body().getData();
 
-                                    // 리스트에 추가 (GroupCommentItem 으로 변환)
                                     commentList.add(new GroupCommentItem(
                                             newComment.getNickname(),
                                             newComment.getContent(),
-                                            newComment.getFormattedCreatedAt(),
-                                            newComment.getUserProfileImage()
+                                            newComment.getProfileImageUrl(),
+                                            newComment.getFormattedCreatedAt()
                                     ));
                                     commentAdapter.notifyItemInserted(commentList.size() - 1);
-
-                                    // 입력창 비우기
+                                    commentRecyclerView.scrollToPosition(commentList.size() - 1); // ✅ 맨 아래로 스크롤
                                     commentEditText.setText("");
 
-                                    // 콜백 호출 (댓글 수 갱신)
                                     if (onCommentAddedListener != null) {
                                         onCommentAddedListener.onCommentAdded(commentList.size());
                                     }
                                 } else {
-                                    Log.e("Comment", "댓글 등록 실패: " + response.code());
+                                    Log.e("GroupComment", "댓글 등록 실패: " + response.code());
                                 }
                             }
 
                             @Override
-                            public void onFailure(Call<ApiResponse<CommentResponse>> call, Throwable t) {
-                                Log.e("Comment", "댓글 등록 에러: " + t.getMessage());
+                            public void onFailure(Call<ApiResponse<GroupCommentResponse>> call, Throwable t) {
+                                Log.e("GroupComment", "댓글 등록 에러: " + t.getMessage());
                             }
                         });
             }
@@ -165,38 +170,39 @@ public class GroupCommentBottomSheet extends BottomSheetDialogFragment {
         String token = prefs.getString("jwt", null);
         if (token == null) return;
 
-        ApiService apiService = ApiClient.getClient(token).create(ApiService.class);
+        //ApiService apiService = ApiClient.getClient(token).create(ApiService.class);
+        GroupApi groupApi = ApiClient.getClient(token).create(GroupApi.class);
 
-        apiService.getComments("Bearer " + token, postId)
-                .enqueue(new Callback<ApiResponse<List<CommentResponse>>>() {
+        groupApi.getGroupComments("Bearer " + token, groupId, postId, 0, 20)
+                .enqueue(new Callback<ApiResponse<GroupCommentPageResponse>>() {
                     @Override
-                    public void onResponse(Call<ApiResponse<List<CommentResponse>>> call, Response<ApiResponse<List<CommentResponse>>> response) {
+                    public void onResponse(Call<ApiResponse<GroupCommentPageResponse>> call, Response<ApiResponse<GroupCommentPageResponse>> response) {
                         if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                             commentList.clear();
 
-                            for (CommentResponse comment : response.body().getData()) {
-                                // 서버에서 내려주는 authorName, content, createdAt, profileImageUrl 사용
+                            for (GroupCommentResponse comment : response.body().getData().getContent()) {
                                 GroupCommentItem item = new GroupCommentItem(
                                         comment.getNickname(),
                                         comment.getContent(),
-                                        comment.getFormattedCreatedAt(),
-                                        comment.getUserProfileImage() // 서버에서 내려주면
+                                        comment.getProfileImageUrl(),
+                                        comment.getFormattedCreatedAt() // 서버에서 내려주는 필드 사용
                                 );
                                 commentList.add(item);
+
                             }
 
                             commentAdapter.notifyDataSetChanged();
                         } else {
                             Log.e("GroupComment", "댓글 불러오기 실패: " + (response.body() != null ? response.body().getError() : "null"));
                         }
-
                     }
 
-            @Override
-            public void onFailure(Call<ApiResponse<List<CommentResponse>>> call, Throwable t) {
-                Log.e("GroupComment", "네트워크 오류: " + t.getMessage());
-            }
-        });
+                    @Override
+                    public void onFailure(Call<ApiResponse<GroupCommentPageResponse>> call, Throwable t) {
+                        Log.e("GroupComment", "네트워크 오류: " + t.getMessage());
+                    }
+                });
     }
+
 
 }

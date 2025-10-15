@@ -1,7 +1,8 @@
 package com.example.meltingbooks.network.group;
 
 public class UpdatePostRequest {
-    private String postType;   // NOTICE, GOAL, REVIEW, RECOMMENDED 등
+    // postType은 항상 REVIEW로 고정
+    private final String postType = "REVIEW";
     private String title;
     private String content;
     private String imageUrl;   // 이미지가 없으면 null
@@ -10,8 +11,7 @@ public class UpdatePostRequest {
     public UpdatePostRequest() {}
 
     // 전체 생성자
-    public UpdatePostRequest(String postType, String title, String content, String imageUrl) {
-        this.postType = postType;
+    public UpdatePostRequest(String title, String content, String imageUrl) {
         this.title = title;
         this.content = content;
         this.imageUrl = imageUrl;
@@ -20,10 +20,6 @@ public class UpdatePostRequest {
     // Getter & Setter
     public String getPostType() {
         return postType;
-    }
-
-    public void setPostType(String postType) {
-        this.postType = postType;
     }
 
     public String getTitle() {

@@ -1,5 +1,7 @@
 package com.example.meltingbooks.network.group;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -32,6 +34,8 @@ public class GroupFeedResponse implements Serializable {
         private String userProfileImage;
         private String content;
         private int rating;
+
+        @SerializedName("imageUrls")  // 서버 필드 이름
         private List<String> reviewImageUrls;
         private String createdAt;
         private int likeCount;

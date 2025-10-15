@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
 
 import java.util.List;
@@ -27,6 +28,18 @@ public class BookListHelper {
             this.imageResId = imageResId;
             this.isSelected = isSelected;
         }
+
+        public BookItem(int imageResId, boolean isRead, boolean isSelected) {
+            this.imageResId = imageResId;
+            this.isRead = isRead;
+            this.isSelected = isSelected;
+        }
+
+        public BookItem(String imageUrl, boolean isRead, boolean isSelected) {
+            this.imageUrl = imageUrl;
+            this.isRead = isRead;
+            this.isSelected = isSelected;
+        }
     }
 
     public static void setupBooks(Context context, ViewGroup container, List<BookItem> bookItems, boolean showOverlayAndSelection) {
@@ -40,11 +53,19 @@ public class BookListHelper {
             View overlayRead = itemView.findViewById(R.id.overlay_read);
             ImageView awardIcon = itemView.findViewById(R.id.award_icon);
 
-            bookImage.setImageResource(book.imageResId);
+            //bookImage.setImageResource(book.imageResId);
+            if (book.imageUrl != null) {
+                Glide.with(context)
+                        .load(book.imageUrl)
+                        .placeholder(R.drawable.book_image) // 책 기본 이미지
+                        .into(bookImage);
+            } else {
+                bookImage.setImageResource(book.imageResId);
+            }
 
             if (book.isRead) {
                 awardIcon.setVisibility(View.VISIBLE);
-                overlayRead.setVisibility(showOverlayAndSelection ? View.VISIBLE : View.GONE);
+                overlayRead.setVisibility(View.GONE);
             } else {
                 awardIcon.setVisibility(View.GONE);
                 overlayRead.setVisibility(View.GONE);

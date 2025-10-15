@@ -21,6 +21,7 @@ public class FeedResponse  implements Serializable {
     private Integer bookId;
     private String bookTitle;
     private String nickname;
+    private String shareUrl; //⭐추가
 
 
 
@@ -139,7 +140,11 @@ public class FeedResponse  implements Serializable {
         this.userProfileImage = userProfileImage;
     }
 
+    public String getShareUrl(){return shareUrl;} //⭐추가
 
+    public void setShareUrl(String shareUrl) { //⭐추가
+        this.shareUrl = shareUrl;
+    }
 
 
 }

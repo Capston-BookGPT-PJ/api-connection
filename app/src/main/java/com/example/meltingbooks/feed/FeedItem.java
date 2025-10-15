@@ -38,6 +38,8 @@ public class FeedItem implements Serializable {
 
     private Integer rating;
 
+    private String shareUrl; //⭐추가
+
 
     public FeedItem(String userName, String reviewContent, String reviewDate,
                     String imageUrl, String profileImageUrl, Integer bookId,
@@ -68,6 +70,7 @@ public class FeedItem implements Serializable {
         this.tagId = tagId;
         this.hashtags = hashtags;
     }
+
 
     //기존 생성자 (댓글/좋아요 없는 버전)도 유지
     public FeedItem(String userName, String reviewContent, String reviewDate,
@@ -105,6 +108,23 @@ public class FeedItem implements Serializable {
         this.rating = rating;
     }
 
+    //⭐ 공유 URL, userId 추가 버전
+    public FeedItem(String userName, String reviewContent, String reviewDate,
+                    String imageUrl, String profileImageUrl, Integer bookId,
+                    int commentCount, int likeCount, String tagId, List<String> hashtags, String shareUrl, int userId) {
+        this.userName = userName;
+        this.reviewContent = reviewContent;
+        this.reviewDate = reviewDate;
+        this.imageUrl = imageUrl;
+        this.profileImageUrl = profileImageUrl;
+        this.bookId = bookId;
+        this.commentCount = commentCount;
+        this.likeCount = likeCount;
+        this.tagId = tagId;
+        this.hashtags = hashtags;
+        this.shareUrl = shareUrl;
+        this.userId = userId;
+    }
     //getter and setter
     public int getUserId() {
         return userId;
@@ -219,6 +239,11 @@ public class FeedItem implements Serializable {
 
     public void setRating(Integer hashtags) {
         this.rating = rating;
+    }
+    public String getShareUrl(){return shareUrl;} //⭐추가
+
+    public void setShareUrl(String shareUrl) { //⭐추가
+        this.shareUrl = shareUrl;
     }
 
 }

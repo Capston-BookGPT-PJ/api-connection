@@ -1,7 +1,8 @@
 package com.example.meltingbooks.network.group;
 
 public class CreatePostRequest {
-    private String postType;   // NOTICE, GOAL, REVIEW, RECOMMENDED 등
+    // postType은 항상 REVIEW
+    private final String postType = "REVIEW";
     private String title;
     private String content;
 
@@ -9,8 +10,7 @@ public class CreatePostRequest {
     public CreatePostRequest() {}
 
     // 전체 생성자
-    public CreatePostRequest(String postType, String title, String content) {
-        this.postType = postType;
+    public CreatePostRequest(String title, String content) {
         this.title = title;
         this.content = content;
     }
@@ -18,10 +18,6 @@ public class CreatePostRequest {
     // Getter & Setter
     public String getPostType() {
         return postType;
-    }
-
-    public void setPostType(String postType) {
-        this.postType = postType;
     }
 
     public String getTitle() {

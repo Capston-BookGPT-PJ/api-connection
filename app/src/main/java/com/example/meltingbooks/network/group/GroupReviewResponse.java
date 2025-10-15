@@ -1,5 +1,7 @@
 package com.example.meltingbooks.network.group;
 
+import com.example.meltingbooks.group.menu.GroupMemberItem;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -47,5 +49,7 @@ public class GroupReviewResponse implements Serializable {
         return createdAt;
     }
 
-
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
+    }
 }

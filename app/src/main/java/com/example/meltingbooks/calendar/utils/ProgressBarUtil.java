@@ -59,6 +59,14 @@ public class ProgressBarUtil {
         progressFillView.setLayoutParams(params);
     }
 
+    public static void setProgressBarWithPx(View progressFillView, float progressPercent, float totalWidthInPx) {
+        int fillWidthInPx = Math.round(totalWidthInPx * progressPercent / 100f);
+
+        ViewGroup.LayoutParams params = progressFillView.getLayoutParams();
+        params.width = fillWidthInPx;
+        progressFillView.setLayoutParams(params);
+    }
+
     // 원형 그래프용 (Custom View)
     public static void setCircularProgress(CircularProgressView progressView, float progressPercent) {
         if (progressView != null) {
@@ -66,7 +74,7 @@ public class ProgressBarUtil {
         }
     }
 
-    private static int dpToPx(Context context, int dp) {
+    public  static int dpToPx(Context context, int dp) {
         float density = context.getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
     }

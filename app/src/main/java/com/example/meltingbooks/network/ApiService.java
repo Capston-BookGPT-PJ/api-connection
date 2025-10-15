@@ -10,6 +10,7 @@ import com.example.meltingbooks.network.feed.ReviewRequest;
 import com.example.meltingbooks.network.feed.ReviewResponse;
 import com.example.meltingbooks.network.feed.ReviewUpdateRequest;
 import com.example.meltingbooks.network.feed.UserReviewResponse;
+import com.example.meltingbooks.network.profile.BadgeCatalogResponse;
 import com.example.meltingbooks.network.profile.UpdateUserRequest;
 import com.example.meltingbooks.network.profile.UserResponse;
 //추가
@@ -178,5 +179,12 @@ public interface ApiService {
              //@Query("page") int page,
              //@Query("size") int size
      );
+
+    // 배지 카탈로그 조회
+    @GET("/api/badges/catalog")
+    Call<ApiResponse<List<BadgeCatalogResponse>>> getBadgeCatalog(
+            @Header("Authorization") String token,
+            @Query("userId") int userId
+    );
 
 }

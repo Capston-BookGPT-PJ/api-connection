@@ -9,9 +9,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.meltingbooks.calendar.CalendarActivity;
 import com.example.meltingbooks.feed.FeedActivity;
-import com.example.meltingbooks.profile.ProfileActivity;
 
 public class GoogleLoginCallbackActivity extends AppCompatActivity {
 
@@ -24,7 +22,7 @@ public class GoogleLoginCallbackActivity extends AppCompatActivity {
             Log.d("CALLBACK", "Redirect URI: " + uri.toString());
 
             // ✅ 백엔드가 token, userID 같은 값 붙여서 redirect 해준다고 가정
-            String token = uri.getQueryParameter("token");
+            String token = uri.getQueryParameter("accessToken");
             String userId = uri.getQueryParameter("userId");
 
             if (token != null) {

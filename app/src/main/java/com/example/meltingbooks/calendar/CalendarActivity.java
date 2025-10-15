@@ -2,8 +2,9 @@ package com.example.meltingbooks.calendar;
 
 import android.os.Bundle;
 
-import com.example.meltingbooks.base.BaseActivity;
 import com.example.meltingbooks.R;
+import com.example.meltingbooks.base.BaseActivity;
+import com.example.meltingbooks.calendar.aichat.AiChatFragment;
 import com.example.meltingbooks.calendar.record.AddReadingRecordFragment;
 
 
@@ -22,6 +23,15 @@ public class CalendarActivity extends BaseActivity {
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, new AddReadingRecordFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
+
+        //fragment_container
+        findViewById(R.id.ai_button).setOnClickListener(v -> {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new AiChatFragment())
                     .addToBackStack(null)
                     .commit();
         });

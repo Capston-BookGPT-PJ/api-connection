@@ -1,6 +1,7 @@
 package com.example.meltingbooks.network.group;
 
 import com.example.meltingbooks.network.ApiResponse;
+import com.example.meltingbooks.network.feed.CommentResponse;
 
 import java.util.List;
 
@@ -127,6 +128,91 @@ public interface GroupApi {
             @Header("Authorization") String token,
             @Path("groupId") int groupId,
             @Path("postId") int postId
+    );
+
+    // 그룹 댓글 작성
+    @POST("/api/groups/{groupId}/posts/{postId}/comments")
+    Call<ApiResponse<GroupCommentResponse>> createGroupComment(
+            @Header("Authorization") String token,
+            @Path("groupId") int groupId,
+            @Path("postId") int postId,
+            @Body GroupCommentRequest groupCommentRequest
+    );
+
+    // 그룹 댓글 수정
+    @PUT("/api/groups/{groupId}/posts/{postId}/comments/{commentId}")
+    Call<ApiResponse<GroupCommentResponse>> updateGroupComment(
+            @Header("Authorization") String token,
+            @Path("groupId") int groupId,
+            @Path("postId") int postId,
+            @Path("commentId") int commentId,
+            @Body GroupCommentRequest groupCommentRequest
+    );
+
+    // 그룹 댓글 삭제
+    @DELETE("/api/groups/{groupId}/posts/{postId}/comments/{commentId}")
+    Call<ApiResponse<Void>> deleteGroupComment(
+            @Header("Authorization") String token,
+            @Path("groupId") int groupId,
+            @Path("postId") int postId,
+            @Path("commentId") int commentId
+    );
+
+    // 그룹 댓글 목록 조회 (페이징)
+    @GET("/api/groups/{groupId}/posts/{postId}/comments")
+    Call<ApiResponse<GroupCommentPageResponse>> getGroupComments(
+            @Header("Authorization") String token,
+            @Path("groupId") int groupId,
+            @Path("postId") int postId,
+            @Query("page") int page,
+            @Query("size") int size
+    );
+
+    // 🔹 1. 그룹 가입 요청 리스트 조회
+    @GET("/api/groups/{groupId}/join-requests")
+    Call<GroupJoinRequestResponse> getJoinRequests(
+            @Header("Authorization") String token,
+            @Path("groupId") int groupId,
+            @Query("page") int page,
+            @Query("size") int size
+    );
+
+    // 🔹 2. 그룹장 - 가입 요청 승인
+    @POST("/api/groups/{groupId}/accept")
+    Call<GroupCommonResponse> acceptJoinRequest(
+            @Header("Authorization") String token,
+            @Path("groupId") int groupId,
+            @Query("memberUserId") int memberUserId
+    );
+
+    // 🔹 3. 그룹장 - 가입 요청 거절
+    @POST("/api/groups/{groupId}/reject")
+    Call<GroupCommonResponse> rejectJoinRequest(
+            @Header("Authorization") String token,
+            @Path("groupId") int groupId,
+            @Query("memberUserId") int memberUserId
+    );
+
+    // 🔹 4. 그룹장 권한 위임
+    @PUT("/api/groups/{groupId}/delegate-owner")
+    Call<GroupCommonResponse> delegateGroupOwner(
+            @Header("Authorization") String token,
+            @Path("groupId") int groupId,
+            @Query("newOwnerId") int newOwnerId
+    );
+
+    @POST("/api/groups/{groupId}/posts")
+    Call<ApiResponse<GroupReviewResponse>>  createNotice(
+            @Header("Authorization") String token,
+            @Path("groupId") int groupId,
+            @Body CreateGroupNotice body
+    );
+
+    @POST("/api/groups/{groupId}/posts")
+    Call<ApiResponse<GroupReviewResponse>> createRecommend(
+            @Header("Authorization") String token,
+            @Path("groupId") int groupId,
+            @Body CreateGroupRecommend body
     );
 
 }

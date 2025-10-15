@@ -48,18 +48,25 @@ public class LoginActivity extends AppCompatActivity {
         findAccountText = findViewById(R.id.findAccount);
 
         // 카카오 로그인 버튼 클릭 이벤트
-        kakaoLoginBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(LoginActivity.this, "카카오 로그인 클릭", Toast.LENGTH_SHORT).show();
-                // TODO: 카카오 로그인 로직 구현
-                Intent intent = new Intent(LoginActivity.this, FeedActivity.class);
-                startActivity(intent);
-            }
+        kakaoLoginBtn.setOnClickListener(v -> {
+            String loginUrl = "http://meltingbooks.o-r.kr:8080/auth/KAKAO";
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(loginUrl));
+            startActivity(intent);
+
+            // 현재 액티비티는 바로 닫기
+            finish();
         });
 
-        // 소셜 로그인 클릭 이벤트
-        naverLoginBtn.setOnClickListener(v -> Toast.makeText(this, "네이버 로그인 클릭", Toast.LENGTH_SHORT).show());
+
+        // 네이버 로그인 클릭 이벤트
+        naverLoginBtn.setOnClickListener(v -> {
+            String loginUrl = "http://meltingbooks.o-r.kr:8080/auth/NAVER";
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(loginUrl));
+            startActivity(intent);
+
+            // 현재 액티비티는 바로 닫기
+            finish();
+        });
 
         //구글 로그인
         googleLoginBtn.setOnClickListener(v -> {
@@ -74,8 +81,8 @@ public class LoginActivity extends AppCompatActivity {
         // 하단 링크 클릭 이벤트
         signupText.setOnClickListener(v -> {
             Toast.makeText(this, "회원가입 클릭", Toast.LENGTH_SHORT).show();
-            // TODO: 회원가입 화면으로 이동
-            Intent intent = new Intent(LoginActivity.this, FeedActivity.class);
+            // 회원가입 화면으로 이동
+            Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
             startActivity(intent);
         });
 

@@ -33,6 +33,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.bumptech.glide.Glide;
+import com.example.meltingbooks.feed.FeedActivity;
 import com.example.meltingbooks.feed.FeedWriteActivity;
 import com.example.meltingbooks.group.GroupFeedActivity;
 import com.example.meltingbooks.group.GroupFeedItem;
@@ -85,16 +87,11 @@ public class GroupWriteActivity extends AppCompatActivity {
     private static final int REQUEST_PERMISSION_CODE = 1001;
 
     private EditText etInput, etInputTitle;
-    private EditText postTitle,goalTitle, recommendTitle, groupNotiTitle, etPostContent, etGoalContent, etRecommendContent, etNotiContent;
     private ImageView micImageView, summarizingImageView;
     private ImageView imageView;
     private ImageButton btnRecord, btnAddFile, btnSummarize, btnUpload;
 
-    private Spinner categorySpinner;
-    private LinearLayout postLayout;
-    private LinearLayout goalLayout;
-    private LinearLayout recommendLayout;
-    private LinearLayout groupNotiLayout;
+    private LinearLayout discussionLayout;
     private TextView textHint;
 
     private SpeechRecognizer speechRecognizer;
@@ -152,34 +149,19 @@ public class GroupWriteActivity extends AppCompatActivity {
         btnAddFile = findViewById(R.id.btnAddFile);
         btnSummarize = findViewById(R.id.btnSummarize);
         btnUpload = findViewById(R.id.btnUpload);
-        categorySpinner = findViewById(R.id.categorySpinner);
 
-        postLayout = findViewById(R.id.postLayout);
-        goalLayout = findViewById(R.id.goalLayout);
-        recommendLayout = findViewById(R.id.recommendLayout);
-        groupNotiLayout = findViewById(R.id.groupNotiLayout);
 
-        textHint = findViewById(R.id.textHint);
-
-        postTitle = findViewById(R.id.postTitle);
-        etPostContent = findViewById(R.id.etPostContent);
-
-        goalTitle = findViewById(R.id.goalTitle);
-        etGoalContent = findViewById(R.id.etGoalContent);
-
-        recommendTitle = findViewById(R.id.recommendTitle);
-        etRecommendContent = findViewById(R.id.etRecommendContent);
-
-        groupNotiTitle = findViewById(R.id.groupNotiTitle);
-        etNotiContent = findViewById(R.id.etNotiContent);
+        discussionLayout = findViewById(R.id.discussionLayout);
+        etInputTitle = findViewById(R.id.discussionTitle);
+        etInput = findViewById(R.id.discussionContent);
 
 
 
         //게시글 수정 모드
-        Intent intent = getIntent();
-        isEdit = intent.getBooleanExtra("isEdit", false);
-        postId = intent.getIntExtra("postId", -1);
-        groupId = intent.getIntExtra("groupId", -1);
+        Intent editIntent = getIntent();
+        isEdit = editIntent.getBooleanExtra("isEdit", false);
+        postId = editIntent.getIntExtra("postId", -1);
+        groupId = editIntent.getIntExtra("groupId", -1);
 
         if (isEdit && postId != -1) {
             loadPostData(groupId, postId); // 서버에서 기존 리뷰 데이터 가져오기
@@ -190,12 +172,8 @@ public class GroupWriteActivity extends AppCompatActivity {
 
         // 권한 체크
         checkPermissions();
+        setupImagePicker();;
 
-        // 이미지 선택기 설정
-        setupImagePicker();
-
-        // 스피너 설정 (카테고리별 레이아웃 토글)
-        setupSpinner();
 
         // 요약하기 버튼 클릭 리스너
         btnSummarize.setOnClickListener(v -> {
@@ -207,163 +185,6 @@ public class GroupWriteActivity extends AppCompatActivity {
             // 텍스트를 요약하는 로직
             String inputText = etInput.getText().toString();
             callAPI(inputText);  // ChatGPT API 호출
-        });
-
-
-    }
-    private void updateEtInput(String category) {
-        switch (category) {
-            case "감상문 공유":
-                etInput = etPostContent;
-                etInputTitle = postTitle;
-                break;
-            case "독서 목표 공유":
-                etInput = etGoalContent;
-                etInputTitle = goalTitle;
-                break;
-            case "책 추천":
-                etInput = etRecommendContent;
-                etInputTitle = recommendTitle;
-                break;
-            case "공지 사항":
-                etInput = etNotiContent;
-                etInputTitle = groupNotiTitle;
-                break;
-            default:
-                etInput = null;
-                etInputTitle = null;
-                break;
-        }
-    }
-
-    private boolean isSpinnerInitialized = false;
-
-    private void setupSpinner() {
-
-        // 문자열 배열 리소스를 가져와서 Spinner에 연결
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                this,
-                R.array.groupPost_categories,
-                R.layout.spinner_item  // 커스텀 일반 아이템 레이아웃
-        );
-
-        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);  // 커스텀 드롭다운 아이템 레이아웃
-
-        categorySpinner.setAdapter(adapter);
-
-
-        categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedCategory = parent.getItemAtPosition(position).toString();
-                /*
-                // 선택된 카테고리에 맞게 레이아웃 보여주기
-                switch (position) {
-                    case 0:
-                        postLayout.setVisibility(View.GONE);
-                        goalLayout.setVisibility(View.GONE);
-                        recommendLayout.setVisibility(View.GONE);
-                        groupNotiLayout.setVisibility(View.GONE);
-                        textHint.setVisibility(View.VISIBLE);
-                        break;
-                    case 1:
-                        postLayout.setVisibility(View.VISIBLE);
-                        goalLayout.setVisibility(View.GONE);
-                        recommendLayout.setVisibility(View.GONE);
-                        groupNotiLayout.setVisibility(View.GONE);
-                        textHint.setVisibility(View.GONE);
-                        break;
-                    case 2:
-                        postLayout.setVisibility(View.GONE);
-                        goalLayout.setVisibility(View.VISIBLE);
-                        recommendLayout.setVisibility(View.GONE);
-                        groupNotiLayout.setVisibility(View.GONE);
-                        textHint.setVisibility(View.GONE);
-                        break;
-                    case 3:
-                        postLayout.setVisibility(View.GONE);
-                        goalLayout.setVisibility(View.GONE);
-                        recommendLayout.setVisibility(View.VISIBLE);
-                        groupNotiLayout.setVisibility(View.GONE);
-                        textHint.setVisibility(View.GONE);
-                        break;
-                    case 4:
-                        postLayout.setVisibility(View.GONE);
-                        goalLayout.setVisibility(View.GONE);
-                        recommendLayout.setVisibility(View.GONE);
-                        groupNotiLayout.setVisibility(View.VISIBLE);
-                        textHint.setVisibility(View.GONE);
-                        break;
-                }*/
-                // 선택된 카테고리에 따라 레이아웃 보이기
-                postLayout.setVisibility(position == 1 ? View.VISIBLE : View.GONE);
-                goalLayout.setVisibility(position == 2 ? View.VISIBLE : View.GONE);
-                recommendLayout.setVisibility(position == 3 ? View.VISIBLE : View.GONE);
-                groupNotiLayout.setVisibility(position == 4 ? View.VISIBLE : View.GONE);
-                textHint.setVisibility(position == 0 ? View.VISIBLE : View.GONE);
-
-
-                updateEtInput(selectedCategory);
-                // EditText 클릭 및 텍스트 감지 리스너 설정
-                setupEditTextListeners();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                postLayout.setVisibility(View.GONE);
-                goalLayout.setVisibility(View.GONE);
-                recommendLayout.setVisibility(View.GONE);
-                groupNotiLayout.setVisibility(View.GONE);
-            }
-
-        });
-
-    }
-
-    private void setupEditTextListeners() {
-        if (etInput == null) return;
-
-        etInput.setOnClickListener(v -> {
-            if (isKeyboardVisible) {
-                hideKeyboard();
-            } else {
-                etInput.requestFocus();
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.showSoftInput(etInput, InputMethodManager.SHOW_IMPLICIT);
-            }
-            isKeyboardVisible = !isKeyboardVisible;
-        });
-
-        etInput.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.length() >= 5) {
-                    btnSummarize.setVisibility(View.VISIBLE);
-                } else {
-                    btnSummarize.setVisibility(View.GONE);
-                }
-            }
-
-            @Override public void afterTextChanged(Editable s) {}
-        });
-    }
-
-    private void setupImagePicker() {
-        imagePickerLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        selectedImageUri = result.getData().getData();
-                        imageView.setImageURI(selectedImageUri);
-                    }
-                });
-
-        btnAddFile.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.setType("image/*");
-            imagePickerLauncher.launch(intent);
         });
 
         /// RecognizerIntent 생성
@@ -398,11 +219,6 @@ public class GroupWriteActivity extends AppCompatActivity {
         // --- 게시글 업로드 / 수정 버튼 ---
         btnUpload.setOnClickListener(v -> {
 
-            if (etInputTitle == null || etInput == null) {
-                Toast.makeText(this, "게시글 타입을 선택하세요.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
             String title = etInputTitle.getText().toString().trim();
             String content = etInput.getText().toString().trim();
 
@@ -415,23 +231,6 @@ public class GroupWriteActivity extends AppCompatActivity {
                 return;
             }
 
-            // 게시글 타입 결정
-            String postType = "POST";
-            switch (categorySpinner.getSelectedItemPosition()) {
-                case 1:
-                    postType = "POST";
-                    break;
-                case 2:
-                    postType = "GOAL_SHARE";
-                    break;
-                case 3:
-                    postType = "RECOMMENDED_BOOK";
-                    break;
-                case 4:
-                    postType = "NOTICE";
-                    break;
-            }
-
             SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
             token = prefs.getString("jwt", null);
             int userId = prefs.getInt("userId", -1);
@@ -441,21 +240,15 @@ public class GroupWriteActivity extends AppCompatActivity {
                 return;
             }
 
-
             GroupApi groupApi = ApiClient.getClient(token).create(GroupApi.class);
             Call<ApiResponse<GroupReviewResponse>> call;
 
             if (isEdit) {
                 String imageUrl = selectedImageUri != null ? selectedImageUri.toString() : null;
-                UpdatePostRequest updateRequest = new UpdatePostRequest(
-                        postType, title, content,
-                        imageUrl
-                );
+                UpdatePostRequest updateRequest = new UpdatePostRequest(title, content, imageUrl);
                 call = groupApi.updatePost("Bearer " + token, groupId, postId, userId, updateRequest);
             } else {
-                CreatePostRequest createRequest = new CreatePostRequest(
-                        postType, title, content
-                );
+                CreatePostRequest createRequest = new CreatePostRequest(title, content);
                 call = groupApi.createPost("Bearer " + token, groupId, createRequest);
             }
 
@@ -464,44 +257,19 @@ public class GroupWriteActivity extends AppCompatActivity {
                 public void onResponse(Call<ApiResponse<GroupReviewResponse>> call, Response<ApiResponse<GroupReviewResponse>> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                         GroupReviewResponse postData = response.body().getData();
-                        Toast.makeText(GroupWriteActivity.this, isEdit ? "게시글 수정 완료" : "게시글 작성 완료", Toast.LENGTH_SHORT).show();
+                        int createdPostId = postData.getId();
 
                         if (selectedImageUri != null) {
-                            uploadPostImage(groupApi, token, postId, selectedImageUri);
+                            uploadPostImage(groupApi, token, createdPostId, selectedImageUri, postData);
                         } else {
-                            Toast.makeText(GroupWriteActivity.this, isEdit ? "게시글 수정 완료!" : "리뷰 작성 완료!", Toast.LENGTH_SHORT).show();
-
-
-                            if (isEdit) {
-                                // 그룹용 Post 객체 생성
-                                GroupFeedResponse.Post updatedPost = new GroupFeedResponse.Post();
-                                updatedPost.setPostType(postData.getPostType());          // postType
-                                updatedPost.setTitle(postData.getTitle());                // title
-                                updatedPost.setContent(postData.getContent());            // content
-                                updatedPost.setReviewImageUrls(postData.getImageUrls());  // 이미지 리스트
-                                updatedPost.setCreatedAt(postData.getCreatedAt());
-
-                                // 런처에 전달
-                                Intent resultIntent = new Intent();
-                                resultIntent.putExtra("updatedPost", updatedPost);
-                                resultIntent.putExtra("groupId", groupId); // ✅ 여기에 넣어야 함
-                                resultIntent.putExtra("postId", postId);   // ✅ 여기에 넣어야 함
-                                setResult(RESULT_OK, resultIntent);
-                                finish();
-
-                            } else {
-                                // 생성 모드: 그룹 피드 갱신 신호
-                                Intent intent = new Intent(GroupWriteActivity.this, GroupFeedActivity.class);
-                                intent.putExtra("refreshFeed", true);
-                                intent.putExtra("groupId", groupId); // 추가
-                                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                startActivity(intent);
-                                finish();
-                            }
+                            handlePostResult(postData);
                         }
+
                     } else {
-                        Toast.makeText(GroupWriteActivity.this, isEdit ? "게시글 수정 실패" : "게시글 작성 실패", Toast.LENGTH_SHORT).show();
-                        Log.e("GroupWriteActivity", "Response code: " + response.code() + ", body: " + new Gson().toJson(response.body()));
+                        Toast.makeText(GroupWriteActivity.this,
+                                isEdit ? "게시글 수정 실패" : "게시글 작성 실패", Toast.LENGTH_SHORT).show();
+                        Log.e("GroupWriteActivity", "Response code: " + response.code() +
+                                ", body: " + new Gson().toJson(response.body()));
                     }
                 }
 
@@ -513,7 +281,194 @@ public class GroupWriteActivity extends AppCompatActivity {
             });
         });
     }
-    private RecognitionListener listener = new RecognitionListener() {
+
+
+    private void setupEditTextListeners() {
+        if (etInput == null) return;
+
+        etInput.setOnClickListener(v -> {
+            if (isKeyboardVisible) {
+                hideKeyboard();
+            } else {
+                etInput.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(etInput, InputMethodManager.SHOW_IMPLICIT);
+            }
+            isKeyboardVisible = !isKeyboardVisible;
+        });
+
+        etInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() >= 5) {
+                    btnSummarize.setVisibility(View.VISIBLE);
+                } else {
+                    btnSummarize.setVisibility(View.GONE);
+                }
+            }
+
+            @Override public void afterTextChanged(Editable s) {}
+        });
+    }
+
+    // ActivityResultLauncher 설정
+    private void setupImagePicker() {
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri selectedUri = result.getData().getData();
+                        if (selectedUri != null) {
+                            try {
+                                File imageFile = copyUriToCache(selectedUri); // 캐시 파일로 복사
+                                Glide.with(this).load(imageFile).into(imageView); // Glide 안전하게 로딩
+                                selectedImageUri = Uri.fromFile(imageFile); // 서버 업로드용
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                Toast.makeText(this, "이미지 로딩 실패", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+                });
+
+        btnAddFile.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("image/*");
+            imagePickerLauncher.launch(intent);
+        });
+    }
+
+    // URI를 캐시 파일로 복사하는 메서드
+    private File copyUriToCache(Uri uri) throws IOException {
+        InputStream inputStream = getContentResolver().openInputStream(uri);
+        if (inputStream == null) throw new IOException("InputStream is null");
+
+        File tempFile = new File(getCacheDir(), "temp_review_" + System.currentTimeMillis() + ".jpg");
+        try (OutputStream outputStream = new FileOutputStream(tempFile)) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
+            }
+        }
+        return tempFile;
+    }
+
+    private void uploadPostImage(GroupApi groupApi, String token, int postId, Uri imageUri, GroupReviewResponse postData) {
+        try {
+            File file = new File(imageUri.getPath());
+            RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
+            MultipartBody.Part body = MultipartBody.Part.createFormData("files", file.getName(), requestFile);
+
+            Call<ApiResponse<List<String>>> call = groupApi.uploadPostImages("Bearer " + token, groupId, postId, body);
+            call.enqueue(new Callback<ApiResponse<List<String>>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<List<String>>> call, Response<ApiResponse<List<String>>> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        postData.setImageUrls(response.body().getData());
+                        Toast.makeText(GroupWriteActivity.this, "리뷰 & 이미지 업로드 완료!", Toast.LENGTH_SHORT).show();
+                    }
+
+                    // 이미지 업로드 실패도 무시하고 게시글 성공 처리
+                    handlePostResult(postData);
+                }
+
+                @Override
+                public void onFailure(Call<ApiResponse<List<String>>> call, Throwable t) {
+                    // 이미지 업로드 실패도 무시하고 게시글 성공 처리
+                    handlePostResult(postData);
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "이미지 처리 중 오류 발생 (게시글은 업로드됨)", Toast.LENGTH_SHORT).show();
+
+            // ✅ 예외 발생 시에도 게시글은 성공 처리
+            handlePostResult(postData);
+        }
+    }
+
+
+        /*// --- 이미지 업로드 ---
+        private void uploadPostImage (GroupApi groupApi, String token,int postId, Uri
+        imageUri, GroupReviewResponse postData){
+            try {
+                File file = new File(getCacheDir(), "temp_review.jpg");
+                InputStream inputStream = getContentResolver().openInputStream(imageUri);
+                OutputStream outputStream = new FileOutputStream(file);
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+                outputStream.close();
+                inputStream.close();
+
+                RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
+                MultipartBody.Part body = MultipartBody.Part.createFormData("files", file.getName(), requestFile);
+
+                Call<ApiResponse<List<String>>> call = groupApi.uploadPostImages("Bearer " + token, groupId, postId, body)
+                        call.enqueue(new Callback<ApiResponse<List<String>>>() {
+                            @Override
+                            public void onResponse(Call<ApiResponse<List<String>>> call, Response<ApiResponse<List<String>>> response) {
+                                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                                    postData.setImageUrls(response.body().getData());
+                                    Toast.makeText(GroupWriteActivity.this, "리뷰 & 이미지 업로드 완료!", Toast.LENGTH_SHORT).show();
+                                    handlePostResult(postData);
+                                } else {
+                                    Toast.makeText(GroupWriteActivity.this, "이미지 업로드 실패", Toast.LENGTH_SHORT).show();
+                                }
+
+                                // 업로드 성공/실패 상관없이 게시글 처리
+                                handlePostResult(postData);
+                            }
+
+                            @Override
+                            public void onFailure(Call<ApiResponse<List<String>>> call, Throwable t) {
+                                Toast.makeText(GroupWriteActivity.this, "이미지 업로드 실패: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                                // 업로드 실패 시에도 handlePostResult 호출
+                                handlePostResult(postData);
+                            }
+                        });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(this, "이미지 처리 중 오류 발생", Toast.LENGTH_SHORT).show();
+            }
+        }*/
+
+        // --- 업로드 / 수정 후 처리 공통 ---
+        private void handlePostResult(GroupReviewResponse postData) {
+            if (isEdit) {
+                GroupFeedResponse.Post updatedPost = new GroupFeedResponse.Post();
+                updatedPost.setPostType(postData.getPostType());
+                updatedPost.setTitle(postData.getTitle());
+                updatedPost.setContent(postData.getContent());
+                updatedPost.setReviewImageUrls(postData.getImageUrls());
+                updatedPost.setReviewId(postData.getId());
+                updatedPost.setCreatedAt(postData.getCreatedAt());
+
+                Intent resultIntent = new Intent(GroupWriteActivity.this, GroupFeedActivity.class);
+                resultIntent.putExtra("refreshPost", true); // 새로고침 신호 추가
+                resultIntent.putExtra("updatedPost", updatedPost);
+                resultIntent.putExtra("postId", postId);
+                resultIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP); // resultIntent에 플래그 추가
+                startActivity(resultIntent);
+                finish();
+
+            } else {
+                // 생성: GroupFeedActivity에 refresh 신호 보내기
+                Intent intent = new Intent(GroupWriteActivity.this, GroupFeedActivity.class);
+                intent.putExtra("refreshPost", true);
+                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                finish();
+            }
+        }
+        private RecognitionListener listener = new RecognitionListener() {
         @Override
         public void onReadyForSpeech(Bundle params) {
             showSpeechRecognitionUI();
@@ -752,52 +707,6 @@ public class GroupWriteActivity extends AppCompatActivity {
     }
 
 
-
-
-    // 그룹 게시글 이미지 업로드용
-
-
-
-    private void uploadPostImage(GroupApi groupApi,String token, int postId, Uri imageUri) {
-        try {
-            File file = new File(getCacheDir(), "temp_review.jpg");
-            InputStream inputStream = getContentResolver().openInputStream(imageUri);
-            OutputStream outputStream = new FileOutputStream(file);
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buffer)) > 0) {
-                outputStream.write(buffer, 0, length);
-            }
-            outputStream.close();
-            inputStream.close();
-
-            RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
-            MultipartBody.Part body = MultipartBody.Part.createFormData("files", file.getName(), requestFile);
-
-            Call<ApiResponse<List<String>>> call = groupApi.uploadPostImages("Bearer " + token, groupId, postId, body);
-            call.enqueue(new Callback<ApiResponse<List<String>>>() {
-                @Override
-                public void onResponse(Call<ApiResponse<List<String>>> call, Response<ApiResponse<List<String>>> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        Toast.makeText(GroupWriteActivity.this, "리뷰 & 이미지 업로드 완료!", Toast.LENGTH_SHORT).show();
-                        finish();
-                    } else {
-                        Toast.makeText(GroupWriteActivity.this, "이미지 업로드 실패", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<ApiResponse<List<String>>> call, Throwable t) {
-                    Toast.makeText(GroupWriteActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-    }
     // 기존 그룹 게시글 불러오기 (수정용)
     private void loadPostData(int groupId, int postId) {
         SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
@@ -836,26 +745,6 @@ public class GroupWriteActivity extends AppCompatActivity {
 
     // GroupReviewResponse → 뷰 바인딩
     private void bindDataToViews(GroupReviewResponse feed) {
-        // Spinner 위치 매핑
-        int spinnerPosition;
-        switch (feed.getPostType()) {
-            case "POST": spinnerPosition = 1; break;
-            case "GOAL_SHARE": spinnerPosition = 2; break;
-            case "RECOMMENDED_BOOK": spinnerPosition = 3; break;
-            case "NOTICE": spinnerPosition = 4; break;
-            default: spinnerPosition = 1; break;
-        }
-        categorySpinner.setSelection(spinnerPosition);
-
-        // 스피너 이벤트에 의존하지 않고 직접 EditText 연결
-        switch (spinnerPosition) {
-            case 1: etInput = etPostContent; etInputTitle = postTitle; break;
-            case 2: etInput = etGoalContent; etInputTitle = goalTitle; break;
-            case 3: etInput = etRecommendContent; etInputTitle = recommendTitle; break;
-            case 4: etInput = etNotiContent; etInputTitle = groupNotiTitle; break;
-            default: etInput = null; etInputTitle = null; break;
-        }
-
         // 바로 데이터 세팅
         if (etInputTitle != null) etInputTitle.setText(feed.getTitle());
         if (etInput != null) etInput.setText(feed.getContent());

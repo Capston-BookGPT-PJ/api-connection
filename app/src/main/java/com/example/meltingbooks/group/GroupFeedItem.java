@@ -8,10 +8,11 @@ public class GroupFeedItem implements Serializable {
     private int groupId;         // groupId
     private int userId;          // userId (기존 authorId)
     private String userName;     // username (기존 authorName)
-    private String postType;         // postType / type
+    // postType은 항상 REVIEW로 고정
+    private String postType;
     private String title;        // title
     private String content;      // content
-    private String imageUrl;     // imageUrls[0] / reviewImageUrls[0]
+    private List<String> imageUrls;     // imageUrls[0] / reviewImageUrls[0]
     private String createdAt;    // createdAt
     private int commentCount;    // commentCount
     private int likeCount;       // likeCount
@@ -21,25 +22,27 @@ public class GroupFeedItem implements Serializable {
     private String tagId;        // tagId
 
 
-    // 편의 boolean
-    private boolean isGoal;
-    private boolean isPost;
-    private boolean isNotice;
-    private boolean isRecommended;
-
 
     public GroupFeedItem(String postType, String userName, String title,String content, String createdAt,
-                    String imageUrl, String userProfileImage, int commentCount, int likeCount, String tagId, int groupId) {
+                         List<String> imageUrls, String userProfileImage, int commentCount, int likeCount, String tagId, int groupId) {
         this.postType = postType;
         this.userName = userName;
         this.title = title;
         this.content = content;
         this.createdAt = createdAt;
-        this.imageUrl = imageUrl;
+        this.imageUrls = imageUrls;
         this.userProfileImage = userProfileImage;
         this.commentCount = commentCount;
         this.likeCount = likeCount;
         this.tagId = tagId;
+        this.groupId = groupId;
+    }
+
+    public GroupFeedItem(String postType, String title, String content, List<String> imageUrls, int groupId) {
+        this.postType = postType;
+        this.title = title;
+        this.content = content;
+        this.imageUrls = imageUrls;
         this.groupId = groupId;
     }
 
@@ -72,9 +75,15 @@ public class GroupFeedItem implements Serializable {
         return content;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    // getter / setter
+    public List<String> getImageUrls() { return imageUrls; }
+    public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls; }
+
+    // 기존 getImageUrl() 대신 첫 번째 이미지를 바로 가져오는 편의 메서드
+    public String getFirstImageUrl() {
+        return (imageUrls != null && !imageUrls.isEmpty()) ? imageUrls.get(0) : null;
     }
+
 
     public String getCreatedAt() {
         return createdAt;
@@ -106,6 +115,7 @@ public class GroupFeedItem implements Serializable {
     public void setPostId(int postId) {
         this.postId = postId;
     }
+    public void setPostType(String postType) {this.postType = postType;}
 
     public void setGroupId(int groupId) {
         this.groupId = groupId;
@@ -119,9 +129,6 @@ public class GroupFeedItem implements Serializable {
         this.userName = username;
     }
 
-    public void setPostType(String postType) {
-        this.postType = postType;
-    }
 
     public void setTitle(String title) {
         this.title = title;
@@ -131,9 +138,6 @@ public class GroupFeedItem implements Serializable {
         this.content = content;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
@@ -155,20 +159,4 @@ public class GroupFeedItem implements Serializable {
         this.tagId = tagId;
     }
 
-    // --- 포스트 타입 편의 Getter ---
-    public boolean isGoal() {
-        return isGoal;
-    }
-
-    public boolean isPost() {
-        return isPost;
-    }
-
-    public boolean isNotice() {
-        return isNotice;
-    }
-
-    public boolean isRecommended() {
-        return isRecommended;
-    }
 }

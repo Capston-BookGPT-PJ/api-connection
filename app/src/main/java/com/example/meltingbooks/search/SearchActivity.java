@@ -85,7 +85,7 @@ public class SearchActivity extends AppCompatActivity {
     private List<FeedItem> reviewList = new ArrayList<>();
 
     // 선택한 책 bookId와 별점(전달용)
-    private int selectedBookId = -1;
+    private Integer selectedBookId = -1;
     private int selectedBookRating = 0;
 
 

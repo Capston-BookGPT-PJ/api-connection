@@ -23,21 +23,24 @@ public class UserResponse {
     // ----------------- Nested Models -----------------
     public static class Badge {
         private int id;
-        private String badgeName;
+        private String badgeType;
         private String tier;
         private String createdAt;
+        private String imageUrl;    // 이미지 URL
 
         public int getId() { return id; }
         public void setId(int id) { this.id = id; }
 
-        public String getBadgeName() { return badgeName; }
-        public void setBadgeName(String badgeName) { this.badgeName = badgeName; }
+        public String getBadgeType() { return badgeType; }
+        public void setBadgeType(String badgeType) { this.badgeType = badgeType; }
 
         public String getTier() { return tier; }
         public void setTier(String tier) { this.tier = tier; }
 
         public String getCreatedAt() { return createdAt; }
         public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+        public String getImageUrl() { return imageUrl; }
     }
 
     public static class Book {
@@ -139,7 +142,7 @@ public class UserResponse {
         private String imageUrl;
         private  int rating;
         private  int userId;
-        private  int bookId;
+        private  Integer bookId;
         private String createdAt;
 
 
@@ -179,10 +182,10 @@ public class UserResponse {
             this.userId = userId;
         }
 
-        public int getBookId() {
+        public Integer getBookId() {
             return bookId;
         }
-        public void setBookId(int bookId) {
+        public void setBookId(Integer bookId) {
             this.bookId = bookId;
         }
 

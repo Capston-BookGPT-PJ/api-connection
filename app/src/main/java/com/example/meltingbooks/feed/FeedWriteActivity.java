@@ -131,7 +131,7 @@ public class FeedWriteActivity extends AppCompatActivity {
     private TextView bookInfoTitle, bookInfoAuthor, bookInfoPublisher, bookInfoCategory; //제목 저자 출판사 카테고리
 
    // 선택한 책 bookId와 별점(전달용)
-    private int selectedBookId = -1;
+    private Integer selectedBookId = -1;
     private int selectedBookRating = 0;
     private boolean isBookSearchInitialized = false;
 
@@ -392,10 +392,11 @@ public class FeedWriteActivity extends AppCompatActivity {
             if (isEdit) {
                  // 수정 모드: 모든 필드 포함
                 String imageUrl = selectedImageUri != null ? selectedImageUri.toString() : null;
+                Integer safeBookId = (selectedBookId != null && selectedBookId != -1) ? selectedBookId : null;
                 ReviewUpdateRequest updateRequest = new ReviewUpdateRequest(
                         content,
                         imageUrl,
-                        selectedBookId != -1 ? selectedBookId : null,  // 선택한 책 ID
+                        safeBookId, // 선택한 책 ID
                         selectedBookRating != 0 ? selectedBookRating : null,  // 별점
                         hashtags.isEmpty() ? null : hashtags
                 );
@@ -409,9 +410,10 @@ public class FeedWriteActivity extends AppCompatActivity {
 
 
             } else {
+                Integer safeBookId = (selectedBookId != null && selectedBookId != -1) ? selectedBookId : null;
                 // 생성 모드: bookId, rating, hashtags 조건부 전달
                 ReviewRequest createRequest = new ReviewRequest(
-                        selectedBookId != -1 ? selectedBookId : null,
+                        safeBookId,
                         content,
                         selectedBookRating != 0 ? selectedBookRating : null,
                         hashtags.isEmpty() ? null : hashtags
@@ -448,9 +450,11 @@ public class FeedWriteActivity extends AppCompatActivity {
                                 updatedFeed.setRating(review.getRating());
                                 updatedFeed.setCreatedAt(review.getCreatedAt());
 
-                                Intent resultIntent = new Intent();
+                                Intent resultIntent = new Intent(FeedWriteActivity.this, FeedActivity.class);
+                                resultIntent.putExtra("refreshFeed", true); // 새로고침 신호 추가
                                 resultIntent.putExtra("updatedFeed", updatedFeed);
-                                setResult(RESULT_OK, resultIntent);
+                                resultIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP); // resultIntent에 플래그 추가
+                                startActivity(resultIntent);
                                 finish();
                             } else {
                                 // 생성: FeedActivity에 refresh 신호 보내기

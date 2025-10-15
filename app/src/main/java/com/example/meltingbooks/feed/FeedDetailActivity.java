@@ -190,7 +190,9 @@ public class FeedDetailActivity extends AppCompatActivity {
             Intent intent = new Intent(FeedDetailActivity.this, FeedWriteActivity.class);
             intent.putExtra("postId", postId);
             intent.putExtra("isEdit", true);
-            feedEditLauncher.launch(intent); // ActivityResultLauncher로 교체
+            //feedEditLauncher.launch(intent);
+            startActivity(intent);
+            finish(); // FeedActivity로 돌아갈 때 onNewIntent로 refresh 신호 처리
         });
 
         btnDeletePost.setOnClickListener(v -> {
@@ -208,10 +210,11 @@ public class FeedDetailActivity extends AppCompatActivity {
                                 Toast.makeText(FeedDetailActivity.this, "게시글이 삭제되었습니다.", Toast.LENGTH_SHORT).show();
 
                                 // 삭제 후 FeedActivity 갱신
-                                Intent resultIntent = new Intent();
-                                resultIntent.putExtra("deletedPostId", postId);
-                                setResult(RESULT_OK, resultIntent);
-                                finish(); // FeedActivity로 돌아감
+                                Intent intent = new Intent(FeedDetailActivity.this, FeedActivity.class);
+                                intent.putExtra("refreshFeed", true); // 새로고침 신호
+                                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                startActivity(intent);
+                                finish(); // FeedActivity로 돌아가기
                             } else {
                                 Toast.makeText(FeedDetailActivity.this, "리뷰 삭제 실패", Toast.LENGTH_SHORT).show();
                             }
@@ -284,7 +287,9 @@ public class FeedDetailActivity extends AppCompatActivity {
         // 피드 이미지
         if (feed.getImageUrl() != null && !feed.getImageUrl().isEmpty()) {
             feedImage.setVisibility(View.VISIBLE);
-            Glide.with(this).load(feed.getImageUrl()).into(feedImage);
+            Glide.with(this).load(feed.getImageUrl())
+                    .centerCrop()
+                    .into(feedImage);
         } else {
             feedImage.setVisibility(View.GONE);
         }
@@ -467,6 +472,8 @@ public class FeedDetailActivity extends AppCompatActivity {
         likeCount.setText(String.valueOf(correctedCount));
     }
 
+
+    /*
     //피드 갱신
     private final ActivityResultLauncher<Intent> feedEditLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -480,6 +487,6 @@ public class FeedDetailActivity extends AppCompatActivity {
                         finish();
                     }
                 }
-            });
+            });*/
 
 }

@@ -61,35 +61,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:layout_marginBottom="20dp"
             >
-
-            <TextView
-                android:id="@+id/WriteReply_Button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="답글 달기"
-                android:padding="14dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:textColor="#666666"
-                />
-
-            <TextView
-                android:id="@+id/ViewReply_Button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="답글 보기"
-                android:padding="14dp"
-                android:textColor="#666666"
-                />
-
-            <TextView
-                android:id="@+id/Reply_Count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="(2)"
-                android:textColor="#666666"
-                />
 
         </LinearLayout>
     </LinearLayout>

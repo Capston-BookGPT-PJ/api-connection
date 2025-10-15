@@ -39,7 +39,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="독서 목표 설정"
-                    android:textSize="23sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="#000000"
                     app:layout_constraintTop_toTopOf="parent"
@@ -56,47 +56,47 @@
                     android:gravity="center"
                     android:elevation="6dp"
                     android:layout_marginTop="10dp"
-                    android:layout_marginRight="20dp"
+                    android:layout_marginRight="15dp"
                     android:background="@drawable/round_background_20"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     >
 
-                <TextView
-                    android:id="@+id/set_goal_monthly"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="월간"
-                    android:textSize="14sp"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="4dp"
-                    android:gravity="center"
-                    android:textColor="@android:color/black"
-                    android:background="@drawable/setgoal_my_selector"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:stateListAnimator="@null"/>
+                    <TextView
+                        android:id="@+id/set_goal_monthly"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="월간"
+                        android:textSize="14sp"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="4dp"
+                        android:gravity="center"
+                        android:textColor="@android:color/black"
+                        android:background="@drawable/setgoal_my_selector"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:stateListAnimator="@null"/>
 
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="16dp"
-                    android:layout_marginHorizontal="4dp"
-                    android:background="#4D000000"/>
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="16dp"
+                        android:layout_marginHorizontal="4dp"
+                        android:background="#4D000000"/>
 
-                <TextView
-                    android:id="@+id/set_goal_yearly"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="연간"
-                    android:textSize="14sp"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="4dp"
-                    android:gravity="center"
-                    android:textColor="@android:color/black"
-                    android:background="@drawable/setgoal_my_selector"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:stateListAnimator="@null"/>
+                    <TextView
+                        android:id="@+id/set_goal_yearly"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="연간"
+                        android:textSize="14sp"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="4dp"
+                        android:gravity="center"
+                        android:textColor="@android:color/black"
+                        android:background="@drawable/setgoal_my_selector"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:stateListAnimator="@null"/>
                 </LinearLayout>
 
                 <!-- 회색 구분선 -->
@@ -201,15 +201,15 @@
                         android:hint="0"
                         android:inputType="number"
                         android:maxLength="4"
-                        android:textColorHint="#DDDDDD"
                         android:textColor="@color/black"
+                        android:textColorHint="#DDDDDD"
                         android:textSize="16sp" />
 
                     <TextView
                         android:id="@+id/text_review"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="권"
+                        android:text="개"
                         android:textSize="16sp"
                         android:layout_marginStart="4dp"
                         android:textColor="@color/black"/>
@@ -286,72 +286,51 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"/>
 
-                <!-- 책 추가 영역-->
-                <LinearLayout
-                    android:id="@+id/goal_set_books"
-                    android:layout_width="0dp"
+                <!-- 목표 저장 버튼 버튼 -->
+                <TextView
+                    android:id="@+id/btn_delete_goal"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginStart="5dp"
-                    android:layout_marginEnd="5dp"
-                    android:orientation="vertical"
-                    app:layout_constraintTop_toBottomOf="@id/gray_line_4"
-                    app:layout_constraintStart_toStartOf="@id/gray_line_4"
-                    app:layout_constraintEnd_toEndOf="parent">
+                    android:text="기존 목표 삭제"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:background="@drawable/round_background_20"
+                    android:backgroundTint="#A6FFBCE1"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    app:layout_constraintEnd_toStartOf="@+id/btn_save_goal"
+                    app:layout_constraintTop_toTopOf="@+id/gray_line_4"
+                    app:layout_constraintEnd_toEndOf="parent" />
 
-                    <!-- 책 추가 제목 -->
-                    <TextView
-                        android:id="@+id/set_books_title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="읽고 싶은 책 추가"
-                        android:textSize="18sp"
-                        android:textColor="#000000" />
-
-                    <!--검색창 추가-->
-
-                    <!-- 책 선택 영역 -->
-                    <LinearLayout
-                        android:id="@+id/book_image_container"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center"
-                        android:layout_marginTop="8dp"
-                        app:layout_constraintTop_toBottomOf="@id/set_books_title"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        android:clipChildren="false">
-
-                        <HorizontalScrollView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:overScrollMode="never"
-                            android:scrollbars="none"
-                            android:clipChildren="false"
-                            >
-                            <LinearLayout
-                                android:id="@+id/book_list_container"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="16dp"
-                                android:clipChildren="false"
-                                />
-                        </HorizontalScrollView>
-                    </LinearLayout>
-                </LinearLayout>
+                <!-- 목표 저장 버튼 버튼 -->
+                <TextView
+                    android:id="@+id/btn_save_goal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="목표 저장"
+                    android:textSize="14sp"
+                    android:textColor="#000000"
+                    android:background="@drawable/round_background_20"
+                    android:backgroundTint="#A6FFBCE1"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp"
+                    app:layout_constraintTop_toTopOf="@+id/gray_line_4"
+                    app:layout_constraintEnd_toEndOf="parent" />
 
                 <!--하단 여백-->
                 <View
                     android:layout_width="0dp"
-                    android:layout_height="200dp"
+                    android:layout_height="15dp"
                     android:background="@android:color/transparent"
-                    app:layout_constraintTop_toBottomOf="@id/goal_set_books"
+                    app:layout_constraintTop_toBottomOf="@id/btn_save_goal"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
         </LinearLayout>
     </ScrollView>

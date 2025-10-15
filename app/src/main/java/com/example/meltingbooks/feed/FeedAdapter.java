@@ -23,19 +23,17 @@ import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.ApiService;
 import com.example.meltingbooks.network.book.Book;
-import com.example.meltingbooks.network.book.BookApi;
 import com.example.meltingbooks.network.book.BookController;
+import com.example.meltingbooks.profile.ProfileActivity;
 
 import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 //피드 갱신용
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
+
 
 public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder> {
 
@@ -119,7 +117,7 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
         //공유 버튼 클릭 리스너
         holder.shareButton.setOnClickListener(v -> {
 
-            String shareUrl = "https://yourapp.com/post/12345"; //+ item.getPostId();  공유할 URL 예시 나중에 실제 URL 공유 기능 추가
+            String shareUrl = String.valueOf(item.getShareUrl()); //⭐수정
 
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
             shareIntent.setType("text/plain");
@@ -153,6 +151,18 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
             holder.profileImage.setVisibility(View.VISIBLE); // GONE 대신 보이게
             holder.profileImage.setImageResource(R.drawable.sample_profile); // 기본 이미지 적용
         }
+
+        //⭐ 사용자 프로필 이동 추가
+        View.OnClickListener profileClickListener = v -> {
+            Intent intent = new Intent(v.getContext(), ProfileActivity.class);
+            intent.putExtra("userId", item.getUserId());
+            v.getContext().startActivity(intent);
+        };
+
+        //⭐ 프로필 이미지 클릭
+        holder.profileImage.setOnClickListener(profileClickListener);
+        //⭐ 사용자 이름 클릭
+        holder.userName.setOnClickListener(profileClickListener);
 
         //평점은 피드에서 표시 안함.
         Book book = item.getBook();

@@ -68,8 +68,9 @@ public class GroupFeedAdapter extends RecyclerView.Adapter<GroupFeedAdapter.Grou
 
         // 댓글 버튼(현재 feed용 나중에 group용으로 수정 필요)
         holder.commentButton.setOnClickListener(v -> {
+
             GroupCommentBottomSheet groupCommentBottomSheet =
-                    GroupCommentBottomSheet.newInstance(item.getPostId(), "feed");
+                    GroupCommentBottomSheet.newInstance(groupId, item.getPostId(), "group");
 
             groupCommentBottomSheet.setOnCommentAddedListener(commentCount -> {
                 holder.commentCount.setText(String.valueOf(commentCount));
@@ -94,18 +95,16 @@ public class GroupFeedAdapter extends RecyclerView.Adapter<GroupFeedAdapter.Grou
 
 
         // 이미지 표시
-        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+        if (item.getImageUrls() != null && !item.getImageUrls().isEmpty()) {
             holder.groupImage.setVisibility(View.VISIBLE);
-            Glide.with(context).load(item.getImageUrl()).into(holder.groupImage);
-            /*
             Glide.with(context)
-                    .load(item.getImageUrl())
-                    .placeholder(R.drawable.sample_profile)
-                    .error(R.drawable.sample_profile)
-                    .into(holder.groupImage);*/
+                    .load(item.getImageUrls().get(0)) // 첫 번째 이미지 사용
+                    .centerCrop()
+                    .into(holder.groupImage);
         } else {
             holder.groupImage.setVisibility(View.GONE);
         }
+
 
         // 프로필 표시
         if (item.getUserProfileImage() != null && !item.getUserProfileImage().isEmpty()) {

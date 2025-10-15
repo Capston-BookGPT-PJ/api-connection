@@ -21,6 +21,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
+import com.example.meltingbooks.feed.FeedActivity;
+import com.example.meltingbooks.feed.FeedDetailActivity;
 import com.example.meltingbooks.feed.FeedItem;
 import com.example.meltingbooks.group.comment.GroupCommentAdapter;
 import com.example.meltingbooks.group.comment.GroupCommentItem;
@@ -31,6 +33,9 @@ import com.example.meltingbooks.network.ApiService;
 import com.example.meltingbooks.network.feed.CommentRequest;
 import com.example.meltingbooks.network.feed.CommentResponse;
 import com.example.meltingbooks.network.group.GroupApi;
+import com.example.meltingbooks.network.group.GroupCommentPageResponse;
+import com.example.meltingbooks.network.group.GroupCommentRequest;
+import com.example.meltingbooks.network.group.GroupCommentResponse;
 import com.example.meltingbooks.network.group.GroupFeedPageResponse;
 import com.example.meltingbooks.network.group.GroupReviewResponse;
 import com.google.gson.Gson;
@@ -54,7 +59,6 @@ public class GroupDetailActivity extends AppCompatActivity {
     private ImageView postUserProfile, groupImage;
     private TextView postUserName;
     private TextView postDate;
-    private TextView postTypeContent;
     private TextView postTitle;
     private TextView postContent;
 
@@ -95,7 +99,6 @@ public class GroupDetailActivity extends AppCompatActivity {
         postUserProfile = findViewById(R.id.postUserProfile);
         postUserName = findViewById(R.id.postUserName);
         postDate = findViewById(R.id.postDate);
-        postTypeContent = findViewById(R.id.postTypeContent);
 
         postTitle = findViewById(R.id.postTitle);
         postContent = findViewById(R.id.postContent);
@@ -183,7 +186,9 @@ public class GroupDetailActivity extends AppCompatActivity {
             Log.d("EditPostClick", "Intent 생성 후 putExtra 완료");
 
             // feedEditLauncher는 ActivityResultLauncher<Intent> 로 선언해둬야 함
-            feedEditLauncher.launch(intent);
+            //feedEditLauncher.launch(intent);
+            startActivity(intent);
+            finish();
         });
 
         // 게시글 삭제 버튼 리스너
@@ -201,13 +206,12 @@ public class GroupDetailActivity extends AppCompatActivity {
                         public void onResponse(Call<Void> call, Response<Void> response) {
                             if (response.isSuccessful()) {
                                 Toast.makeText(GroupDetailActivity.this, "게시글이 삭제되었습니다.", Toast.LENGTH_SHORT).show();
-
-                                // 삭제 후 이전 화면 갱신
-                                Intent resultIntent = new Intent();
-                                resultIntent.putExtra("deletedPostId", postId);
-                                resultIntent.putExtra("groupId", groupId); // ✅ 여기에 넣어야 함
-                                setResult(RESULT_OK, resultIntent);
-                                finish();
+                                // 삭제 후 FeedActivity 갱신
+                                Intent intent = new Intent(GroupDetailActivity.this, GroupFeedActivity.class);
+                                intent.putExtra("refreshPost", true); // 새로고침 신호
+                                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                startActivity(intent);
+                                finish(); // GroupFeedActivity로 돌아가기
                             } else {
                                 Toast.makeText(GroupDetailActivity.this, "게시글 삭제 실패", Toast.LENGTH_SHORT).show();
                             }
@@ -252,38 +256,34 @@ public class GroupDetailActivity extends AppCompatActivity {
             postUserProfile.setImageResource(R.drawable.sample_profile2);
         }
 
-        // 게시글 이미지
-        if (feed.getImageUrl() != null && !feed.getImageUrl().isEmpty()) {
+        // 게시글 이미지 (리뷰 게시글만)
+        if ("REVIEW".equals(feed.getPostType()) && feed.getImageUrls() != null && !feed.getImageUrls().isEmpty()) {
             groupImage.setVisibility(View.VISIBLE);
             Glide.with(this)
-                    .load(feed.getImageUrl())
-                    .placeholder(R.drawable.sample_profile)
-                    .error(R.drawable.sample_profile)
+                    .load(feed.getFirstImageUrl()) // ✅ 첫 번째 이미지 사용
+                    .centerCrop()
                     .into(groupImage);
         } else {
             groupImage.setVisibility(View.GONE);
         }
-
-        // 게시글 유형
-        postTypeContent.setText(feed.getPostType());
     }
 
 
     //현재 피드용 사용중. 그룹용 수정 필요
     private void fetchComments() {
-        apiService.getComments("Bearer " + token, postId)
-                .enqueue(new Callback<ApiResponse<List<CommentResponse>>>() {
+        groupApi.getGroupComments("Bearer " + token, groupId, postId, 0, 20)
+                .enqueue(new Callback<ApiResponse<GroupCommentPageResponse>>() {
                     @Override
-                    public void onResponse(Call<ApiResponse<List<CommentResponse>>> call, Response<ApiResponse<List<CommentResponse>>> response) {
+                    public void onResponse(Call<ApiResponse<GroupCommentPageResponse>> call, Response<ApiResponse<GroupCommentPageResponse>> response) {
                         if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
-                            List<CommentResponse> responseList = response.body().getData();
+                            List<GroupCommentResponse> responseList = response.body().getData().getContent();
                             commentList.clear();
 
-                            for (CommentResponse c : responseList) {
+                            for (GroupCommentResponse c : responseList) {
                                 commentList.add(new GroupCommentItem(
                                         c.getNickname(),
                                         c.getContent(),
-                                        c.getUserProfileImage(),   // ✅ 서버 값 사용
+                                        c.getProfileImageUrl(),   // ✅ 서버 값 사용
                                         c.getFormattedCreatedAt()
                                 ));
                             }
@@ -299,7 +299,7 @@ public class GroupDetailActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(Call<ApiResponse<List<CommentResponse>>> call, Throwable t) {
+                    public void onFailure(Call<ApiResponse<GroupCommentPageResponse>> call, Throwable t) {
                         Log.e("Comments", "댓글 로드 실패: " + t.getMessage());
                     }
                 });
@@ -312,16 +312,15 @@ public class GroupDetailActivity extends AppCompatActivity {
             return;
         }
 
-        CommentRequest request = new CommentRequest(commentContent);
+        GroupCommentRequest request = new GroupCommentRequest(commentContent);
 
-        apiService.postComment("Bearer " + token,  currentUserId, postId, request)
-                .enqueue(new Callback<ApiResponse<CommentResponse>>() {
+        groupApi.createGroupComment("Bearer " + token, groupId, postId, request)
+                .enqueue(new Callback<ApiResponse<GroupCommentResponse>>() {
                     @Override
-                    public void onResponse(Call<ApiResponse<CommentResponse>> call, Response<ApiResponse<CommentResponse>> response) {
+                    public void onResponse(Call<ApiResponse<GroupCommentResponse>> call, Response<ApiResponse<GroupCommentResponse>> response) {
                         if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
                             Toast.makeText(GroupDetailActivity.this, "댓글이 등록되었습니다.", Toast.LENGTH_SHORT).show();
                             Log.d("postComment", "postId=" + postId + ", currentUserId=" + currentUserId + ", content=" + request.getContent());
-
 
                             // 입력창 비우기
                             commentEditText.setText("");
@@ -344,7 +343,7 @@ public class GroupDetailActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(Call<ApiResponse<CommentResponse>> call, Throwable t) {
+                    public void onFailure(Call<ApiResponse<GroupCommentResponse>> call, Throwable t) {
                         Toast.makeText(GroupDetailActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -397,6 +396,7 @@ public class GroupDetailActivity extends AppCompatActivity {
         likeCount.setText(String.valueOf(correctedCount));
     }
 
+    /*
     //피드 갱신
     private final ActivityResultLauncher<Intent> feedEditLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -410,6 +410,6 @@ public class GroupDetailActivity extends AppCompatActivity {
                         finish();
                     }
                 }
-            });
+            });*/
 
 }
