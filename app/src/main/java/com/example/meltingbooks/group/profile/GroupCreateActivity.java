@@ -25,7 +25,7 @@ import com.example.meltingbooks.R;
 import com.example.meltingbooks.network.group.Group;
 import com.example.meltingbooks.network.group.GroupApi;
 import com.example.meltingbooks.network.ApiClient;
-import com.example.meltingbooks.network.group.GroupPostResponse;
+import com.example.meltingbooks.network.group.feed.GroupPostResponse;
 import com.example.meltingbooks.network.group.GroupProfileResponse;
 
 import retrofit2.Call;

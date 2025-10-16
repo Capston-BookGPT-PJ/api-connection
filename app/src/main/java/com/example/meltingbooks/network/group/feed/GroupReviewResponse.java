@@ -1,6 +1,4 @@
-package com.example.meltingbooks.network.group;
-
-import com.example.meltingbooks.group.menu.GroupMemberItem;
+package com.example.meltingbooks.network.group.feed;
 
 import java.io.Serializable;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.example.meltingbooks.network.group;
+package com.example.meltingbooks.network.group.comment;
 
 public class GroupCommonResponse {
     private boolean success;

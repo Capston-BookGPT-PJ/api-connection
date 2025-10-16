@@ -20,13 +20,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.ApiResponse;
-import com.example.meltingbooks.network.ApiService;
-import com.example.meltingbooks.network.feed.CommentRequest;
-import com.example.meltingbooks.network.feed.CommentResponse;
 import com.example.meltingbooks.network.group.GroupApi;
-import com.example.meltingbooks.network.group.GroupCommentPageResponse;
-import com.example.meltingbooks.network.group.GroupCommentRequest;
-import com.example.meltingbooks.network.group.GroupCommentResponse;
+import com.example.meltingbooks.network.group.comment.GroupCommentPageResponse;
+import com.example.meltingbooks.network.group.comment.GroupCommentRequest;
+import com.example.meltingbooks.network.group.comment.GroupCommentResponse;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 

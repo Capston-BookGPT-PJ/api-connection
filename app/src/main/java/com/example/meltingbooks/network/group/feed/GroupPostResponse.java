@@ -1,4 +1,6 @@
-package com.example.meltingbooks.network.group;
+package com.example.meltingbooks.network.group.feed;
+
+import com.example.meltingbooks.network.group.GroupProfileResponse;
 
 import java.io.Serializable;
 

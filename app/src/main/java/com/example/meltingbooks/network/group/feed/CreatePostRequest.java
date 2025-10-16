@@ -1,4 +1,4 @@
-package com.example.meltingbooks.network.group;
+package com.example.meltingbooks.network.group.feed;
 
 public class CreatePostRequest {
     // postType은 항상 REVIEW

@@ -6,6 +6,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.meltingbooks.network.ApiClient;
+import com.example.meltingbooks.network.group.feed.GroupPostResponse;
 
 import retrofit2.Call;
 import retrofit2.Callback;

@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.network.group.GroupApi;
-import com.example.meltingbooks.network.group.GroupCommonResponse;
+import com.example.meltingbooks.network.group.comment.GroupCommonResponse;
 import com.example.meltingbooks.network.group.GroupJoinRequestResponse;
 import com.google.android.material.button.MaterialButton;
 

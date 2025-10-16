@@ -1,4 +1,4 @@
-package com.example.meltingbooks.network.group;
+package com.example.meltingbooks.network.group.comment;
 
 public class GroupCommentResponse {
     private int id;                     // 댓글 ID

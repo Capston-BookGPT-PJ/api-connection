@@ -1,7 +1,17 @@
 package com.example.meltingbooks.network.group;
 
 import com.example.meltingbooks.network.ApiResponse;
-import com.example.meltingbooks.network.feed.CommentResponse;
+import com.example.meltingbooks.network.group.comment.GroupCommentPageResponse;
+import com.example.meltingbooks.network.group.comment.GroupCommentRequest;
+import com.example.meltingbooks.network.group.comment.GroupCommentResponse;
+import com.example.meltingbooks.network.group.comment.GroupCommonResponse;
+import com.example.meltingbooks.network.group.feed.CreateGroupNotice;
+import com.example.meltingbooks.network.group.feed.CreateGroupRecommend;
+import com.example.meltingbooks.network.group.feed.CreatePostRequest;
+import com.example.meltingbooks.network.group.feed.GroupFeedPageResponse;
+import com.example.meltingbooks.network.group.feed.GroupPostResponse;
+import com.example.meltingbooks.network.group.feed.GroupReviewResponse;
+import com.example.meltingbooks.network.group.feed.UpdatePostRequest;
 
 import java.util.List;
 

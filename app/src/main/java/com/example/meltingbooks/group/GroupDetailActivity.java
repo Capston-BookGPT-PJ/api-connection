@@ -12,8 +12,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -21,23 +19,16 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
-import com.example.meltingbooks.feed.FeedActivity;
-import com.example.meltingbooks.feed.FeedDetailActivity;
-import com.example.meltingbooks.feed.FeedItem;
 import com.example.meltingbooks.group.comment.GroupCommentAdapter;
 import com.example.meltingbooks.group.comment.GroupCommentItem;
 import com.example.meltingbooks.group.write.GroupWriteActivity;
 import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.ApiService;
-import com.example.meltingbooks.network.feed.CommentRequest;
-import com.example.meltingbooks.network.feed.CommentResponse;
 import com.example.meltingbooks.network.group.GroupApi;
-import com.example.meltingbooks.network.group.GroupCommentPageResponse;
-import com.example.meltingbooks.network.group.GroupCommentRequest;
-import com.example.meltingbooks.network.group.GroupCommentResponse;
-import com.example.meltingbooks.network.group.GroupFeedPageResponse;
-import com.example.meltingbooks.network.group.GroupReviewResponse;
+import com.example.meltingbooks.network.group.comment.GroupCommentPageResponse;
+import com.example.meltingbooks.network.group.comment.GroupCommentRequest;
+import com.example.meltingbooks.network.group.comment.GroupCommentResponse;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;

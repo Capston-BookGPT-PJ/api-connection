@@ -17,7 +17,7 @@ import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.group.GroupActivity;
 import com.example.meltingbooks.network.group.GroupController;
-import com.example.meltingbooks.network.group.GroupPostResponse;
+import com.example.meltingbooks.network.group.feed.GroupPostResponse;
 import com.example.meltingbooks.network.group.GroupProfileResponse;
 
 import retrofit2.Call;

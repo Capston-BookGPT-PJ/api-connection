@@ -28,7 +28,7 @@ import com.example.meltingbooks.network.group.GroupApi;
 import com.example.meltingbooks.network.group.GroupController;
 import com.example.meltingbooks.network.group.GroupProfileResponse;
 import com.example.meltingbooks.network.group.GroupProfileResponseAdapter;
-import com.example.meltingbooks.network.group.GroupPostResponse;
+import com.example.meltingbooks.network.group.feed.GroupPostResponse;
 import com.example.meltingbooks.network.group.MyGroup;
 import com.example.meltingbooks.search.SearchActivity;
 

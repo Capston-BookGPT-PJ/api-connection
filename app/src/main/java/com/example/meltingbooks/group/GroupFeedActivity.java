@@ -2,7 +2,6 @@ package com.example.meltingbooks.group;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,7 +15,6 @@ import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,11 +26,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.base.BaseActivity;
-import com.example.meltingbooks.feed.FeedItem;
-import com.example.meltingbooks.group.goal.GroupGoalSetting;
+import com.example.meltingbooks.calendar.utils.ProgressBarUtil;
+import com.example.meltingbooks.calendar.view.CircularProgressView;
+import com.example.meltingbooks.calendar.view.GoalProgressView;
+import com.example.meltingbooks.group.goal.GroupGoalFragment;
+import com.example.meltingbooks.group.goal.GroupSetGoalFragment;
 import com.example.meltingbooks.group.menu.GroupJoinRequestAdapter;
 import com.example.meltingbooks.group.menu.GroupListAdapter;
 import com.example.meltingbooks.group.menu.GroupListItem;
@@ -42,39 +42,37 @@ import com.example.meltingbooks.group.write.GroupWriteActivity;
 import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.ApiService;
-import com.example.meltingbooks.network.feed.FeedResponse;
-import com.example.meltingbooks.network.group.CreateGroupNotice;
-import com.example.meltingbooks.network.group.CreateGroupRecommend;
+import com.example.meltingbooks.network.goal.GoalApi;
+import com.example.meltingbooks.network.goal.GoalController;
+import com.example.meltingbooks.network.goal.GoalResponse;
+import com.example.meltingbooks.network.group.feed.CreateGroupNotice;
+import com.example.meltingbooks.network.group.feed.CreateGroupRecommend;
 import com.example.meltingbooks.network.group.GroupApi;
-import com.example.meltingbooks.network.group.GroupCommonResponse;
+import com.example.meltingbooks.network.group.comment.GroupCommonResponse;
 import com.example.meltingbooks.network.group.GroupController;
-import com.example.meltingbooks.network.group.GroupFeedPageResponse;
-import com.example.meltingbooks.network.group.GroupFeedResponse;
+import com.example.meltingbooks.network.group.feed.GroupFeedPageResponse;
+import com.example.meltingbooks.network.group.feed.GroupFeedResponse;
 import com.example.meltingbooks.network.group.GroupJoinRequestResponse;
 import com.example.meltingbooks.network.group.GroupProfileResponse;
-import com.example.meltingbooks.network.group.GroupPostResponse;
-import com.example.meltingbooks.network.group.GroupReviewResponse;
+import com.example.meltingbooks.network.group.feed.GroupPostResponse;
+import com.example.meltingbooks.network.group.feed.GroupReviewResponse;
 import com.example.meltingbooks.network.group.MyGroup;
+import com.example.meltingbooks.network.group.goal.GroupGoalApi;
+import com.example.meltingbooks.network.group.goal.GroupGoalController;
+import com.example.meltingbooks.network.group.goal.GroupGoalResponse;
 import com.google.android.material.button.MaterialButton;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.OnGoalSetListener {
+public class GroupFeedActivity extends BaseActivity {
 
     private int groupId;
     private String groupName;
@@ -109,10 +107,14 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
     private RecyclerView groupJoinRecyclerView;
     private GroupJoinRequestAdapter joinRequestAdapter;
     private List<GroupJoinRequestResponse.JoinRequest> joinRequestList = new ArrayList<>();
-
-
-
     private GroupMemberAdapter memberAdapter;
+
+    private GroupGoalController goalController;
+
+    /*// --- GoalProgressView 변수 선언 ---
+    private GoalProgressView goal1;
+    private GoalProgressView goal2;
+    private GoalProgressView goal3;*/
 
     //⭐새로 고침 및 무한 스크롤 관련 변수
     private SwipeRefreshLayout swipeRefreshLayout; //⭐
@@ -151,6 +153,7 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
 
         groupApi = ApiClient.getClient(token).create(GroupApi.class);
         apiService = ApiClient.getClient(token).create(ApiService.class);
+        GroupGoalApi groupGoalApi = ApiClient.getClient(token).create(GroupGoalApi.class);
 
         // 그룹 Id
         groupId = getIntent().getIntExtra("groupId", -1);
@@ -239,14 +242,24 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
         menuLayout.setFocusableInTouchMode(true);
 
         menuButton = findViewById(R.id.menuButton);
-        menuButton.setOnClickListener(v -> showGroupInfo());
+       // menuButton.setOnClickListener(v -> showGroupInfo());
+
+        // 메뉴 버튼 클릭 시 토글
+        menuButton.setOnClickListener(v -> {
+            if (menuLayout.getVisibility() == View.VISIBLE) {
+                hideGroupInfoAndFinish();
+            } else {
+                showGroupInfo();
+            }
+        });
+
+
 
         gestureDetector = new GestureDetector(this, new SwipeGestureListener());
         menuLayout.setOnTouchListener((v, event) -> {
             gestureDetector.onTouchEvent(event);
             return true;
         });
-
 
         groupWriteButton.setOnClickListener(v -> {
             Intent intent = new Intent(GroupFeedActivity.this, GroupWriteActivity.class);
@@ -379,23 +392,23 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
             }
         });
 
+        goalController = new GroupGoalController(groupGoalApi);
 
-        // Fragment 초기화
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.group_goal_fragment, new GroupGoalSetting())
-                    .commit();
-        }
 
-        // 예시 목표 데이터 불러오기
-        //loadGroupProgress();
+        // Fragment에 groupId 전달
+        Bundle args = new Bundle();
+        args.putInt("groupId", groupId);
 
-        ImageButton goToUpload = findViewById(R.id.groupWrite);
-        goToUpload.setOnClickListener(v -> {
-            Intent intent = new Intent(GroupFeedActivity.this, GroupWriteActivity.class);
-            intent.putExtra("groupId", groupId); // ✅ 올바르게 전달
-            startActivity(intent);
-        });
+        GroupGoalFragment goalFragment = new GroupGoalFragment();
+        goalFragment.setArguments(args);
+
+        // commitNow()를 사용하면 바로 Fragment가 생성됨
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.group_goal_fragment, goalFragment)
+                .commitNow();
+
+        // 이제 안전하게 호출 가능
+        //goalFragment.refreshGoal();
 
 
     }
@@ -426,6 +439,8 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
                 currentPage = 0;
                 groupFeedList.clear();
                 loadGroupFeeds(groupId, true);
+                // ✅ 그룹 정보도 다시 불러오기
+                fetchGroupInfo(memberAdapter);
             }
 
             // ✅ 1초 뒤 플래그 해제 (다음 Intent 대비)
@@ -571,130 +586,7 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
                     }
                 });
     }
-/*
-    private void loadGroupFeeds(int groupId, boolean isRefresh) {
 
-        groupApi = ApiClient.getClient(token).create(GroupApi.class);
-        isLoading = true; // ⭐ 로딩 시작
-
-        Call<ApiResponse<GroupFeedPageResponse>> call =
-                groupApi.getGroupFeed("Bearer " + token, groupId, currentPage, PAGE_SIZE);
-
-        call.enqueue(new Callback<ApiResponse<GroupFeedPageResponse>>() {
-            @Override
-            public void onResponse(Call<ApiResponse<GroupFeedPageResponse>> call,
-                                   Response<ApiResponse<GroupFeedPageResponse>> response) {
-                isLoading = false; // ⭐ 로딩 끝
-                swipeRefreshLayout.setRefreshing(false); //⭐ 새로고침 종료
-
-                if (response.isSuccessful() && response.body() != null &&
-                        response.body().getData() != null) {
-
-                    GroupFeedPageResponse pageResponse = response.body().getData();
-                    List<GroupFeedResponse.Post> posts = pageResponse.getPosts().getContent();
-                    List<GroupFeedResponse.Post> notices = pageResponse.getNotices();
-                    List<GroupFeedResponse.Post> recommendedBooks = pageResponse.getRecommendedBooks();
-                    List<GroupFeedResponse.Post> goals = pageResponse.getGoals();
-                    // 새로고침이면 리스트 초기화
-                    if (isRefresh) {
-                        currentPage = 0;
-                        groupFeedList.clear();
-                    }
-
-                    // 📌 공지/추천 단일 세팅
-                    if (notices != null && !notices.isEmpty()) {
-                        setSingleNoticeOrRecommend(notices.get(0), "NOTICE", groupId);
-                    }
-
-                    if (recommendedBooks != null && !recommendedBooks.isEmpty()) {
-                        setSingleNoticeOrRecommend(recommendedBooks.get(0), "RECOMMENDED_BOOK", groupId);
-                    }
-                    // 📌 나머지 게시글은 RecyclerView에 추가
-                    if (posts != null) {
-                        for (GroupFeedResponse.Post post : posts) {
-                            addSinglePost(post, "REVIEW", groupId);
-                        }
-                    }
-
-                    if (goals != null) {
-                        for (GroupFeedResponse.Post post : goals) {
-                            addSinglePost(post, "GOAL_SHARE", groupId);
-                        }
-                    }
-
-
-                    groupFeedAdapter.notifyDataSetChanged();
-                    isLastPage = pageResponse.getPosts().isLast(); // ⭐ 마지막 페이지 여부 업데이트
-
-                    Log.d("GroupFeed", "불러온 게시글 수: " + posts.size());
-                    Log.d("GroupFeed", "전체 페이지: " + pageResponse.getPosts().getTotalPages()
-                            + ", 마지막 페이지 여부: " + pageResponse.getPosts().isLast());
-
-                } else {
-                    Log.e("GroupFeed", "GroupFeed 응답 비정상: " + response.message());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ApiResponse<GroupFeedPageResponse>> call, Throwable t) {
-                Log.e("GroupFeed", "GroupFeed API 실패: " + t.getMessage());
-                isLoading = false;
-                //swipeRefreshLayout.setRefreshing(false);
-            }
-        });
-    }
-
-    // 단일 게시글 처리 함수
-    private void addSinglePost(GroupFeedResponse.Post post, String postType, int groupId) {
-        String firstImage = (post.getReviewImageUrls() != null && !post.getReviewImageUrls().isEmpty())
-                ? post.getReviewImageUrls().get(0)
-                : null;
-
-
-        groupApi.getPost("Bearer " + token, groupId, post.getReviewId(), post.getUserId())
-                .enqueue(new Callback<ApiResponse<GroupReviewResponse>>() {
-                    @Override
-                    public void onResponse(Call<ApiResponse<GroupReviewResponse>> call,
-                                           Response<ApiResponse<GroupReviewResponse>> reviewResponse) {
-                        if (reviewResponse.isSuccessful() && reviewResponse.body() != null &&
-                                reviewResponse.body().getData() != null) {
-
-                            GroupReviewResponse review = reviewResponse.body().getData();
-
-                            // 여기서 포맷
-                            String createdAtFormatted = post.getCreatedAt();
-                            if (createdAtFormatted != null && createdAtFormatted.length() >= 19) {
-                                createdAtFormatted = createdAtFormatted.substring(0, 19).replace("T", " ");
-                            }
-
-                            GroupFeedItem item = new GroupFeedItem(
-                                    postType,
-                                    post.getNickname(),
-                                    review.getTitle(),
-                                    post.getContent(),
-                                    createdAtFormatted,
-                                    firstImage,
-                                    post.getUserProfileImage(),
-                                    post.getCommentCount(),
-                                    post.getLikeCount(),
-                                    post.getTagId(),
-                                    groupId
-                            );
-                            item.setPostId(post.getReviewId());
-                            groupFeedList.add(item);
-                            groupFeedAdapter.notifyDataSetChanged();
-
-                        } else {
-                            Log.e("GroupFeed", "단일 게시글 조회 실패: " + reviewResponse.message());
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<ApiResponse<GroupReviewResponse>> call, Throwable t) {
-                        Log.e("GroupFeed", "단일 게시글 API 실패: " + t.getMessage());
-                    }
-                });
-    }*/
 
     // 공지/추천 단일 게시글 세팅
     private void setSingleNoticeOrRecommend(GroupFeedResponse.Post post, String postType, int groupId) {
@@ -738,38 +630,6 @@ public class GroupFeedActivity extends BaseActivity implements GroupGoalSetting.
                         Log.e("GroupFeed", "단일 게시글 API 실패: " + t.getMessage());
                     }
                 });
-    }
-
-
-    @Override
-    public void onGoalSet(GroupGoalSetting.GroupGoal goal) {
-        Toast.makeText(this, "목표 저장됨: " + goal.targetBooks + "권", Toast.LENGTH_SHORT).show();
-
-        GroupGoalSetting fragment = (GroupGoalSetting)
-                getSupportFragmentManager().findFragmentById(R.id.group_goal_fragment);
-        if (fragment != null) {
-            fragment.updateGoalProgress(goal.targetBooks, goal.targetReviews, goal.targetTime,
-                    0, 0, 0);
-        }
-    }
-
-    private void loadGroupProgress() {
-        int targetBooks = 30, targetReviews = 15, targetTime = 100;
-        int[] memberBooks = {5,3,2}, memberReviews = {1,2,0}, memberTimes = {10,5,3};
-
-        int sumBooks=0, sumReviews=0, sumTimes=0;
-        for(int i=0;i<memberBooks.length;i++){
-            sumBooks += memberBooks[i];
-            sumReviews += memberReviews[i];
-            sumTimes += memberTimes[i];
-        }
-
-        GroupGoalSetting fragment = (GroupGoalSetting)
-                getSupportFragmentManager().findFragmentById(R.id.group_goal_fragment);
-        if(fragment != null){
-            fragment.updateGoalProgress(targetBooks, targetReviews, targetTime,
-                    sumBooks, sumReviews, sumTimes);
-        }
     }
 
     private void showGroupInfo() {
