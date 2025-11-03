@@ -27,6 +27,9 @@ import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.goal.GoalApi;
 import com.example.meltingbooks.network.goal.GoalController;
 import com.example.meltingbooks.network.goal.GoalResponse;
+import com.example.meltingbooks.network.recommend.GoalRecommendApi;
+import com.example.meltingbooks.network.recommend.GoalRecommendController;
+import com.example.meltingbooks.network.recommend.GoalRecommendResponse;
 import com.example.meltingbooks.network.report.ReportApi;
 import com.example.meltingbooks.network.report.ReportController;
 import com.example.meltingbooks.network.report.ReportResponse;
@@ -119,6 +122,10 @@ public class MonthlyReportFragment extends Fragment {
         updateDateText();
         loadGoal("MONTHLY");
         loadReport("MONTHLY");
+
+        GoalRecommendApi recommendApi = ApiClient.getClient(token).create(GoalRecommendApi.class);
+        GoalRecommendController recommendController = new GoalRecommendController(recommendApi);
+        loadHabitAnalysis(view, recommendController);
 
         return view;
     }
@@ -412,7 +419,37 @@ public class MonthlyReportFragment extends Fragment {
             title.setText(year + "년의 리포트 \uD83D\uDCCA");
         }
 
-
     }
+
+    private void loadHabitAnalysis(View view, GoalRecommendController controller) {
+        TextView period = view.findViewById(R.id.preferredPeriodNumber);
+        TextView hour = view.findViewById(R.id.preferredHourNumber);
+        TextView session = view.findViewById(R.id.sessionMinutesNumber);
+        TextView days = view.findViewById(R.id.daysPerWeekNumber);
+        TextView weekly = view.findViewById(R.id.recommendedWeeklyMinutesNumber);
+        TextView lastRead = view.findViewById(R.id.daysSinceLastReadNumber);
+        TextView date = view.findViewById(R.id.analysisDateNumber);
+        TextView inactive = view.findViewById(R.id.inactiveFlagText);
+
+        controller.getGoalRecommendation(token, userId, new GoalRecommendController.RecommendCallback<GoalRecommendResponse>() {
+            @Override
+            public void onSuccess(GoalRecommendResponse data) {
+                period.setText(data.getPreferredPeriod());
+                hour.setText(data.getPreferredHour() + "시");
+                session.setText(data.getSessionMinutes() + "분");
+                days.setText(data.getDaysPerWeek() + "일");
+                weekly.setText(data.getRecommendedWeeklyMinutes() + "분");
+                lastRead.setText(data.getDaysSinceLastRead() + "일 전");
+                date.setText(data.getCreatedAt().substring(0, 10));
+                inactive.setVisibility(data.isInactiveFlag() ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void onError(String message) {
+                Log.e("MonthlyReportFragment", "추천 분석 불러오기 실패: " + message);
+            }
+        });
+    }
+
 }
 

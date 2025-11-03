@@ -24,9 +24,11 @@ import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.ApiService;
 import com.example.meltingbooks.network.book.Book;
 import com.example.meltingbooks.network.book.BookController;
+import com.example.meltingbooks.network.recommend.RecommendBookResponse;
 import com.example.meltingbooks.profile.ProfileActivity;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -35,8 +37,11 @@ import retrofit2.Response;
 //피드 갱신용
 
 
-public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder> {
+public class FeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+
+    private static final int VT_FEED = FeedItem.TYPE_FEED;
+    private static final int VT_RECO = FeedItem.TYPE_RECOMMEND;
     private final List<FeedItem> feedList;
     private final Context context;
     private final ActivityResultLauncher<Intent> detailLauncher;
@@ -45,37 +50,97 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
     public FeedAdapter(Context context, List<FeedItem> feedList, ActivityResultLauncher<Intent> detailLauncher) {
         this.context = context;
         this.feedList = feedList;
+        setHasStableIds(true); // ✅ 안정적 재활용
         this.detailLauncher = detailLauncher;
     }
 
     @NonNull
     @Override
-    public FeedViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.feed_item, parent, false);
-        return new FeedViewHolder(view);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        if (viewType == VT_RECO) {
+            View v = inflater.inflate(R.layout.item_recommend_books, parent, false);
+            return new RecommendViewHolder(v);
+        } else {
+            View v = inflater.inflate(R.layout.feed_item, parent, false);
+            return new FeedViewHolder(v);
+        }
+    }
 
+
+    @Override
+    public int getItemViewType(int position) {
+        FeedItem item = feedList.get(position);
+        return (item != null && item.getViewType() == FeedItem.TYPE_RECOMMEND)
+                ? VT_RECO : VT_FEED;
+    }
+
+
+    @Override public long getItemId(int position) {
+        return feedList.get(position).getStableId(); // ✅ 진짜 고정되는 값
     }
 
     @Override
-    public void onBindViewHolder(@NonNull FeedViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         FeedItem item = feedList.get(position);
 
-        holder.userName.setText(item.getUserName());
-        holder.reviewContent.setText(item.getReviewContent());
-        holder.reviewDate.setText(item.getReviewDate());
+
+        if (holder instanceof RecommendViewHolder) {
+            RecommendViewHolder vh = (RecommendViewHolder) holder;
+            vh.title.setText("📚 당신을 위한 책 추천");
+
+            vh.bookListContainer.removeAllViews();
+            List<String> covers = item.getRecommendCovers();
+            if (covers != null && !covers.isEmpty()) {
+
+                // BookListHelper로 커버 리스트 세팅
+                List<com.example.meltingbooks.calendar.utils.BookListHelper.BookItem> books = new ArrayList<>();
+                for (String url : covers) books.add(new com.example.meltingbooks.calendar.utils.BookListHelper.BookItem(url, false));
+                com.example.meltingbooks.calendar.utils.BookListHelper.setupBooks(context, vh.bookListContainer, books, false);
+
+                // 📌 각 커버에 클릭 리스너 추가 (AlertDialog)
+                for (int i = 0; i < vh.bookListContainer.getChildCount(); i++) {
+                    View bookView = vh.bookListContainer.getChildAt(i);
+
+                    // 클릭 이벤트 등록
+                    int index = i;
+                    bookView.setOnClickListener(v -> {
+                        // 커버 이미지 URL에 대응하는 책 정보 찾기
+                        if (item.getRecommendBooks() != null && index < item.getRecommendBooks().size()) {
+                            RecommendBookResponse book = item.getRecommendBooks().get(index);
+
+                            new androidx.appcompat.app.AlertDialog.Builder(context)
+                                    .setTitle(book.getBookTitle())
+                                    .setMessage("저자: " + book.getAuthor())
+                                    .setPositiveButton("닫기", (dialog, which) -> dialog.dismiss())
+                                    .show();
+                        }
+                    });
+                }
+            }
+            return;
+        }
+
+
+
+        FeedViewHolder h = (FeedViewHolder) holder;
+
+        h.userName.setText(item.getUserName());
+        h.reviewContent.setText(item.getReviewContent());
+        h.reviewDate.setText(item.getReviewDate());
 
         // 댓글/좋아요 수 연결
-        holder.commentCount.setText(String.valueOf(item.getCommentCount()));
-        holder.likeCount.setText(String.valueOf(item.getLikeCount()));
+        h.commentCount.setText(String.valueOf(item.getCommentCount()));
+        h.likeCount.setText(String.valueOf(item.getLikeCount()));
 
 
         // 댓글 버튼
-        holder.commentButton.setOnClickListener(v -> {
+        h.commentButton.setOnClickListener(v -> {
             CommentBottomSheet commentBottomSheet =
                     CommentBottomSheet.newInstance(item.getPostId(), "feed");
 
             commentBottomSheet.setOnCommentAddedListener(commentCount -> {
-                holder.commentCount.setText(String.valueOf(commentCount));
+                h.commentCount.setText(String.valueOf(commentCount));
             });
 
             commentBottomSheet.show(
@@ -89,36 +154,18 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
         /*holder.likeButton.setImageResource(
                 item.isLiked() ? R.drawable.feed_like_full : R.drawable.feed_like_button
         );*/
-        holder.likeButton.setImageResource(
+        h.likeButton.setImageResource(
                 item.isLikedByMe() ? R.drawable.feed_like_full : R.drawable.feed_like_button
         );
-        holder.likeCount.setText(String.valueOf(item.getLikeCount()));
+        h.likeCount.setText(String.valueOf(item.getLikeCount()));
 
-        //좋아요 버튼
-        // 좋아요 버튼 클릭 이벤트
-        /**holder.likeButton.setOnClickListener(v -> {
-         boolean newState = !item.isLiked(); // 토글
-         item.setLiked(newState);
 
-         // 이미지 변경
-         holder.likeButton.setImageResource(
-         newState ? R.drawable.feed_like_full : R.drawable.feed_like_button
-         );
-
-         // 카운트 갱신
-         int newCount = item.getLikeCount() + (newState ? 1 : -1);
-         item.setLikeCount(newCount);
-         holder.likeCount.setText(String.valueOf(newCount));
-
-         // TODO: 서버에 좋아요 API 호출 필요
-         });*/
-
-        holder.likeButton.setOnClickListener(v -> {
-            toggleLike(item, holder);
+        h.likeButton.setOnClickListener(v -> {
+            toggleLike(item, h);
         });
 
         //공유 버튼 클릭 리스너
-        holder.shareButton.setOnClickListener(v -> {
+        h.shareButton.setOnClickListener(v -> {
 
             String shareUrl = String.valueOf(item.getShareUrl()); //⭐수정
 
@@ -136,23 +183,23 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
 
         // 이미지 표시
         if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
-            holder.feedImage.setVisibility(View.VISIBLE);
-            Glide.with(context).load(item.getImageUrl()).into(holder.feedImage);
+            h.feedImage.setVisibility(View.VISIBLE);
+            Glide.with(context).load(item.getImageUrl()).into(h.feedImage);
         } else {
-            holder.feedImage.setVisibility(View.GONE);
+            h.feedImage.setVisibility(View.GONE);
         }
 
         // 프로필 표시
         if (item.getProfileImageUrl() != null && !item.getProfileImageUrl().isEmpty()) {
-            holder.profileImage.setVisibility(View.VISIBLE);
+            h.profileImage.setVisibility(View.VISIBLE);
             Glide.with(context)
                     .load(item.getProfileImageUrl())
                     .placeholder(R.drawable.sample_profile) // 로딩 중 기본 이미지
                     .error(R.drawable.sample_profile)       // 실패 시 기본 이미지
-                    .into(holder.profileImage);
+                    .into(h.profileImage);
         } else {
-            holder.profileImage.setVisibility(View.VISIBLE); // GONE 대신 보이게
-            holder.profileImage.setImageResource(R.drawable.sample_profile); // 기본 이미지 적용
+            h.profileImage.setVisibility(View.VISIBLE); // GONE 대신 보이게
+            h.profileImage.setImageResource(R.drawable.sample_profile); // 기본 이미지 적용
         }
 
         //⭐ 사용자 프로필 이동 추가
@@ -163,9 +210,9 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
         };
 
         //⭐ 프로필 이미지 클릭
-        holder.profileImage.setOnClickListener(profileClickListener);
+        h.profileImage.setOnClickListener(profileClickListener);
         //⭐ 사용자 이름 클릭
-        holder.userName.setOnClickListener(profileClickListener);
+        h.userName.setOnClickListener(profileClickListener);
 
         //평점은 피드에서 표시 안함.
         Book book = item.getBook();
@@ -179,49 +226,35 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
                         Book book = response.body();
                         item.setBook(book); // 캐싱해두면 다음에 API 안 타고 바로 표시 가능
 
-                        holder.bookInfoLayout.setVisibility(View.VISIBLE);
-                        holder.bookTitle.setText(book.getTitle());
-                        holder.bookAuthor.setText(book.getAuthor());
-                        holder.bookPublisher.setText(book.getPublisher());
-                        holder.bookCategory.setText(book.getCategoryName());
+                        h.bookInfoLayout.setVisibility(View.VISIBLE);
+                        h.bookTitle.setText(book.getTitle());
+                        h.bookAuthor.setText(book.getAuthor());
+                        h.bookPublisher.setText(book.getPublisher());
+                        h.bookCategory.setText(book.getCategoryName());
 
-                        Glide.with(context).load(book.getCover()).into(holder.bookCover);
+                        Glide.with(context).load(book.getCover()).into(h.bookCover);
                     } else {
                         Log.e("BookDetail", "실패 코드: " + response.code());
-                        holder.bookInfoLayout.setVisibility(View.GONE);
+                        h.bookInfoLayout.setVisibility(View.GONE);
                     }
                 }
 
                 @Override
                 public void onFailure(Call<Book> call, Throwable t) {
                     Log.e("BookDetail", "에러: " + t.getMessage());
-                    holder.bookInfoLayout.setVisibility(View.GONE);
+                    h.bookInfoLayout.setVisibility(View.GONE);
                 }
             });
         } else {
-            holder.bookInfoLayout.setVisibility(View.GONE);
+            h.bookInfoLayout.setVisibility(View.GONE);
         }
 
-
-        // 투표 기능
-        /*if (item.hasVote()) {
-            holder.voteLayout.setVisibility(View.VISIBLE);
-        } else {
-            holder.voteLayout.setVisibility(View.GONE);
-        }
-        holder.voteOption1.setOnClickListener(v -> {
-            Toast.makeText(context, "예 선택!", Toast.LENGTH_SHORT).show();
-        });
-
-        holder.voteOption2.setOnClickListener(v -> {
-            Toast.makeText(context, "아니오 선택!", Toast.LENGTH_SHORT).show();
-        });*/
 
 
         // ✅ 해시태그 표시
         List<String> hashtags = item.getHashtags();
         if (hashtags != null && !hashtags.isEmpty()) {
-            holder.hashtagContent.setVisibility(View.VISIBLE);
+            h.hashtagContent.setVisibility(View.VISIBLE);
             StringBuilder sb = new StringBuilder();
             for (String tag : hashtags) {
                 // 이미 #로 시작하면 그대로, 아니면 붙이기
@@ -230,14 +263,14 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
                 }
                 sb.append(tag).append(" ");
             }
-            holder.hashtagContent.setText(sb.toString().trim());
+            h.hashtagContent.setText(sb.toString().trim());
         } else {
-            holder.hashtagContent.setVisibility(View.GONE);
+            h.hashtagContent.setVisibility(View.GONE);
         }
 
 
         //더보기
-        holder.readMore.setOnClickListener(v -> {
+        h.readMore.setOnClickListener(v -> {
             Context context = v.getContext();
             Intent intent = new Intent(context, FeedDetailActivity.class);
             intent.putExtra("feedItem", item); // FeedItem 전달
@@ -245,7 +278,15 @@ public class FeedAdapter extends RecyclerView.Adapter<FeedAdapter.FeedViewHolder
         });
     }
 
-
+    static class RecommendViewHolder extends RecyclerView.ViewHolder {
+        LinearLayout bookListContainer;
+        TextView title;
+        RecommendViewHolder(View v) {
+            super(v);
+            bookListContainer = v.findViewById(R.id.book_list_container);
+            title = v.findViewById(R.id.recommend_title);
+        }
+    }
 
     @Override
     public int getItemCount() {

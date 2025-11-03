@@ -1,6 +1,7 @@
 package com.example.meltingbooks.feed;
 
 import com.example.meltingbooks.network.book.Book;
+import com.example.meltingbooks.network.recommend.RecommendBookResponse;
 
 import java.io.Serializable;
 import java.util.List;
@@ -25,6 +26,11 @@ public class FeedItem implements Serializable {
     private int postId;      // 댓글 조회/등록용 ID
     private String postType;    // "feed" 또는 "group"
 
+    public static final int TYPE_FEED = 0;
+    public static final int TYPE_RECOMMEND = 1;
+    private int viewType;                    // TYPE_FEED / TYPE_RECOMMEND
+    private long stableId;                   // setHasStableIds용
+    private List<String> recommendCovers;    // 추천 전용 데이터
 
     //책 정보 통째로 보관
     private Book book;
@@ -43,6 +49,7 @@ public class FeedItem implements Serializable {
     private boolean likedByMe;
     private List<String> likedUsers;
 
+    private List<RecommendBookResponse> recommendBooks;
 
 
     public FeedItem(String userName, String reviewContent, String reviewDate,
@@ -130,6 +137,20 @@ public class FeedItem implements Serializable {
         this.shareUrl = shareUrl;
         this.userId = userId;
     }
+
+    // --- Getter/Setter ---
+    public int getViewType() { return viewType; }
+    public void setViewType(int viewType) { this.viewType = viewType; }
+
+    public long getStableId() { return stableId; }
+    public void setStableId(long stableId) { this.stableId = stableId; }
+
+    public List<String> getRecommendCovers() { return recommendCovers; }
+    public void setRecommendCovers(List<String> recommendCovers) { this.recommendCovers = recommendCovers; }
+
+    public List<RecommendBookResponse> getRecommendBooks() { return recommendBooks; }
+    public void setRecommendBooks(List<RecommendBookResponse> recommendBooks) { this.recommendBooks = recommendBooks; }
+
     //getter and setter
     public int getUserId() {
         return userId;

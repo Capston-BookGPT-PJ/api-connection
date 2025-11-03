@@ -24,6 +24,9 @@ import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.ApiService;
 import com.example.meltingbooks.network.feed.FeedPageResponse;
 import com.example.meltingbooks.network.feed.FeedResponse;
+import com.example.meltingbooks.network.recommend.RecommendBookApi;
+import com.example.meltingbooks.network.recommend.RecommendBookPageResponse;
+import com.example.meltingbooks.network.recommend.RecommendBookResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +41,7 @@ public class FeedActivity extends BaseActivity {
     private List<FeedItem> feedList = new ArrayList<>(); //Null 방지 초기화
 
 
+    private List<String> cachedRecommendedCovers = new ArrayList<>();
 
     //⭐새로 고침 및 무한 스크롤 관련 변수
     private SwipeRefreshLayout swipeRefreshLayout; //⭐
@@ -46,11 +50,15 @@ public class FeedActivity extends BaseActivity {
     private boolean isLoading = false; //⭐
     private boolean isLastPage = false; //⭐
 
+    private int nextRecommendPage = 0; // ✅ 추천 전용 페이지
+    private long nextRecoStableId = -1; // ✅ 추천아이템 고정 ID 생성 (음수로)
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed);
         setupBottomNavigation();
+
 
 
 
@@ -118,7 +126,7 @@ public class FeedActivity extends BaseActivity {
                 loadFeeds(true); // true: 새로고침
             });
 
-            //서버에서 피드 불러오기
+            // ✅ 첫 페이지부터 로드
             loadFeeds(false);
         }
     }
@@ -155,87 +163,132 @@ public class FeedActivity extends BaseActivity {
         SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
         String token = prefs.getString("jwt", null);
         int userId = prefs.getInt("userId", -1);
+        if (token == null || userId == -1) return;
+        if (isLoading) return;
+        isLoading = true;
 
-        if (token == null || userId == -1) {
-            Log.e("Feed", "토큰 또는 사용자 ID가 없습니다.");
-            return;
+        if (isRefresh) {
+            currentPage = 0;
+            nextRecommendPage = 0;         // ✅ 추천 페이지도 리셋
+            feedList.clear();
+            isLastPage = false;
         }
 
-        ApiService apiService = ApiClient.getClient(token).create(ApiService.class);
+        final int pageToLoad = currentPage;
+        ApiService api = ApiClient.getClient(token).create(ApiService.class);
 
-        isLoading = true; // ⭐ 로딩 시작
+        api.getUserFeeds("Bearer " + token, userId, pageToLoad, PAGE_SIZE)
+                .enqueue(new Callback<ApiResponse<FeedPageResponse>>() {
+                    @Override public void onResponse(Call<ApiResponse<FeedPageResponse>> call,
+                                                     Response<ApiResponse<FeedPageResponse>> res) {
+                        if (!res.isSuccessful() || res.body()==null || res.body().getData()==null) {
+                            finishLoading(false);
+                            return;
+                        }
 
-        // ✅ FeedPageResponse로 수정
-        Call<ApiResponse<FeedPageResponse>> call =
-                apiService.getUserFeeds("Bearer " + token, userId,  currentPage, PAGE_SIZE);
+                        FeedPageResponse pg = res.body().getData();
+                        List<FeedResponse> feeds = pg.getContent();
 
-        call.enqueue(new Callback<ApiResponse<FeedPageResponse>>() {
-            @Override
-            public void onResponse(Call<ApiResponse<FeedPageResponse>> call,
-                                   Response<ApiResponse<FeedPageResponse>> response) {
-                isLoading = false; // ⭐ 로딩 끝
-                swipeRefreshLayout.setRefreshing(false); //⭐ 새로고침 종료
+                        // 1) 이번 페이지 피드들을 임시로 변환
+                        List<FeedItem> pageFeedItems = new ArrayList<>();
+                        for (FeedResponse f : feeds) {
+                            String firstImage = (f.getReviewImageUrls()!=null && !f.getReviewImageUrls().isEmpty())
+                                    ? f.getReviewImageUrls().get(0) : null;
 
-                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
-                    FeedPageResponse pageResponse = response.body().getData();
-                    List<FeedResponse> feeds = pageResponse.getContent();
+                            FeedItem it = new FeedItem(
+                                    f.getNickname(), f.getContent(), f.getFormattedCreatedAt(),
+                                    firstImage, f.getUserProfileImage(), f.getBookId(),
+                                    f.getCommentCount(), f.getLikeCount(), f.getTagId(),
+                                    f.getHashtags(), f.getShareUrl(), f.getUserId()
+                            );
+                            it.setPostId(f.getReviewId());
+                            it.setViewType(FeedItem.TYPE_FEED);
+                            it.setStableId(f.getReviewId()); // ✅ FEED는 reviewId로 안정 ID
+                            pageFeedItems.add(it);
+                        }
 
-                    //feedList.clear();⭐ 삭제 필요
+                        // 2) 메인 리스트에 "피드 5개 + 추천 1개" 패턴으로 병합
+                        //    (추천 아이템은 covers 비어있는 상태로 자리만 먼저 넣고, 나중에 채움)
+                        int feedsSinceLastReco = countTailFeeds(feedList); // 현재 리스트 뒤쪽 연속 feed 개수
 
-                    //⭐ 새로고침이면 기존 리스트 초기화
-                    if (isRefresh) {
-                        currentPage = 0;
-                        feedList.clear(); // 새로고침이면 기존 리스트 초기화
+
+                        for (FeedItem it : pageFeedItems) {
+                            feedList.add(it);
+                            feedsSinceLastReco++;
+
+                            if (feedsSinceLastReco == 5) {
+
+                                // 추천 자리(placeholder) 생성
+                                FeedItem reco = new FeedItem();
+                                reco.setPostType("recommend");
+                                reco.setViewType(FeedItem.TYPE_RECOMMEND);
+                                long recoId = System.currentTimeMillis();   // 고유 ID
+                                reco.setStableId(recoId);
+                                reco.setRecommendCovers(
+                                        cachedRecommendedCovers != null ? new ArrayList<>(cachedRecommendedCovers) : new ArrayList<>()
+                                );
+                                feedList.add(reco);
+
+                                // 비동기로 이 블록만의 추천 커버 요청
+                                loadRecommendBlock(token, userId, nextRecommendPage, recoId, covers -> {
+                                    int posNow = findItemPositionById(recoId);
+                                    if (posNow != -1 && posNow < feedList.size()) {
+                                        FeedItem block = feedList.get(posNow);
+                                        if (block.getViewType() == FeedItem.TYPE_RECOMMEND) {
+                                            block.setRecommendCovers(new ArrayList<>(covers)); // 커버 세팅
+                                            feedAdapter.notifyItemChanged(posNow);             // UI 갱신
+                                        }
+                                    }
+                                });
+
+
+                                nextRecommendPage++;       // ✅ 추천 페이지 증가
+                                feedsSinceLastReco = 0;    // 리셋
+                            }
+                        }
+
+                        feedAdapter.notifyDataSetChanged(); // 또는 범위 삽입으로 최적화
+                        isLastPage = pg.isLast();
+                        if (!isLastPage) currentPage++;
+                        finishLoading(true);
                     }
 
-                    for (FeedResponse feed : feeds) {
-                        String firstImage = (feed.getReviewImageUrls() != null && !feed.getReviewImageUrls().isEmpty())
-                                ? feed.getReviewImageUrls().get(0)
-                                : null;
-
-                        FeedItem feedItem = new FeedItem(
-                                //feed.getUsername(),
-                                feed.getNickname(),
-                                feed.getContent(),
-                                feed.getFormattedCreatedAt(),
-                                firstImage,
-                                feed.getUserProfileImage(),
-                                feed.getBookId(),
-                                feed.getCommentCount(),
-                                feed.getLikeCount(),
-                                feed.getTagId(),
-                                feed.getHashtags(),
-                                feed.getShareUrl(), //⭐추가
-                                feed.getUserId() //⭐추가
-                        );
-
-                        // ✅ 리뷰ID를 postId로 세팅
-                        feedItem.setPostId(feed.getReviewId());
-                        feedItem.setPostType("feed");
-
-                        feedList.add(feedItem);
+                    @Override public void onFailure(Call<ApiResponse<FeedPageResponse>> call, Throwable t) {
+                        finishLoading(false);
                     }
-
-                    feedAdapter.notifyDataSetChanged();
-                    isLastPage = pageResponse.isLast(); // ⭐ 마지막 페이지 여부 업데이트
-
-                    // ✅ 페이징 정보도 로그 찍기
-                    Log.d("Feed", "불러온 리뷰 개수: " + feeds.size());
-                    Log.d("Feed", "전체 페이지 수: " + pageResponse.getTotalPages()
-                            + ", 마지막 페이지 여부: " + pageResponse.isLast());
-
-                } else {
-                    Log.e("Feed", "Feed 응답이 비정상: " + response.message());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ApiResponse<FeedPageResponse>> call, Throwable t) {
-                isLoading = false; // ⭐ 실패해도 로딩 끝
-                Log.e("Feed", "Feed API 실패: " + t.getMessage());
-            }
-        });
+                });
     }
+
+    private void finishLoading(boolean ok){
+        isLoading = false;
+        swipeRefreshLayout.setRefreshing(false);
+    }
+
+    // 현재 리스트 끝에서부터 연속된 FEED 개수 계산
+    private int countTailFeeds(List<FeedItem> list){
+        int c=0;
+        for (int i=list.size()-1; i>=0; --i){
+            if (list.get(i).getViewType()==FeedItem.TYPE_FEED) c++;
+            else break;
+        }
+        return c;
+    }
+
+    private int findItemPositionById(long id){
+        for (int i=0;i<feedList.size();i++){
+            if (feedList.get(i).getStableId()==id) return i;
+        }
+        return -1;
+    }
+
+
+    // 로딩 종료 공통처리
+    private void onFeedLoadComplete(boolean success) {
+        isLoading = false;
+        swipeRefreshLayout.setRefreshing(false);
+        Log.d("Feed", success ? "✅ 로드 완료" : "❌ 로드 실패");
+    }
+
 
     @Override
     protected int getCurrentNavItemId() {
@@ -285,7 +338,6 @@ public class FeedActivity extends BaseActivity {
         }
     }
 
-
     //피드 수정 갱신
     private void updateFeedInList(FeedResponse updatedFeed) {
         Log.d("FeedRefresh", "updateFeedInList 호출, reviewId=" + updatedFeed.getReviewId());
@@ -312,4 +364,64 @@ public class FeedActivity extends BaseActivity {
             }
         }
     }
+
+    private interface CoversCallback { void onResult(List<String> covers); }
+
+    private void loadRecommendBlock(String token, int userId, int recoPage, long targetId, CoversCallback cb) {
+        ApiClient.getClient(token).create(RecommendBookApi.class)
+                .getRecommendedBooks("Bearer " + token, userId, recoPage, 6)
+                .enqueue(new Callback<ApiResponse<RecommendBookPageResponse>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<RecommendBookPageResponse>> call,
+                                           Response<ApiResponse<RecommendBookPageResponse>> res) {
+
+                        List<String> covers = new ArrayList<>();
+
+                        if (res.isSuccessful() && res.body() != null && res.body().getData() != null) {
+                            List<RecommendBookResponse> books = res.body().getData().getContent();
+
+                            for (RecommendBookResponse b : books) {
+                                if (b.getBookCoverUrl() != null)
+                                    covers.add(b.getBookCoverUrl());
+                            }
+
+                            // ✅ ID로 정확히 해당 추천 블록을 찾아서 데이터 업데이트
+                            int posNow = findItemPositionById(targetId);
+                            if (posNow != -1) {
+                                FeedItem block = feedList.get(posNow);
+                                block.setRecommendBooks(new ArrayList<>(books));
+                                feedAdapter.notifyItemChanged(posNow); // 갱신
+                            }
+                        }
+
+                        cb.onResult(covers);
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<RecommendBookPageResponse>> call, Throwable t) {
+                        cb.onResult(new ArrayList<>());
+                    }
+                });
+    }
+
+    // 콜백 인터페이스
+    interface RecommendCallback {
+        void onResult(List<String> covers);
+    }
+
+
+    // ✅ 추천 커버 리스트 반환
+    private List<String> getCachedRecommendedCovers() {
+        // 아직 추천 커버를 불러오지 않았다면 기본 더미 리스트를 반환
+        if (cachedRecommendedCovers == null || cachedRecommendedCovers.isEmpty()) {
+            List<String> dummy = new ArrayList<>();
+            dummy.add("https://image.aladin.co.kr/product/37/1/cover/893746067x_3.jpg");
+            dummy.add("https://image.aladin.co.kr/product/17915/57/cover/k462534038_1.jpg");
+            dummy.add("https://image.aladin.co.kr/product/2611/13/cover/8996991349_1.jpg");
+            dummy.add("https://image.aladin.co.kr/product/31081/19/cover/8959897316_1.jpg");
+            return dummy;
+        }
+        return cachedRecommendedCovers;
+    }
+
 }

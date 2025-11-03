@@ -519,6 +519,7 @@
                     app:layout_constraintStart_toEndOf="@+id/averageDailyMinutesTitle"
                     app:layout_constraintTop_toBottomOf="@+id/completedReviewsTitle"/>
 
+                <!-- 구분선 -->
                 <View
                     android:id="@+id/gray_line_6"
                     android:layout_width="0dp"
@@ -530,6 +531,219 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/averageDailyMinutesNumber" />
+
+                <!-- 상단 제목 -->
+                <TextView
+                    android:id="@+id/reading_rhythm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:text="독서 리듬 분석"
+                    android:textColor="#000000"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/gray_line_6" />
+
+                <!-- 가장 많이 읽은 시간대 -->
+                <TextView
+                    android:id="@+id/preferredPeriod"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:text="가장 많이 읽은 시간대:"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/reading_rhythm" />
+
+                <TextView
+                    android:id="@+id/preferredPeriodNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="아침"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toEndOf="@+id/preferredPeriod"
+                    app:layout_constraintTop_toTopOf="@+id/preferredPeriod" />
+
+                <!-- 가장 많이 읽는 시각 -->
+                <TextView
+                    android:id="@+id/preferredHour"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="8dp"
+                    android:text="가장 집중하는 시간:"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/preferredPeriod" />
+
+                <TextView
+                    android:id="@+id/preferredHourNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="09시"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toEndOf="@+id/preferredHour"
+                    app:layout_constraintTop_toTopOf="@+id/preferredHour" />
+
+                <!-- 평균 1회 독서 시간 -->
+                <TextView
+                    android:id="@+id/sessionMinutes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="8dp"
+                    android:text="평균 독서 시간:"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/preferredHour" />
+
+                <TextView
+                    android:id="@+id/sessionMinutesNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="55분"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toEndOf="@+id/sessionMinutes"
+                    app:layout_constraintTop_toTopOf="@+id/sessionMinutes" />
+
+                <!-- 주 평균 독서일 수 -->
+                <TextView
+                    android:id="@+id/daysPerWeek"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="8dp"
+                    android:text="주 평균 독서일:"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/sessionMinutes" />
+
+                <TextView
+                    android:id="@+id/daysPerWeekNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="2일"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toEndOf="@+id/daysPerWeek"
+                    app:layout_constraintTop_toTopOf="@+id/daysPerWeek" />
+
+                <!-- 주간 권장 독서 시간 -->
+                <TextView
+                    android:id="@+id/recommendedWeeklyMinutes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="8dp"
+                    android:text="주간 권장 독서 시간:"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/daysPerWeek" />
+
+                <TextView
+                    android:id="@+id/recommendedWeeklyMinutesNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="167분"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toEndOf="@+id/recommendedWeeklyMinutes"
+                    app:layout_constraintTop_toTopOf="@+id/recommendedWeeklyMinutes" />
+
+                <!-- 마지막 독서 이후 경과일 -->
+                <TextView
+                    android:id="@+id/daysSinceLastRead"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="8dp"
+                    android:text="마지막 독서 이후:"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/recommendedWeeklyMinutes" />
+
+                <TextView
+                    android:id="@+id/daysSinceLastReadNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="9일 전"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toEndOf="@+id/daysSinceLastRead"
+                    app:layout_constraintTop_toTopOf="@+id/daysSinceLastRead" />
+
+                <!-- 분석 생성일 -->
+                <TextView
+                    android:id="@+id/analysisDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="8dp"
+                    android:text="분석 생성일:"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/daysSinceLastRead" />
+
+                <TextView
+                    android:id="@+id/analysisDateNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="2025-11-02"
+                    android:textColor="#000000"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toEndOf="@+id/analysisDate"
+                    app:layout_constraintTop_toTopOf="@+id/analysisDate" />
+
+                <!-- 비활성 사용자 경고 -->
+                <TextView
+                    android:id="@+id/inactiveFlagText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginEnd="20dp"
+                    android:layout_marginTop="12dp"
+                    android:text="이번 주에는 독서를 재시작해볼까요? 📖"
+                    android:textColor="@color/black"
+                    android:textSize="15sp"
+                    android:visibility="gone"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/analysisDate" />
+
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

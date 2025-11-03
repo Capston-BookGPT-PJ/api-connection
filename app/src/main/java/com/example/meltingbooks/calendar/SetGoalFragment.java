@@ -20,6 +20,9 @@ import com.example.meltingbooks.network.goal.GoalApi;
 import com.example.meltingbooks.network.goal.GoalController;
 import com.example.meltingbooks.network.goal.GoalRequest;
 import com.example.meltingbooks.network.goal.GoalResponse;
+import com.example.meltingbooks.network.recommend.GoalRecommendApi;
+import com.example.meltingbooks.network.recommend.GoalRecommendController;
+import com.example.meltingbooks.network.recommend.GoalRecommendResponse;
 import com.google.gson.Gson;
 
 import java.time.LocalDate;
@@ -82,6 +85,12 @@ public class SetGoalFragment extends Fragment {
 
         // 진입 시 월간 목표 자동 조회
         loadGoal("MONTHLY");
+
+        GoalRecommendApi recommendApi = ApiClient.getClient(token).create(GoalRecommendApi.class);
+        GoalRecommendController recommendController = new GoalRecommendController(recommendApi);
+
+        // 목표 추천 호출
+        loadGoalRecommendation(view, recommendController);
 
         return view;
     }
@@ -222,4 +231,37 @@ public class SetGoalFragment extends Fragment {
         editReview.setText("");
         editTime.setText("");
     }
+
+
+    private void loadGoalRecommendation(View view, GoalRecommendController recommendController) {
+        TextView tvBook = view.findViewById(R.id.recommend_goal_book);
+        TextView tvReview = view.findViewById(R.id.recommend_goal_review);
+        TextView tvTime = view.findViewById(R.id.recommend_goal_time);
+
+        recommendController.getGoalRecommendation(token, userId, new GoalRecommendController.RecommendCallback<GoalRecommendResponse>() {
+            @Override
+            public void onSuccess(GoalRecommendResponse data) {
+                tvBook.setText("- 목표 권수: " + data.getRecommendedBooks() + "권");
+                tvReview.setText("- 감상문 작성: " + data.getRecommendedReviews() + "개");
+
+                int totalMinutes = data.getRecommendedMinutes();
+                int hours = totalMinutes / 60;
+                int minutes = totalMinutes % 60;
+                tvTime.setText("- 추천 독서 시간: " + hours + "시간 " + minutes + "분");
+
+                // 추천값을 기본 입력값으로 세팅
+                editPage.setText(String.valueOf(data.getRecommendedBooks()));
+                editReview.setText(String.valueOf(data.getRecommendedReviews()));
+                editTime.setText(String.valueOf(hours));
+            }
+
+            @Override
+            public void onError(String message) {
+                tvBook.setText("- 목표 권수: -");
+                tvReview.setText("- 감상문 작성: -");
+                tvTime.setText("- 추천 독서 시간: -");
+            }
+        });
+    }
+
 }
