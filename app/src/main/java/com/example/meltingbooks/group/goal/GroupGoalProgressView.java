@@ -69,12 +69,17 @@ public class GroupGoalProgressView extends FrameLayout {
     public void setProgressWithGoal(float current, float goal, Float progressOverride, Integer progressHeightDp, Float titleTextSizePx) {
         if (goal <= 0) return;
 
+        // 퍼센트 계산
         float percent = (progressOverride != null) ? progressOverride : (current / goal) * 100f;
-        currentPercent = percent;
+
+        // 0~100 범위로 제한
+        currentPercent = Math.max(0f, Math.min(percent, 100f));
 
         // 단위 표시
-        String currentStr = ("권".equals(unit) || "개".equals(unit)) ? String.valueOf((int)current) : String.format(Locale.getDefault(),"%.1f",current);
-        String goalStr = ("권".equals(unit) || "개".equals(unit)) ? String.valueOf((int)goal) : String.format(Locale.getDefault(),"%.1f",goal);
+        String currentStr = ("권".equals(unit) || "개".equals(unit)) ? String.valueOf((int) current)
+                : String.format(Locale.getDefault(), "%.1f", current);
+        String goalStr = ("권".equals(unit) || "개".equals(unit)) ? String.valueOf((int) goal)
+                : String.format(Locale.getDefault(), "%.1f", goal);
         tvSubtext.setText(currentStr + unit + " / " + goalStr + unit);
 
         // 제목 글씨 크기 적용
@@ -87,25 +92,28 @@ public class GroupGoalProgressView extends FrameLayout {
             int heightPx = (progressHeightDp != null) ? ProgressBarUtil.dpToPx(getContext(), progressHeightDp)
                     : ProgressBarUtil.dpToPx(getContext(), 15); // 기본 15dp
 
+            // 배경 높이 설정
             ViewGroup.LayoutParams bgParams = vProgressBackground.getLayoutParams();
             bgParams.height = heightPx;
             vProgressBackground.setLayoutParams(bgParams);
 
+            // 채움 높이 설정
             ViewGroup.LayoutParams fillParams = vProgressFill.getLayoutParams();
             fillParams.height = heightPx;
 
-            // 로그 찍기
+            // 로그
             android.util.Log.d("GroupGoalProgressView", "setProgressWithGoal: current=" + current
                     + ", goal=" + goal
                     + ", percent=" + currentPercent
                     + ", totalWidthPx=" + totalWidthPx
                     + ", heightPx=" + heightPx);
+
+            // 실제 채움 적용
             ProgressBarUtil.setProgressBarWithPx(vProgressFill, currentPercent, totalWidthPx);
             vProgressFill.setLayoutParams(fillParams);
         });
-
-
     }
+
 
 
     public float getPercent() {

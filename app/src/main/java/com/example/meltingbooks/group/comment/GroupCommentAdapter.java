@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
+import com.example.meltingbooks.feed.comment.CommentAdapter;
 
 import org.w3c.dom.Comment;
 
@@ -22,11 +23,16 @@ public class GroupCommentAdapter extends RecyclerView.Adapter<GroupCommentAdapte
 
     private final Context context;
     private final List<GroupCommentItem> commentList;
+    private final int currentUserId; // 로그인 유저 ID
+    private CommentAdapter.OnDeleteCommentListener deleteListener; // ← 이걸 추가
+
+
 
     // ✅ 하나의 생성자만 사용, null이면 빈 리스트로 초기화
-    public GroupCommentAdapter(Context context, List<GroupCommentItem> commentList) {
+    public GroupCommentAdapter(Context context, List<GroupCommentItem> commentList, int currentUserId) {
         this.context = context;
         this.commentList = commentList != null ? commentList : new ArrayList<>();
+        this.currentUserId = currentUserId;
     }
 
 
@@ -55,6 +61,19 @@ public class GroupCommentAdapter extends RecyclerView.Adapter<GroupCommentAdapte
         } else {
             holder.commentProfileImage.setImageResource(R.drawable.sample_profile);
         }
+
+        // 작성자가 본인일 경우 삭제 버튼 표시
+        if (comment.getUserId() == currentUserId) {
+            holder.deleteComment.setVisibility(View.VISIBLE);
+        } else {
+            holder.deleteComment.setVisibility(View.GONE);
+        }
+
+        holder.deleteComment.setOnClickListener(v -> {
+            if (deleteListener != null) {
+                deleteListener.onDeleteComment(comment.getCommentId(), position);
+            }
+        });
     }
 
     @Override
@@ -63,7 +82,7 @@ public class GroupCommentAdapter extends RecyclerView.Adapter<GroupCommentAdapte
     }
 
     public static class CommentViewHolder extends RecyclerView.ViewHolder {
-        TextView commentUserName, commentContent, commentDate;
+        TextView commentUserName, commentContent, commentDate, deleteComment;
         ImageView commentProfileImage;
 
         public CommentViewHolder(@NonNull View itemView) {
@@ -72,6 +91,16 @@ public class GroupCommentAdapter extends RecyclerView.Adapter<GroupCommentAdapte
             commentContent = itemView.findViewById(R.id.commentContent);
             commentProfileImage = itemView.findViewById(R.id.commentProfileImage);
             commentDate = itemView.findViewById(R.id.commentDate);
+            deleteComment = itemView.findViewById(R.id.deleteComment);
         }
+    }
+
+    /** 삭제 인터페이스 */
+    public interface OnDeleteCommentListener {
+        void onDeleteComment(int commentId, int position);
+    }
+
+    public void setOnDeleteCommentListener(CommentAdapter.OnDeleteCommentListener listener) {
+        this.deleteListener = listener;
     }
 }

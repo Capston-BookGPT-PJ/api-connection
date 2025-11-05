@@ -38,6 +38,8 @@ import com.example.meltingbooks.network.book.BookApi;
 import com.example.meltingbooks.network.goal.GoalApi;
 import com.example.meltingbooks.network.goal.GoalController;
 import com.example.meltingbooks.network.goal.GoalResponse;
+import com.example.meltingbooks.network.growth.GrowthApi;
+import com.example.meltingbooks.network.growth.GrowthController;
 import com.example.meltingbooks.network.log.LogApi;
 import com.example.meltingbooks.network.log.LogController;
 import com.example.meltingbooks.network.log.ReadingLogResponse;
@@ -49,6 +51,7 @@ import java.util.List;
 import java.util.Locale;
 
 import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Response;
 
 public class CalendarContentFragment extends Fragment {
@@ -68,6 +71,7 @@ public class CalendarContentFragment extends Fragment {
     private GoalController goalController;
     private LogController logController;
     private BookController bookController;
+    private GrowthController growthController;
 
 
     @Override
@@ -140,6 +144,9 @@ public class CalendarContentFragment extends Fragment {
 
         BookApi bookApi = ApiClient.getClient(token).create(BookApi.class);
         bookController = new BookController(getContext());
+
+        GrowthApi growthApi = ApiClient.getClient(token).create(GrowthApi.class);
+        growthController = new GrowthController(growthApi, token);
 
         // 월간 불러오기
         loadGoal("MONTHLY");
@@ -286,127 +293,6 @@ public class CalendarContentFragment extends Fragment {
         }
     }
 
-    /**private void updateCalendar(View view) {
-     // 요일 표시
-     LinearLayout weekdaysRow = view.findViewById(R.id.weekdaysRow);
-     weekdaysRow.removeAllViews();
-
-     String[] weekdays = {"S", "M", "T", "W", "T", "F", "S"};
-     for (int i = 0; i < weekdays.length; i++) {
-     TextView dayLabel = new TextView(getContext());
-     dayLabel.setText(weekdays[i]);
-     dayLabel.setTextSize(14);
-     dayLabel.setGravity(Gravity.CENTER);
-     dayLabel.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-
-     // 색상 지정
-     if (i == 0) {
-     dayLabel.setTextColor(Color.parseColor("#FC1F8E")); // 일요일
-     } else if (i == 6) {
-     dayLabel.setTextColor(Color.parseColor("#1D9BF0")); // 토요일
-     } else {
-     dayLabel.setTextColor(Color.BLACK); // 평일
-     }
-
-     weekdaysRow.addView(dayLabel);
-     }
-
-     calendarGrid.removeAllViews();
-
-     // 현재 월의 정보
-     int year = currentCalendar.get(Calendar.YEAR);
-     int month = currentCalendar.get(Calendar.MONTH);
-
-     // 달 이름 표시
-     java.text.SimpleDateFormat monthFormat = new java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.ENGLISH);
-     textMonth.setText(monthFormat.format(currentCalendar.getTime()));
-
-     // 1일이 무슨 요일인지 계산 (0:일 ~ 6:토)
-     Calendar tempCal = Calendar.getInstance();
-     tempCal.set(year, month, 1);
-     int startDayOfWeek = tempCal.get(Calendar.DAY_OF_WEEK) - 1;
-
-     int maxDay = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH);
-
-     // 빈칸 먼저 채우기
-     for (int i = 0; i < startDayOfWeek; i++) {
-     TextView emptyView = new TextView(getContext());
-     GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-     params.width = 0;
-     params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-     params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-     emptyView.setLayoutParams(params);
-     calendarGrid.addView(emptyView);
-     }
-
-     //날짜 채우기
-     for (int day = 1; day <= maxDay; day++) {
-     TextView dayView = new TextView(getContext());
-     dayView.setText(String.valueOf(day));
-     dayView.setGravity(Gravity.CENTER);
-     dayView.setTextSize(16);
-     dayView.setPadding(8, 8, 8, 8);
-
-     // 크기 설정 (정사각형)
-     int sizeInDp = 35;
-     int sizeInPx = (int) TypedValue.applyDimension(
-     TypedValue.COMPLEX_UNIT_DIP, sizeInDp, getResources().getDisplayMetrics()
-     );
-     GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-     params.width = sizeInPx;
-     params.height = sizeInPx;
-     params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED);
-     dayView.setLayoutParams(params);
-
-     Calendar thisDate = Calendar.getInstance();
-     thisDate.set(year, month, day);
-
-     // 초기 스타일 적용
-     if (thisDate.get(Calendar.YEAR) == selectedDate.get(Calendar.YEAR) &&
-     thisDate.get(Calendar.MONTH) == selectedDate.get(Calendar.MONTH) &&
-     thisDate.get(Calendar.DAY_OF_MONTH) == selectedDate.get(Calendar.DAY_OF_MONTH)) {
-     dayView.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.bg_selected_date));
-     dayView.setTextColor(Color.WHITE);
-     selectedDayView = dayView;
-     } else {
-     dayView.setTextColor(Color.BLACK);
-     }
-
-     // 클릭 이벤트 처리
-     dayView.setOnClickListener(v -> {
-     // 기존 선택 해제
-     if (selectedDayView != null) {
-     selectedDayView.setBackground(null);
-     selectedDayView.setTextColor(Color.BLACK);
-     }
-
-     // 새로 선택
-     selectedDayView = (TextView) v;
-     selectedDayView.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.bg_selected_date));
-     selectedDayView.setTextColor(Color.WHITE);
-
-     // 날짜 저장
-     selectedDate.set(year, month, Integer.parseInt(dayView.getText().toString()));
-
-     // 날짜별 기록 표시
-     SimpleDateFormat format = new SimpleDateFormat("M/d (E)", Locale.KOREA);
-     TextView goalByDate = getActivity().findViewById(R.id.goal_by_date);
-     if (goalByDate != null) {
-     goalByDate.setText(format.format(selectedDate.getTime()));
-     }
-
-     // 선택한 날짜의 로그 조회
-     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.KOREA);
-     String selectedDateStr = sdf.format(selectedDate.getTime());
-     loadLogsByDate(selectedDateStr);
-
-     });
-
-     calendarGrid.addView(dayView);
-     }
-
-     }*/
-
     private List<BookListHelper.BookItem> bookItems = new ArrayList<>();
 
     private void setupBooks(View view) {
@@ -490,6 +376,13 @@ public class CalendarContentFragment extends Fragment {
         float completedHours = goal.getCompletedMinutes() / 60f;
         float targetHours = goal.getTargetMinutes() / 60f;
         goal3.setProgressWithGoal(completedHours, targetHours, goal.getTimeProgress());
+
+        // 목표 100% 달성 시 경험치 지급
+        if (totalProgress >= 100f) {
+            String eventType = "MONTHLY".equalsIgnoreCase(goal.getGoalType()) ?
+                    "ACHIEVE_MONTHLY_GOAL" : "ACHIEVE_YEARLY_GOAL";
+            giveCompletionExp(eventType);
+        }
     }
 
     private void loadLogsByDate(String dateStr) {
@@ -608,5 +501,33 @@ public class CalendarContentFragment extends Fragment {
         }
     }
 
+    private void giveCompletionExp(String eventType) {
+        growthController.giveExp(userId, eventType, new Callback<String>() {
+            @Override
+            public void onResponse(Call<String> call, Response<String> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String message = response.body();
+
+                    // 이미 지급된 이벤트 메시지는 토스트 표시 안 함
+                    if (message.contains("이미 지급된 이벤트입니다")) {
+                        Log.i("ExpAPI", "이미 지급된 이벤트: " + message);
+                        return;
+                    }
+
+                    // 그 외 성공 메시지만 토스트
+                    Toast.makeText(requireContext(), "경험치 지급 완료: " + message, Toast.LENGTH_SHORT).show();
+
+                } else {
+                    Toast.makeText(requireContext(), "경험치 지급 실패", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                Toast.makeText(requireContext(), "서버 통신 실패", Toast.LENGTH_SHORT).show();
+                Log.e("ExpAPI", "서버 통신 실패", t);
+            }
+        });
+    }
 
 }

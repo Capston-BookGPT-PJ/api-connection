@@ -1,5 +1,7 @@
 package com.example.meltingbooks.group.comment;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -20,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.ApiResponse;
+import com.example.meltingbooks.network.ApiService;
 import com.example.meltingbooks.network.group.GroupApi;
 import com.example.meltingbooks.network.group.comment.GroupCommentPageResponse;
 import com.example.meltingbooks.network.group.comment.GroupCommentRequest;
@@ -43,6 +46,7 @@ public class GroupCommentBottomSheet extends BottomSheetDialogFragment {
     private int postId;
     private int groupId;
     private String postType;
+    private int currentUserId;
 
     public interface OnCommentAddedListener {
         void onCommentAdded(int commentCount);
@@ -86,6 +90,9 @@ public class GroupCommentBottomSheet extends BottomSheetDialogFragment {
             postId = getArguments().getInt("postId");
             postType = getArguments().getString("postType");
         }
+        SharedPreferences prefs = requireContext().getSharedPreferences("auth", MODE_PRIVATE);
+        currentUserId = prefs.getInt("userId", -1);
+
     }
 
     @Nullable
@@ -101,8 +108,41 @@ public class GroupCommentBottomSheet extends BottomSheetDialogFragment {
         commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         commentList = new ArrayList<>();
-        commentAdapter = new GroupCommentAdapter(getContext(), commentList);
+        commentAdapter = new GroupCommentAdapter(getContext(), commentList, currentUserId);
         commentRecyclerView.setAdapter(commentAdapter);
+
+        //댓글 삭제 리스너
+        commentAdapter.setOnDeleteCommentListener((commentId, position) -> {
+            SharedPreferences prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE);
+            String token = prefs.getString("jwt", null);
+            int userId = prefs.getInt("userId", -1);
+            if (token == null) return;
+
+            GroupApi groupApi = ApiClient.getClient(token).create(GroupApi.class);
+            groupApi.deleteGroupComment( "Bearer " + token, groupId, postId, commentId)
+                    .enqueue(new Callback<ApiResponse<Void>>() {
+                        @Override
+                        public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
+                            if (response.isSuccessful()) {
+                                commentList.remove(position);
+                                commentAdapter.notifyItemRemoved(position);
+
+                                //댓글 수 업데이트
+                                if (onCommentAddedListener != null) {
+                                    onCommentAddedListener.onCommentAdded(commentList.size());
+                                }
+
+                            } else {
+                                Log.e("Comment", "삭제 실패: " + response.code());
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
+                            Log.e("Comment", "삭제 에러: " + t.getMessage());
+                        }
+                    });
+        });
 
         if ("group".equals(postType)) {
             loadCommentsFromServer();
@@ -133,6 +173,8 @@ public class GroupCommentBottomSheet extends BottomSheetDialogFragment {
                                     GroupCommentResponse newComment = response.body().getData();
 
                                     commentList.add(new GroupCommentItem(
+                                            newComment.getId(),
+                                            newComment.getUserId(),
                                             newComment.getNickname(),
                                             newComment.getContent(),
                                             newComment.getProfileImageUrl(),
@@ -179,6 +221,8 @@ public class GroupCommentBottomSheet extends BottomSheetDialogFragment {
 
                             for (GroupCommentResponse comment : response.body().getData().getContent()) {
                                 GroupCommentItem item = new GroupCommentItem(
+                                        comment.getId(),                 // commentId
+                                        comment.getUserId(),             // userId
                                         comment.getNickname(),
                                         comment.getContent(),
                                         comment.getProfileImageUrl(),

@@ -19,10 +19,14 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     private final List<CommentItem> commentList;
     private final Context context;
+    private final int currentUserId; // 로그인 유저 ID
+    private OnDeleteCommentListener deleteListener; // ← 이걸 추가
 
-    public CommentAdapter(Context context, List<CommentItem> commentList) {
+
+    public CommentAdapter(Context context, List<CommentItem> commentList, int currentUserId) {
         this.context = context;
         this.commentList = commentList;
+        this.currentUserId = currentUserId;
     }
 
     @NonNull
@@ -45,6 +49,20 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                 .placeholder(R.drawable.sample_profile) // 로딩 중 기본 이미지
                 .error(R.drawable.sample_profile)       // 실패 시 기본 이미지
                 .into(holder.commentProfileImage);
+
+        // 작성자가 본인일 경우 삭제 버튼 표시
+        if (comment.getUserId() == currentUserId) {
+            holder.deleteComment.setVisibility(View.VISIBLE);
+        } else {
+            holder.deleteComment.setVisibility(View.GONE);
+        }
+
+        holder.deleteComment.setOnClickListener(v -> {
+            if (deleteListener != null) {
+                deleteListener.onDeleteComment(comment.getCommentId(), position);
+            }
+        });
+
     }
 
     @Override
@@ -54,7 +72,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     public static class CommentViewHolder extends RecyclerView.ViewHolder {
 
-        TextView commentUserName, commentContent, commentDate;
+        TextView commentUserName, commentContent, commentDate, deleteComment;
         ImageView commentProfileImage;
 
         public CommentViewHolder(@NonNull View itemView) {
@@ -63,6 +81,16 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             commentContent = itemView.findViewById(R.id.commentContent);
             commentProfileImage = itemView.findViewById(R.id.commentProfileImage);
             commentDate = itemView.findViewById(R.id.commentDate);
+            deleteComment = itemView.findViewById(R.id.deleteComment);
         }
+    }
+
+    /** 삭제 인터페이스 */
+    public interface OnDeleteCommentListener {
+        void onDeleteComment(int commentId, int position);
+    }
+
+    public void setOnDeleteCommentListener(OnDeleteCommentListener listener) {
+        this.deleteListener = listener;
     }
 }

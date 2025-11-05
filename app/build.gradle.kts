@@ -84,6 +84,8 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-storage:20.2.1")
+    //FCM 메시징 추가
+    implementation("com.google.firebase:firebase-messaging:23.4.0")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
@@ -107,10 +109,11 @@ dependencies {
     // Retrofit
     implementation ("com.squareup.retrofit2:retrofit:2.11.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation ("com.squareup.retrofit2:converter-scalars:2.9.0") //⭐문자 열 응답 추가됨
 
-    //⭐ SwipeRefreshLayout
+    // SwipeRefreshLayout
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 }
 
 // Firebase 설정 적용
-apply(plugin = "com.google.gms.google-services")
+//apply(plugin = "com.google.gms.google-services")

@@ -13,8 +13,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -24,6 +22,7 @@ import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
 import com.example.meltingbooks.feed.comment.CommentAdapter;
 import com.example.meltingbooks.feed.comment.CommentItem;
+import com.example.meltingbooks.feed.like.LikedUsersBottomSheet;
 import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.ApiService;
@@ -76,6 +75,8 @@ public class FeedDetailActivity extends AppCompatActivity {
     private CommentAdapter commentAdapter;
     private List<CommentItem> commentList = new ArrayList<>();
 
+    private int postOwnerId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,16 +91,15 @@ public class FeedDetailActivity extends AppCompatActivity {
             decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
 
-
-        /*
-        Intent intent = getIntent();
-        postId = intent.getIntExtra("postId", -1);
-        FeedResponse feedItem = (FeedResponse) intent.getSerializableExtra("feedItem");
-
-        if (feedItem != null) {
-            currentFeed = feedItem;
-            bindDataToViews(currentFeed);
-        }*/
+        // SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
+        token = prefs.getString("jwt", null);
+        currentUserId = prefs.getInt("userId", -1);
+        if (token == null || currentUserId == -1) {
+            Toast.makeText(this, "로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         // FeedAdpater.java에서 FeedItem 받아오기
         currentFeed = (FeedItem) getIntent().getSerializableExtra("feedItem");
@@ -109,6 +109,8 @@ public class FeedDetailActivity extends AppCompatActivity {
             finish();
             return;
         }
+
+        postOwnerId = currentFeed.getUserId(); // 게시글 작성자 ID
 
         // 초기화
         initializeViews();
@@ -134,6 +136,17 @@ public class FeedDetailActivity extends AppCompatActivity {
         btnEditPost = findViewById(R.id.btn_edit_post);
         btnDeletePost = findViewById(R.id.btn_delete_post);
 
+        // --- 본인 글일 때만 수정/삭제 버튼 보이기 ---
+        if (postOwnerId == currentUserId) {
+            Log.d("FeedDetail", "currentUserId=" + currentUserId + ", userId=" + postOwnerId);
+            btnEditPost.setVisibility(View.VISIBLE);
+            btnDeletePost.setVisibility(View.VISIBLE);
+        } else {
+            Log.d("FeedDetail", "currentUserId=" + currentUserId + ", userId=" + postOwnerId);
+            btnEditPost.setVisibility(View.GONE);
+            btnDeletePost.setVisibility(View.GONE);
+        }
+
         // 리뷰 내용
         profileImage = findViewById(R.id.profileImage);
         userName = findViewById(R.id.userName);
@@ -144,6 +157,22 @@ public class FeedDetailActivity extends AppCompatActivity {
         hashtagContent = findViewById(R.id.hashtagContent);
         commentCount = findViewById(R.id.comment_count);
         likeCount = findViewById(R.id.like_count);
+
+        likeCount.setOnClickListener(v -> {
+            List<FeedResponse.LikedUser> likedUsers = currentFeed.getLikedUsers();
+            if (likedUsers == null || likedUsers.isEmpty()) {
+                Toast.makeText(this, "아직 좋아요한 사람이 없습니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            LikedUsersBottomSheet likedSheet = LikedUsersBottomSheet.newInstance(likedUsers);
+            likedSheet.show(
+                    ((AppCompatActivity) v.getContext()).getSupportFragmentManager(),
+                    "LikedUsersBottomSheet"
+            );
+        });
+
+
         likeButton = findViewById(R.id.like_Button);
 
         // 댓글
@@ -163,8 +192,14 @@ public class FeedDetailActivity extends AppCompatActivity {
     private void setupRecyclerView() {
         commentRecyclerView = findViewById(R.id.commentRecyclerView);
         commentRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        commentAdapter = new CommentAdapter(this, commentList);
+        commentAdapter = new CommentAdapter(this, commentList, currentUserId);
         commentRecyclerView.setAdapter(commentAdapter);
+
+        // 댓글 삭제 리스너 설정
+        commentAdapter.setOnDeleteCommentListener((commentId, position) -> {
+            Log.d("FeedDetail", "삭제 클릭 - commentId=" + commentId + ", position=" + position);
+            deleteComment(commentId, position);
+        });
     }
 
 
@@ -234,36 +269,9 @@ public class FeedDetailActivity extends AppCompatActivity {
         postCommentButton.setOnClickListener(v -> postComment());
     }
 
-    /*
-    // --- 데이터 로드 및 UI 업데이트 ---
-    private void fetchFeedDetail() {
-        // ✅ SharedPreferences에서 userId를 가져옵니다. (initializeApiClients에서 이미 했으므로 여기서는 사용만)
-        apiService.getReviewDetail("Bearer " + token, postId, currentUserId).enqueue(new Callback<ApiResponse<FeedResponse>>() {
-            @Override
-            public void onResponse(Call<ApiResponse<FeedResponse>> call, Response<ApiResponse<FeedResponse>> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
-                    currentFeed = response.body().getData();
-                    bindDataToViews(currentFeed);
-                    fetchComments(); // 댓글 목록 가져오기
-                } else {
-                    Toast.makeText(FeedDetailActivity.this, "게시글을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
-                    finish();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ApiResponse<FeedResponse>> call, Throwable t) {
-                Toast.makeText(FeedDetailActivity.this, "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        });
-    }*/
 
 
     private void bindDataToViews(FeedItem feed) {
-        // 게시글 수정 / 삭제 버튼
-        //btnEditPost.setVisibility(feed.getUserId() == currentUserId ? View.VISIBLE : View.GONE);
-        //btnDeletePost.setVisibility(feed.getUserId() == currentUserId ? View.VISIBLE : View.GONE);
 
         // 기본 정보
         userName.setText(feed.getUserName());
@@ -271,7 +279,7 @@ public class FeedDetailActivity extends AppCompatActivity {
         reviewDate.setText(feed.getReviewDate());
         commentCount.setText(String.valueOf(feed.getCommentCount()));
         likeCount.setText(String.valueOf(feed.getLikeCount()));
-        likeButton.setImageResource(feed.isLiked() ? R.drawable.feed_like_full : R.drawable.feed_like_button);
+        likeButton.setImageResource(feed.isLikedByMe() ? R.drawable.feed_like_full : R.drawable.feed_like_button);
 
         // 프로필 이미지
         if (feed.getProfileImageUrl() != null && !feed.getProfileImageUrl().isEmpty()) {
@@ -356,6 +364,8 @@ public class FeedDetailActivity extends AppCompatActivity {
 
                             for (CommentResponse c : responseList) {
                                 commentList.add(new CommentItem(
+                                        c.getCommentId(),
+                                        c.getUserId(),
                                         c.getNickname(),
                                         c.getContent(),
                                         c.getUserProfileImage(),   // ✅ 서버 값 사용
@@ -424,13 +434,54 @@ public class FeedDetailActivity extends AppCompatActivity {
                     }
                 });
     }
+    /**
+     * 댓글 삭제 처리
+     */
+    private void deleteComment(int commentId, int position) {
+        Log.d("FeedDetail", "deleteComment 호출 - commentId=" + commentId + ", position=" + position);
 
+        if (apiService == null || token == null) return;
+
+        apiService.deleteComment("Bearer " + token, commentId, currentUserId)
+                .enqueue(new Callback<ApiResponse<Void>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
+                        Log.d("FeedDetail", "삭제 응답 - commentId=" + commentId + ", code=" + response.code());
+
+                        if (response.isSuccessful()) {
+                            Toast.makeText(FeedDetailActivity.this, "댓글이 삭제되었습니다.", Toast.LENGTH_SHORT).show();
+
+                            commentList.remove(position);
+                            commentAdapter.notifyItemRemoved(position);
+
+                            if (currentFeed != null) {
+                                currentFeed.setCommentCount(currentFeed.getCommentCount() - 1);
+                                commentCount.setText(String.valueOf(currentFeed.getCommentCount()));
+                            }
+                        } else {
+                            Toast.makeText(FeedDetailActivity.this, "댓글 삭제 실패", Toast.LENGTH_SHORT).show();
+                            Log.e("deleteComment", "삭제 실패 - commentId=" + commentId + ", body=" + response.body());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
+                        Toast.makeText(FeedDetailActivity.this, "댓글 삭제 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e("deleteComment", "삭제 에러 - commentId=" + commentId, t);
+                    }
+                });
+    }
 
     private void toggleLike() {
         if (currentFeed == null) return;
 
-        boolean newState = !currentFeed.isLiked();
-        currentFeed.setLiked(newState);
+        //boolean newState = !currentFeed.isLiked();
+        //currentFeed.setLiked(newState);
+        boolean oldState = currentFeed.isLikedByMe(); // ✅ 기존 상태
+        int oldCount = currentFeed.getLikeCount();    // ✅ 기존 카운트 저장
+
+        boolean newState = !oldState;
+        currentFeed.setLikedByMe(newState); // ✅ likedByMe로 변경
 
         // UI 즉시 반영
         likeButton.setImageResource(newState ? R.drawable.feed_like_full : R.drawable.feed_like_button);
@@ -461,7 +512,8 @@ public class FeedDetailActivity extends AppCompatActivity {
     private void rollbackLike(boolean correctState) {
         if (currentFeed == null) return;
 
-        currentFeed.setLiked(correctState);
+        //currentFeed.setLiked(correctState);
+        currentFeed.setLikedByMe(correctState); // ✅ likedByMe 복원
         likeButton.setImageResource(correctState ? R.drawable.feed_like_full : R.drawable.feed_like_button);
 
         // UI 즉시 반영
@@ -472,21 +524,5 @@ public class FeedDetailActivity extends AppCompatActivity {
         likeCount.setText(String.valueOf(correctedCount));
     }
 
-
-    /*
-    //피드 갱신
-    private final ActivityResultLauncher<Intent> feedEditLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    FeedResponse updatedFeed = (FeedResponse) result.getData().getSerializableExtra("updatedFeed");
-                    if (updatedFeed != null) {
-                        // FeedActivity로 전달
-                        Intent resultIntent = new Intent();
-                        resultIntent.putExtra("updatedFeed", updatedFeed);
-                        setResult(RESULT_OK, resultIntent);
-                        finish();
-                    }
-                }
-            });*/
 
 }

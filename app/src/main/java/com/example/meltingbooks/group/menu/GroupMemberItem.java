@@ -1,6 +1,8 @@
 package com.example.meltingbooks.group.menu;
 
-public class GroupMemberItem {
+import java.io.Serializable;
+
+public class GroupMemberItem implements Serializable {
     private int groupId;
     private int userId;
     private String nickname;

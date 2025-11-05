@@ -1,8 +1,9 @@
 package com.example.meltingbooks.network.feed;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class ReviewResponse {
+public class ReviewResponse implements Serializable {
     private int reviewId;
     private String content;
     private List<String> reviewImageUrls;

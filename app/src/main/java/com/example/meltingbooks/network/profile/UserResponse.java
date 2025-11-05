@@ -1,6 +1,7 @@
 // 유저 정보 네트워크 응답 전용 DTO
 package com.example.meltingbooks.network.profile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserResponse {
@@ -19,6 +20,9 @@ public class UserResponse {
     private int reviewCount;
     private List<Book> recentBooks;
     private List<Review> recentReviews;
+
+    // ✅ 추가: 가입 그룹 이름 리스트
+    private List<String> groupNames = new ArrayList<>();
 
     // ----------------- Nested Models -----------------
     public static class Badge {
@@ -251,4 +255,7 @@ public class UserResponse {
 
     public List<Review> getRecentReviews() { return recentReviews; }
     public void setRecentReviews(List<Review> recentReviews) { this.recentReviews = recentReviews; }
+    public List<String> getGroupNames() { return groupNames; }
+    public void setGroupNames(List<String> groupNames) { this.groupNames = groupNames; }
+
 }

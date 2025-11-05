@@ -1,5 +1,6 @@
 package com.example.meltingbooks.network.group.feed;
 
+import com.example.meltingbooks.network.feed.FeedResponse;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
@@ -42,60 +43,211 @@ public class GroupFeedResponse implements Serializable {
         private int commentCount;
         private List<String> hashtags;
         private boolean likedByMe;
-        private List<String> likedUsers;
+        private List<LikedUser> likedUsers;
         private Integer bookId;
         private String bookTitle;
         private String shareUrl;
+
 
         //추가
         // Post 클래스
         private String title;
         private String postType;
+
         // --- Getter ---
-        public int getReviewId() { return reviewId; }
-        public int getUserId() { return userId; }
-        public String getTagId() { return tagId; }
-        public String getNickname() { return nickname; }
-        public String getUsername() { return username; }
-        public String getUserProfileImage() { return userProfileImage; }
-        public String getContent() { return content; }
-        public int getRating() { return rating; }
-        public List<String> getReviewImageUrls() { return reviewImageUrls; }
-        public String getCreatedAt() { return createdAt; }
-        public int getLikeCount() { return likeCount; }
-        public int getCommentCount() { return commentCount; }
-        public List<String> getHashtags() { return hashtags; }
-        public boolean isLikedByMe() { return likedByMe; }
-        public List<String> getLikedUsers() { return likedUsers; }
-        public Integer getBookId() { return bookId; }
-        public String getBookTitle() { return bookTitle; }
-        public String getShareUrl() { return shareUrl; }
+        public int getReviewId() {
+            return reviewId;
+        }
+
+        public int getUserId() {
+            return userId;
+        }
+
+        public String getTagId() {
+            return tagId;
+        }
+
+        public String getNickname() {
+            return nickname;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public String getUserProfileImage() {
+            return userProfileImage;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        public int getRating() {
+            return rating;
+        }
+
+        public List<String> getReviewImageUrls() {
+            return reviewImageUrls;
+        }
+
+        public String getCreatedAt() {
+            return createdAt;
+        }
+
+        public int getLikeCount() {
+            return likeCount;
+        }
+
+        public int getCommentCount() {
+            return commentCount;
+        }
+
+        public List<String> getHashtags() {
+            return hashtags;
+        }
+
+        public boolean isLikedByMe() {
+            return likedByMe;
+        }
+
+        public Integer getBookId() {
+            return bookId;
+        }
+
+        public String getBookTitle() {
+            return bookTitle;
+        }
+
+        public String getShareUrl() {
+            return shareUrl;
+        }
 
         // --- Setter ---
-        public void setReviewId(int reviewId) { this.reviewId = reviewId; }
-        public void setUserId(int userId) { this.userId = userId; }
-        public void setTagId(String tagId) { this.tagId = tagId; }
-        public void setNickname(String nickname) { this.nickname = nickname; }
-        public void setUsername(String username) { this.username = username; }
-        public void setUserProfileImage(String userProfileImage) { this.userProfileImage = userProfileImage; }
-        public void setContent(String content) { this.content = content; }
-        public void setRating(int rating) { this.rating = rating; }
-        public void setReviewImageUrls(List<String> reviewImageUrls) { this.reviewImageUrls = reviewImageUrls; }
-        public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
-        public void setLikeCount(int likeCount) { this.likeCount = likeCount; }
-        public void setCommentCount(int commentCount) { this.commentCount = commentCount; }
-        public void setHashtags(List<String> hashtags) { this.hashtags = hashtags; }
-        public void setLikedByMe(boolean likedByMe) { this.likedByMe = likedByMe; }
-        public void setLikedUsers(List<String> likedUsers) { this.likedUsers = likedUsers; }
-        public void setBookId(Integer bookId) { this.bookId = bookId; }
-        public void setBookTitle(String bookTitle) { this.bookTitle = bookTitle; }
-        public void setShareUrl(String shareUrl) { this.shareUrl = shareUrl; }
+        public void setReviewId(int reviewId) {
+            this.reviewId = reviewId;
+        }
+
+        public void setUserId(int userId) {
+            this.userId = userId;
+        }
+
+        public void setTagId(String tagId) {
+            this.tagId = tagId;
+        }
+
+        public void setNickname(String nickname) {
+            this.nickname = nickname;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public void setUserProfileImage(String userProfileImage) {
+            this.userProfileImage = userProfileImage;
+        }
+
+        public void setContent(String content) {
+            this.content = content;
+        }
+
+        public void setRating(int rating) {
+            this.rating = rating;
+        }
+
+        public void setReviewImageUrls(List<String> reviewImageUrls) {
+            this.reviewImageUrls = reviewImageUrls;
+        }
+
+        public void setCreatedAt(String createdAt) {
+            this.createdAt = createdAt;
+        }
+
+        public void setLikeCount(int likeCount) {
+            this.likeCount = likeCount;
+        }
+
+        public void setCommentCount(int commentCount) {
+            this.commentCount = commentCount;
+        }
+
+        public void setHashtags(List<String> hashtags) {
+            this.hashtags = hashtags;
+        }
+
+        public void setLikedByMe(boolean likedByMe) {
+            this.likedByMe = likedByMe;
+        }
+
+        public void setBookId(Integer bookId) {
+            this.bookId = bookId;
+        }
+
+        public void setBookTitle(String bookTitle) {
+            this.bookTitle = bookTitle;
+        }
+
+        public void setShareUrl(String shareUrl) {
+            this.shareUrl = shareUrl;
+        }
 
         //// getter/setter -get은 null값
-        public String getTitle() { return title; }
-        public void setTitle(String title) { this.title = title; }
-        public String getPostType() { return postType; }
-        public void setPostType(String postType) { this.postType = postType; }
-    }
+        public String getTitle() {
+            return title;
+        }
 
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getPostType() {
+            return postType;
+        }
+
+        public void setPostType(String postType) {
+            this.postType = postType;
+        }
+
+
+        // ✅ likedUsers Getter/Setter
+        public static class LikedUser implements Serializable {
+            private int id;
+            private String nickname;
+            private String profileImageUrl;
+
+            // Getter & Setter
+            public int getId() {
+                return id;
+            }
+
+            public void setId(int id) {
+                this.id = id;
+            }
+
+            public String getNickname() {
+                return nickname;
+            }
+
+            public void setNickname(String nickname) {
+                this.nickname = nickname;
+            }
+
+            public String getProfileImageUrl() {
+                return profileImageUrl;
+            }
+
+            public void setProfileImageUrl(String profileImageUrl) {
+                this.profileImageUrl = profileImageUrl;
+            }
+        }
+
+        public List<LikedUser> getLikedUsers() {
+            return likedUsers;
+        }
+
+        public void setLikedUsers(List<LikedUser> likedUsers) {
+            this.likedUsers = likedUsers;
+        }
+    }
 }

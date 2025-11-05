@@ -224,11 +224,8 @@ public class GroupActivity extends BaseActivity {
                                     RequestOptions requestOptions = new RequestOptions()
                                             .transform(new CenterCrop(), new RoundedCorners(cornerRadiusPx));
 
-                                    if (imageUrl == null) {
-                                        // null이면 아예 이미지 표시 안 함
-                                        button.setImageDrawable(null);
-                                    } else if (imageUrl.isEmpty()) {
-                                        // 빈 문자열이면 샘플 이미지 표시
+                                    if (imageUrl == null || imageUrl.isEmpty()) {
+                                        // null 또는 빈 문자열이면 샘플 이미지 표시
                                         Glide.with(GroupActivity.this)
                                                 .load(R.drawable.sample_profile)
                                                 .apply(requestOptions)

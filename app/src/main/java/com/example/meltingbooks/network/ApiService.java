@@ -96,6 +96,15 @@ public interface ApiService {
             @Body CommentRequest commentRequest
     );
 
+    @DELETE("/api/comments/{commentId}")
+    Call<ApiResponse<Void>> deleteComment(
+            @Header("Authorization") String token,
+            @Path("commentId") int commentId,
+            @Query("userId") int userId
+    );
+
+
+
     // 리뷰 작성
     @POST("/api/reviews")
     Call<ApiResponse<ReviewResponse>> createReview(
@@ -187,4 +196,16 @@ public interface ApiService {
             @Query("userId") int userId
     );
 
+    // 전체 리뷰 조회 (책 제한 없음)
+    @GET("/api/reviews")
+    Call<ApiResponse<List<FeedResponse>>> getAllReviews(
+            @Header("Authorization") String token
+    );
+
+    //FCM 토큰 저장
+    @POST("api/users/{userId}/tokens")
+    Call<Void> registerToken(
+            @Header("Authorization") String token,
+            @Path("userId") int userId,
+            @Body TokenRequestBody body);
 }

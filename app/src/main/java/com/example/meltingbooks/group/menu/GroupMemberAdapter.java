@@ -94,6 +94,13 @@ public class GroupMemberAdapter extends RecyclerView.Adapter<GroupMemberAdapter.
         this.groupOwnerId = ownerId;
         notifyDataSetChanged(); // 갱신
     }
+
+    // GroupMemberAdapter.java 안에 추가
+    public void addMember(GroupMemberItem member) {
+        members.add(member);
+        notifyItemInserted(members.size() - 1);
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView memberImage;
         ImageView myself;

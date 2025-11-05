@@ -15,9 +15,8 @@ public class ReviewUpdateRequest {
     }
 
 
-    public ReviewUpdateRequest(String content, String imageUrl, Integer bookId, Integer rating, List<String> hashtags) {
+    public ReviewUpdateRequest(String content, Integer bookId, Integer rating, List<String> hashtags) {
         this.content = content;
-        this.imageUrl = imageUrl;
         this.bookId = bookId;
         this.rating = rating;
         this.hashtags = hashtags;

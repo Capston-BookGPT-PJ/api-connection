@@ -1,5 +1,7 @@
 package com.example.meltingbooks.group;
 
+import com.example.meltingbooks.network.group.feed.GroupFeedResponse;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -17,14 +19,13 @@ public class GroupFeedItem implements Serializable {
     private int commentCount;    // commentCount
     private int likeCount;       // likeCount
     private boolean likedByMe;   // likedByMe / liked
-    private List<String> likedUsers; // likedUsers
+    private List<GroupFeedResponse.Post.LikedUser> likedUsers; // likedUsers
     private String userProfileImage; // userProfileImage (기존 profileImageUrl)
     private String tagId;        // tagId
 
 
-
     public GroupFeedItem(String postType, String userName, String title,String content, String createdAt,
-                         List<String> imageUrls, String userProfileImage, int commentCount, int likeCount, String tagId, int groupId) {
+                         List<String> imageUrls, String userProfileImage, int commentCount, int likeCount, String tagId, int groupId, int userId) {
         this.postType = postType;
         this.userName = userName;
         this.title = title;
@@ -36,6 +37,7 @@ public class GroupFeedItem implements Serializable {
         this.likeCount = likeCount;
         this.tagId = tagId;
         this.groupId = groupId;
+        this.userId = userId;
     }
 
     public GroupFeedItem(String postType, String title, String content, List<String> imageUrls, int groupId) {
@@ -98,7 +100,7 @@ public class GroupFeedItem implements Serializable {
     }
 
     public boolean isLikedByMe() { return likedByMe; }
-    public List<String> getLikedUsers() { return likedUsers; }
+    public List<GroupFeedResponse.Post.LikedUser> getLikedUsers() { return likedUsers; }
 
     public String getUserProfileImage() {
         return userProfileImage;
@@ -111,7 +113,7 @@ public class GroupFeedItem implements Serializable {
     // --- Setter ---
     // --- Setter ---
     public void setLikedByMe(boolean likedByMe) { this.likedByMe = likedByMe; }
-    public void setLikedUsers(List<String> likedUsers) { this.likedUsers = likedUsers; }
+    public void setLikedUsers(List<GroupFeedResponse.Post.LikedUser> likedUsers) { this.likedUsers = likedUsers; }
     public void setPostId(int postId) {
         this.postId = postId;
     }

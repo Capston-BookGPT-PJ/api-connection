@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
@@ -26,6 +27,8 @@ import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.goal.GoalApi;
 import com.example.meltingbooks.network.goal.GoalController;
 import com.example.meltingbooks.network.goal.GoalResponse;
+import com.example.meltingbooks.network.growth.GrowthApi;
+import com.example.meltingbooks.network.growth.GrowthController;
 import com.example.meltingbooks.network.log.LogApi;
 import com.example.meltingbooks.network.log.LogController;
 import com.example.meltingbooks.network.log.ReadingLogResponse;
@@ -65,6 +68,8 @@ public class DetailGoalFragment extends Fragment {
 
     private LogController logController;
 
+    private GrowthController growthController;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -91,6 +96,8 @@ public class DetailGoalFragment extends Fragment {
         LogApi logApi = ApiClient.getClient(token).create(LogApi.class);
         logController = new LogController(logApi);
 
+        GrowthApi growthApi = ApiClient.getClient(token).create(GrowthApi.class);
+        growthController = new GrowthController(growthApi, token);
 
         btnMonthly.setOnClickListener(v -> {
             btnMonthly.setSelected(true);
@@ -191,18 +198,6 @@ public class DetailGoalFragment extends Fragment {
             // ✅ 배열에 값 저장
             readingHours[index] = hours;
         }
-
-        /** for (int i = 6; i >= 0; i--) {
-         calendar.add(Calendar.DAY_OF_YEAR, -i);
-         String label = sdf.format(calendar.getTime()); // 요일
-
-         int index = 6 - i;
-         barEntries.add(new BarEntry(index, readingHours[index]));
-         lineEntries.add(new Entry(index, readingHours[index]));
-         xLabels.add(label);
-
-         calendar.add(Calendar.DAY_OF_YEAR, i); // 원래 날짜로 되돌림
-         }*/
 
 
         // 2. 막대그래프
@@ -393,6 +388,12 @@ public class DetailGoalFragment extends Fragment {
         float targetHours = goal.getTargetMinutes() / 60f;
         goal3.setProgressWithGoal(completedHours, targetHours,goal.getTimeProgress());
 
+        // 목표 100% 달성 시 경험치 지급
+        if (totalProgress >= 100f) {
+            String eventType = "MONTHLY".equalsIgnoreCase(goal.getGoalType()) ?
+                    "ACHIEVE_MONTHLY_GOAL" : "ACHIEVE_YEARLY_GOAL";
+            giveCompletionExp(eventType);
+        }
 
         // 20dp 높이, 제목 텍스트 크기 20sp → px 변환
         float titlePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 20, getResources().getDisplayMetrics());
@@ -434,6 +435,36 @@ public class DetailGoalFragment extends Fragment {
             emptyMessage.setPadding(16, 16, 16, 16);
             bookListContainer.addView(emptyMessage);
         }
+    }
+
+
+    private void giveCompletionExp(String eventType) {
+        growthController.giveExp(userId, eventType, new Callback<String>() {
+            @Override
+            public void onResponse(Call<String> call, Response<String> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String message = response.body();
+
+                    // 이미 지급된 이벤트 메시지는 토스트 표시 안 함
+                    if (message.contains("이미 지급된 이벤트입니다")) {
+                        Log.i("ExpAPI", "이미 지급된 이벤트: " + message);
+                        return;
+                    }
+
+                    // 그 외 성공 메시지만 토스트
+                    Toast.makeText(requireContext(), "경험치 지급 완료: " + message, Toast.LENGTH_SHORT).show();
+
+                } else {
+                    Toast.makeText(requireContext(), "경험치 지급 실패", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                Toast.makeText(requireContext(), "서버 통신 실패", Toast.LENGTH_SHORT).show();
+                Log.e("ExpAPI", "서버 통신 실패", t);
+            }
+        });
     }
 
 }

@@ -39,6 +39,8 @@ import com.example.meltingbooks.network.book.BookApi;
 import com.example.meltingbooks.network.book.BookController;
 import com.example.meltingbooks.network.book.BookCreateRequest;
 import com.example.meltingbooks.network.book.BookResponse;
+import com.example.meltingbooks.network.growth.GrowthApi;
+import com.example.meltingbooks.network.growth.GrowthController;
 import com.example.meltingbooks.network.log.LogApi;
 import com.example.meltingbooks.network.log.LogController;
 import com.example.meltingbooks.network.log.ReadingLogRequest;
@@ -89,6 +91,8 @@ public class AddReadingRecordFragment extends Fragment {
     private int userId;
 
     private LogController logController;
+
+    private GrowthController growthController;
 
     public AddReadingRecordFragment() {}
 
@@ -154,6 +158,9 @@ public class AddReadingRecordFragment extends Fragment {
         LogApi logApi = ApiClient.getClient(token).create(LogApi.class);
         logController = new LogController(logApi);
 
+        GrowthApi growthApi = ApiClient.getClient(token).create(GrowthApi.class);
+        growthController = new GrowthController(growthApi, token);
+
 
         // 저장 버튼
         btnSave.setOnClickListener(v -> saveOrUpdateLog());
@@ -197,55 +204,6 @@ public class AddReadingRecordFragment extends Fragment {
 
     }
 
-    /**private void updateWeekDates() {
-     LinearLayout container = rootView.findViewById(R.id.week_date_container);
-     container.removeAllViews();
-
-     // 해당 주의 일요일 찾기
-     LocalDate sunday = selectedDate.minusDays(selectedDate.getDayOfWeek().getValue() % 7);
-
-     for (int i = 0; i < 7; i++) {
-     LocalDate date = sunday.plusDays(i);
-     TextView textView = new TextView(getContext());
-
-     textView.setText(String.valueOf(date.getDayOfMonth()));
-     textView.setTextSize(TypedValue.COMPLEX_UNIT_SP,16);
-     textView.setGravity(Gravity.CENTER);
-     textView.setPadding(24, 16, 24, 16);
-
-     // 정사각형 크기로 설정해서 원으로 보이게
-     int sizeInDp = 35;
-     int sizeInPx = (int) TypedValue.applyDimension(
-     TypedValue.COMPLEX_UNIT_DIP,
-     sizeInDp,
-     getResources().getDisplayMetrics()
-     );
-
-     LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(sizeInPx, sizeInPx);
-     textView.setLayoutParams(layoutParams);
-
-     // 선택된 날짜면 회색 원 + 흰색 글씨
-     if (date.equals(selectedDate)) {
-     textView.setBackground(ContextCompat.getDrawable(getContext(), R.drawable.bg_selected_date));
-     textView.setTextColor(Color.WHITE);
-     } else {
-     textView.setTextColor(Color.BLACK);
-     }
-
-     // 날짜 클릭 시 선택 표시 갱신
-     textView.setOnClickListener(v -> {
-     selectedDate = date;
-     updateWeekDates();  // 다시 렌더링
-     clearInputs();
-     loadLogForSelectedDate(); // 선택한 날짜 기록 불러오기
-     });
-
-     container.addView(textView);
-     }
-
-     //주차 UI 갱신 후 현재 선택 날짜 기록도 자동 불러오기
-     loadLogForSelectedDate();
-     }*/
     private void updateWeekDates() {
         LinearLayout container = rootView.findViewById(R.id.week_date_container);
         container.removeAllViews();
@@ -502,6 +460,13 @@ public class AddReadingRecordFragment extends Fragment {
                             if (response.isSuccessful()) {
                                 Toast.makeText(requireContext(), "기록 저장 완료", Toast.LENGTH_SHORT).show();
                                 loadLogForSelectedDate();
+                                // 기록 저장 후 항상 먼저 로그 로드
+                                loadLogForSelectedDate();
+
+                                //완독이면 경험치 지급
+                                if (isFinished) {
+                                    giveCompletionExp();
+                                }
                             } else {
                                 Toast.makeText(requireContext(), "기록 저장 실패", Toast.LENGTH_SHORT).show();
                             }
@@ -689,6 +654,30 @@ public class AddReadingRecordFragment extends Fragment {
         // 최종 LocalDateTime 생성
         LocalDateTime readAt = selectedDate.atTime(hour, minute, second);
         currentReadAtString = readAt.toString(); // 서버 전송용
+    }
+
+    private void giveCompletionExp() {
+
+        growthController.giveExp(userId, "COMPLETE_BOOK", new Callback<String>() {
+            @Override
+            public void onResponse(Call<String> call, Response<String> response) {
+                if(response.isSuccessful()){
+                    Toast.makeText(requireContext(), "경험치 지급 완료: " + response.body(), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(requireContext(), "경험치 지급 실패", Toast.LENGTH_SHORT).show();
+                    //Log.e("ExpAPI", "Code: " + response.code() + ", Message: " + response.message());
+                    //Log.d("EXP_DEBUG", "userId=" + userId + ", eventType=" + "COMPLETE_BOOK");
+                    //Log.d("EXP_DEBUG", "token=" + token);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<String> call, Throwable t) {
+                Toast.makeText(requireContext(), "서버 통신 실패", Toast.LENGTH_SHORT).show();
+
+            }
+        });
+
     }
 
 }

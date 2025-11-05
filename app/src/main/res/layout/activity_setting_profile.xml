@@ -136,34 +136,6 @@
             android:layout_marginBottom="20dp"
             android:scaleType="centerCrop" />
 
-
-        <!-- 배경 이미지 -->
-        <TextView
-            android:id="@+id/Background_ima_Title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="배경 이미지 추후 추가"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:textColor="@color/textColor"
-            android:layout_marginTop="20dp" />
-
-        <ImageButton
-            android:id="@+id/bnt_BackgroundImage"
-            android:layout_width="150dp"
-            android:layout_height="40dp"
-            android:background="@drawable/get_img"
-            android:padding="5dp"
-            android:layout_marginTop="12dp"/>
-
-        <!-- 이미지 업로드 -->
-        <ImageView
-            android:id="@+id/Background_imageView"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_gravity="bottom"
-            android:layout_marginBottom="20dp"
-            android:scaleType="centerCrop" />
     </LinearLayout>
 
 </ScrollView>

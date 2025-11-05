@@ -1,11 +1,16 @@
 package com.example.meltingbooks.group.goal;
 
+import static android.content.Context.MODE_PRIVATE;
+
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
@@ -22,6 +27,9 @@ import java.util.List;
 public class GroupGoalFragment extends Fragment {
 
     private int groupId; // Activity나 arguments로 받은 그룹 ID
+    private int ownerId;
+    private String token;
+    private int currentUserId;
 
     private GroupGoalController goalController;
     private GroupGoalProgressView goal1, goal2, goal3;
@@ -31,9 +39,21 @@ public class GroupGoalFragment extends Fragment {
         Log.d("GroupSetGoalFragment", "onCreateView called");
         View view = inflater.inflate(R.layout.group_goal_fragment, container, false);
 
+        SharedPreferences prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE);
+        token = prefs.getString("jwt", null);
+        currentUserId = prefs.getInt("userId", -1);
+
+        if (token == null || currentUserId == -1) {
+            Toast.makeText(requireContext(), "로그인이 필요합니다.", Toast.LENGTH_SHORT).show();
+            requireActivity().finish();
+            return null; // ← 반드시 null 반환
+        }
+
+
         // arguments로 groupId 받기
         if (getArguments() != null) {
             groupId = getArguments().getInt("groupId", -1);
+            ownerId = getArguments().getInt("ownerId", -1);
         }
 
         // ProgressView 초기화
@@ -43,10 +63,13 @@ public class GroupGoalFragment extends Fragment {
 
         // arrow 클릭 처리
         ImageView groupArrow = view.findViewById(R.id.group_arrow);
-        groupArrow.setOnClickListener(v -> {
-            Log.d("GroupGoalFragment", "arrow clicked!");
-            openGroupSetGoalFragment();
-        });
+        // 그룹장만 버튼 보이게
+        if (currentUserId == ownerId) {
+            groupArrow.setVisibility(View.VISIBLE);
+            groupArrow.setOnClickListener(v -> openGroupSetGoalFragment());
+        } else {
+            groupArrow.setVisibility(View.GONE);
+        }
 
 
         // GoalController 초기화 (token은 SharedPreferences 등에서 가져오기)

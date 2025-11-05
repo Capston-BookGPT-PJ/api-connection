@@ -235,8 +235,7 @@ public class GroupWriteActivity extends AppCompatActivity {
             Call<ApiResponse<GroupReviewResponse>> call;
 
             if (isEdit) {
-                String imageUrl = selectedImageUri != null ? selectedImageUri.toString() : null;
-                UpdatePostRequest updateRequest = new UpdatePostRequest(title, content, imageUrl);
+                UpdatePostRequest updateRequest = new UpdatePostRequest(title, content);
                 call = groupApi.updatePost("Bearer " + token, groupId, postId, userId, updateRequest);
             } else {
                 CreatePostRequest createRequest = new CreatePostRequest(title, content);
@@ -251,8 +250,10 @@ public class GroupWriteActivity extends AppCompatActivity {
                         int createdPostId = postData.getId();
 
                         if (selectedImageUri != null) {
+                            // FeedWriteActivity 방식처럼 이미지 업로드
                             uploadPostImage(groupApi, token, createdPostId, selectedImageUri, postData);
                         } else {
+                            // 이미지 없으면 바로 결과 처리
                             handlePostResult(postData);
                         }
 
@@ -312,14 +313,10 @@ public class GroupWriteActivity extends AppCompatActivity {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         Uri selectedUri = result.getData().getData();
                         if (selectedUri != null) {
-                            try {
-                                File imageFile = copyUriToCache(selectedUri); // 캐시 파일로 복사
-                                Glide.with(this).load(imageFile).into(imageView); // Glide 안전하게 로딩
-                                selectedImageUri = Uri.fromFile(imageFile); // 서버 업로드용
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                                Toast.makeText(this, "이미지 로딩 실패", Toast.LENGTH_SHORT).show();
-                            }
+                            // ✅ 화면에 바로 표시
+                            imageView.setImageURI(selectedUri);
+                            // ✅ 서버 업로드용으로 저장
+                            selectedImageUri = selectedUri;
                         }
                     }
                 });
@@ -331,44 +328,44 @@ public class GroupWriteActivity extends AppCompatActivity {
         });
     }
 
-    // URI를 캐시 파일로 복사하는 메서드
-    private File copyUriToCache(Uri uri) throws IOException {
-        InputStream inputStream = getContentResolver().openInputStream(uri);
-        if (inputStream == null) throw new IOException("InputStream is null");
 
-        File tempFile = new File(getCacheDir(), "temp_review_" + System.currentTimeMillis() + ".jpg");
-        try (OutputStream outputStream = new FileOutputStream(tempFile)) {
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buffer)) > 0) {
-                outputStream.write(buffer, 0, length);
-            }
-        }
-        return tempFile;
-    }
 
     private void uploadPostImage(GroupApi groupApi, String token, int postId, Uri imageUri, GroupReviewResponse postData) {
         try {
-            File file = new File(imageUri.getPath());
+            // 1️⃣ URI를 캐시 파일로 복사
+            File file = new File(getCacheDir(), "temp_group_" + System.currentTimeMillis() + ".jpg");
+            InputStream inputStream = getContentResolver().openInputStream(imageUri);
+            if (inputStream == null) throw new IOException("InputStream is null");
+            try (OutputStream outputStream = new FileOutputStream(file)) {
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+            }
+            inputStream.close();
+
+            // 2️⃣ MultipartBody 생성
             RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
             MultipartBody.Part body = MultipartBody.Part.createFormData("files", file.getName(), requestFile);
 
+            // 3️⃣ 서버 업로드
             Call<ApiResponse<List<String>>> call = groupApi.uploadPostImages("Bearer " + token, groupId, postId, body);
             call.enqueue(new Callback<ApiResponse<List<String>>>() {
                 @Override
                 public void onResponse(Call<ApiResponse<List<String>>> call, Response<ApiResponse<List<String>>> response) {
                     if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                        postData.setImageUrls(response.body().getData());
-                        Toast.makeText(GroupWriteActivity.this, "리뷰 & 이미지 업로드 완료!", Toast.LENGTH_SHORT).show();
+                        List<String> uploadedUrls = response.body().getData();
+                        if (uploadedUrls != null) {
+                            postData.setImageUrls(uploadedUrls); // ✅ 최신 이미지 리스트 반영
+                        }
+                        Toast.makeText(GroupWriteActivity.this, "게시글 & 이미지 업로드 완료!", Toast.LENGTH_SHORT).show();
                     }
-
-                    // 이미지 업로드 실패도 무시하고 게시글 성공 처리
                     handlePostResult(postData);
                 }
 
                 @Override
                 public void onFailure(Call<ApiResponse<List<String>>> call, Throwable t) {
-                    // 이미지 업로드 실패도 무시하고 게시글 성공 처리
                     handlePostResult(postData);
                 }
             });
@@ -376,62 +373,14 @@ public class GroupWriteActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "이미지 처리 중 오류 발생 (게시글은 업로드됨)", Toast.LENGTH_SHORT).show();
-
-            // ✅ 예외 발생 시에도 게시글은 성공 처리
             handlePostResult(postData);
         }
     }
 
 
-        /*// --- 이미지 업로드 ---
-        private void uploadPostImage (GroupApi groupApi, String token,int postId, Uri
-        imageUri, GroupReviewResponse postData){
-            try {
-                File file = new File(getCacheDir(), "temp_review.jpg");
-                InputStream inputStream = getContentResolver().openInputStream(imageUri);
-                OutputStream outputStream = new FileOutputStream(file);
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = inputStream.read(buffer)) > 0) {
-                    outputStream.write(buffer, 0, length);
-                }
-                outputStream.close();
-                inputStream.close();
 
-                RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
-                MultipartBody.Part body = MultipartBody.Part.createFormData("files", file.getName(), requestFile);
 
-                Call<ApiResponse<List<String>>> call = groupApi.uploadPostImages("Bearer " + token, groupId, postId, body)
-                        call.enqueue(new Callback<ApiResponse<List<String>>>() {
-                            @Override
-                            public void onResponse(Call<ApiResponse<List<String>>> call, Response<ApiResponse<List<String>>> response) {
-                                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
-                                    postData.setImageUrls(response.body().getData());
-                                    Toast.makeText(GroupWriteActivity.this, "리뷰 & 이미지 업로드 완료!", Toast.LENGTH_SHORT).show();
-                                    handlePostResult(postData);
-                                } else {
-                                    Toast.makeText(GroupWriteActivity.this, "이미지 업로드 실패", Toast.LENGTH_SHORT).show();
-                                }
-
-                                // 업로드 성공/실패 상관없이 게시글 처리
-                                handlePostResult(postData);
-                            }
-
-                            @Override
-                            public void onFailure(Call<ApiResponse<List<String>>> call, Throwable t) {
-                                Toast.makeText(GroupWriteActivity.this, "이미지 업로드 실패: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                                // 업로드 실패 시에도 handlePostResult 호출
-                                handlePostResult(postData);
-                            }
-                        });
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(this, "이미지 처리 중 오류 발생", Toast.LENGTH_SHORT).show();
-            }
-        }*/
-
-        // --- 업로드 / 수정 후 처리 공통 ---
+    // --- 업로드 / 수정 후 처리 공통 ---
         private void handlePostResult(GroupReviewResponse postData) {
             if (isEdit) {
                 GroupFeedResponse.Post updatedPost = new GroupFeedResponse.Post();
@@ -739,6 +688,17 @@ public class GroupWriteActivity extends AppCompatActivity {
         // 바로 데이터 세팅
         if (etInputTitle != null) etInputTitle.setText(feed.getTitle());
         if (etInput != null) etInput.setText(feed.getContent());
+        // ✅ 기존 이미지 표시 (마지막 이미지 사용)
+        if (feed.getImageUrls() != null && !feed.getImageUrls().isEmpty()) {
+            List<String> images = feed.getImageUrls();
+            String latestImage = images.get(images.size() - 1); // 마지막 이미지 선택
+            Glide.with(this)
+                    .load(latestImage)
+                    .into(imageView);
+
+            // ✅ 기존 이미지를 화면에 보여주지만 업로드할 Uri는 아직 null (중요)
+            selectedImageUri = null;
+        }
     }
 
 }

@@ -11,10 +11,9 @@ public class UpdatePostRequest {
     public UpdatePostRequest() {}
 
     // 전체 생성자
-    public UpdatePostRequest(String title, String content, String imageUrl) {
+    public UpdatePostRequest(String title, String content) {
         this.title = title;
         this.content = content;
-        this.imageUrl = imageUrl;
     }
 
     // Getter & Setter

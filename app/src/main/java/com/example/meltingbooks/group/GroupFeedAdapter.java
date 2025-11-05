@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
@@ -17,11 +18,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
+import com.example.meltingbooks.group.LikedUsersBottomSheet;
 import com.example.meltingbooks.group.comment.GroupCommentBottomSheet;
 import com.example.meltingbooks.network.ApiClient;
 import com.example.meltingbooks.network.ApiResponse;
 import com.example.meltingbooks.network.ApiService;
 import com.example.meltingbooks.network.group.GroupApi;
+import com.example.meltingbooks.network.group.feed.GroupFeedResponse;
+import com.example.meltingbooks.profile.ProfileActivity;
 
 import java.util.List;
 
@@ -66,6 +70,25 @@ public class GroupFeedAdapter extends RecyclerView.Adapter<GroupFeedAdapter.Grou
         holder.commentCount.setText(String.valueOf(item.getCommentCount()));
         holder.likeCount.setText(String.valueOf(item.getLikeCount()));
 
+        // 좋아요 수 클릭 시
+        holder.likeCount.setOnClickListener(v -> {
+            // item은 GroupFeedResponse.Post 타입
+            List<GroupFeedResponse.Post.LikedUser> likedUsers = item.getLikedUsers();
+
+            if (likedUsers == null || likedUsers.isEmpty()) {
+                Toast.makeText(context, "아직 좋아요한 사람이 없습니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // LikedUsersBottomSheet 호출 (likedUsers 전달)
+            LikedUsersBottomSheet likedSheet = LikedUsersBottomSheet.newInstance(likedUsers);
+            likedSheet.show(
+                    ((AppCompatActivity) v.getContext()).getSupportFragmentManager(),
+                    "LikedUsersBottomSheet"
+            );
+        });
+
+
         // 댓글 버튼(현재 feed용 나중에 group용으로 수정 필요)
         holder.commentButton.setOnClickListener(v -> {
 
@@ -97,13 +120,16 @@ public class GroupFeedAdapter extends RecyclerView.Adapter<GroupFeedAdapter.Grou
         // 이미지 표시
         if (item.getImageUrls() != null && !item.getImageUrls().isEmpty()) {
             holder.groupImage.setVisibility(View.VISIBLE);
+            List<String> images = item.getImageUrls();
+            String latestImage = images.get(images.size() - 1); // ✅ 마지막 이미지 선택
             Glide.with(context)
-                    .load(item.getImageUrls().get(0)) // 첫 번째 이미지 사용
+                    .load(latestImage)
                     .centerCrop()
                     .into(holder.groupImage);
         } else {
             holder.groupImage.setVisibility(View.GONE);
         }
+
 
 
         // 프로필 표시
@@ -118,6 +144,18 @@ public class GroupFeedAdapter extends RecyclerView.Adapter<GroupFeedAdapter.Grou
             holder.profileImage.setVisibility(View.VISIBLE); // GONE 대신 보이게
             holder.profileImage.setImageResource(R.drawable.sample_profile2); // 기본 이미지 적용
         }
+
+        // ⭐ 사용자 프로필 이동 클릭 리스너 추가
+        View.OnClickListener profileClickListener = v -> {
+            Intent intent = new Intent(v.getContext(), ProfileActivity.class);
+            intent.putExtra("userId", item.getUserId());
+            v.getContext().startActivity(intent);
+        };
+
+        // 프로필 이미지와 이름에 클릭 적용
+        holder.profileImage.setOnClickListener(profileClickListener);
+        holder.userName.setOnClickListener(profileClickListener);
+
 
         // 더보기 클릭
         holder.readMore.setOnClickListener(v -> {
@@ -174,24 +212,27 @@ public class GroupFeedAdapter extends RecyclerView.Adapter<GroupFeedAdapter.Grou
         String token = prefs.getString("jwt", null);
         if (token == null) return;
 
-        ApiService apiService = ApiClient.getClient(token).create(ApiService.class);
         GroupApi groupApi = ApiClient.getClient(token).create(GroupApi.class);
 
         // 서버 요청
         int groupId = item.getGroupId();   // ✅ 그룹 ID 가져오기
         int postId = item.getPostId();
 
-        boolean newState = !item.isLikedByMe(); // 토글
-        item.setLikedByMe(newState);
+        boolean oldState = item.isLikedByMe();   // ✅ 기존 상태
+        int oldCount = item.getLikeCount();
+
+        boolean newState = !oldState;
+        item.setLikedByMe(newState);             // ✅ likedByMe 갱신
+
 
         // UI 즉시 반영 (optimistic update)
-        holder.likeButton.setImageResource(
-                newState ? R.drawable.feed_like_full : R.drawable.feed_like_button
-        );
-        int newCount = item.getLikeCount() + (newState ? 1 : -1);
+        int newCount = oldCount + (newState ? 1 : -1); // ✅ oldCount 기준
         item.setLikeCount(newCount);
+
+        holder.likeButton.setImageResource(newState ? R.drawable.feed_like_full : R.drawable.feed_like_button);
         holder.likeCount.setText(String.valueOf(newCount));
 
+        Log.d("LikeClick", "postId=" + postId + ", oldState=" + oldState + ", oldCount=" + oldCount + ", newState=" + newState + ", newCount=" + newCount);
 
         Call<ApiResponse<Void>> call = newState
                 ? groupApi.likePost("Bearer " + token, groupId, postId)   // 좋아요
@@ -200,37 +241,37 @@ public class GroupFeedAdapter extends RecyclerView.Adapter<GroupFeedAdapter.Grou
         call.enqueue(new Callback<ApiResponse<Void>>() {
             @Override
             public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    ApiResponse<Void> result = response.body();
-                    if (!result.isSuccess()) {
-                        // 서버에서 실패 응답 시 -> 롤백
-                        rollbackLike(holder, item, !newState);
-                    }
+                Log.d("LikeResponse", "postId=" + postId + ", response=" + response);
+                if (response.isSuccessful()) {
+                    // HTTP 2xx → 성공, rollback 필요 없음
+                    Log.d("LikeResponse", "postId=" + postId + ", responseCode=" + response.code());
                 } else {
-                    // 서버 응답 실패 -> 롤백
-                    rollbackLike(holder, item, !newState);
+                    // 실패 → rollback
+                    rollbackLike(holder, item, oldState, oldCount);
                 }
             }
 
             @Override
             public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
-                // 네트워크/통신 실패 -> 롤백
-                rollbackLike(holder, item, !newState);
+                // 네트워크/통신 실패 → rollback
+                rollbackLike(holder, item, oldState, oldCount);
+                Log.e("LikeFail", "postId=" + postId + ", error=" + t.getMessage());
             }
         });
 
     }
 
-    private void rollbackLike(GroupFeedAdapter.GroupFeedViewHolder holder, GroupFeedItem item, boolean correctState) {
-        item.setLikedByMe(correctState);
+    private void rollbackLike(GroupFeedAdapter.GroupFeedViewHolder holder, GroupFeedItem item, boolean oldState, int oldCount) {
+        // 상태 복원
+        item.setLikedByMe(oldState);
+        item.setLikeCount(oldCount);
 
-        holder.likeButton.setImageResource(
-                correctState ? R.drawable.feed_like_full : R.drawable.feed_like_button
-        );
+        // UI 복원
+        holder.likeButton.setImageResource(oldState ? R.drawable.feed_like_full : R.drawable.feed_like_button);
+        holder.likeCount.setText(String.valueOf(oldCount));
 
-        int correctedCount = item.getLikeCount() + (correctState ? 1 : -1);
-        item.setLikeCount(correctedCount);
-        holder.likeCount.setText(String.valueOf(correctedCount));
+        Log.d("LikeRollback", "Restored postId=" + item.getPostId() + ", state=" + oldState + ", count=" + oldCount);
     }
+
 
 }

@@ -369,19 +369,33 @@ public class GroupFeedActivity extends BaseActivity {
 
                     for (GroupMemberItem member : memberItems) {
                         member.setGroupId(groupId); // groupId 세팅
+                    }
 
+                    // 1️⃣ 본인
+                    for (GroupMemberItem member : memberItems) {
                         if (member.getUserId() == userId) {
-                            // 본인은 맨 위로 추가
-                            sortedMembers.add(0, member);
-                        } else {
-                            // 나머지는 뒤로 추가
+                            sortedMembers.add(member);
+                            break; // 본인은 1명
+                        }
+                    }
+
+                    // 2️⃣ 그룹장
+                    for (GroupMemberItem member : memberItems) {
+                        if (member.getUserId() == groupData.getOwnerId() && member.getUserId() != userId) {
+                            sortedMembers.add(member);
+                        }
+                    }
+
+                    // 3️⃣ 일반 회원
+                    for (GroupMemberItem member : memberItems) {
+                        if (member.getUserId() != userId && member.getUserId() != groupData.getOwnerId()) {
                             sortedMembers.add(member);
                         }
                     }
 
                     // RecyclerView에 반영
                     menuMemberList.clear();
-                    menuMemberList.addAll(memberItems);
+                    menuMemberList.addAll(sortedMembers);
                     memberAdapter.notifyDataSetChanged();
                 }
             }
@@ -392,23 +406,7 @@ public class GroupFeedActivity extends BaseActivity {
             }
         });
 
-        goalController = new GroupGoalController(groupGoalApi);
-
-
-        // Fragment에 groupId 전달
-        Bundle args = new Bundle();
-        args.putInt("groupId", groupId);
-
-        GroupGoalFragment goalFragment = new GroupGoalFragment();
-        goalFragment.setArguments(args);
-
-        // commitNow()를 사용하면 바로 Fragment가 생성됨
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.group_goal_fragment, goalFragment)
-                .commitNow();
-
-        // 이제 안전하게 호출 가능
-        //goalFragment.refreshGoal();
+        goalController = new GroupGoalController(groupGoalApi);// groupInfo는 Activity에서 서버 호출 후 받은 그룹 정보 객체
 
 
     }
@@ -545,7 +543,7 @@ public class GroupFeedActivity extends BaseActivity {
                                 createdAtFormatted = createdAtFormatted.substring(0, 19).replace("T", " ");
                             }
 
-                            List<String> firstImages = (review.getImageUrls() != null) ? review.getImageUrls() : new ArrayList<>();
+                            List<String> allImages = (review.getImageUrls() != null) ? review.getImageUrls() : new ArrayList<>();
 
 
                             GroupFeedItem item = new GroupFeedItem(
@@ -554,14 +552,17 @@ public class GroupFeedActivity extends BaseActivity {
                                     review.getTitle(),
                                     post.getContent(),
                                     createdAtFormatted,
-                                    firstImages,
+                                    allImages,  // 화면 표시용 최신 이미지
                                     post.getUserProfileImage(),
                                     post.getCommentCount(),
                                     post.getLikeCount(),
                                     post.getTagId(),
-                                    groupId
+                                    groupId,
+                                    post.getUserId()
                             );
                             item.setPostId(post.getReviewId());
+                            item.setLikedByMe(post.isLikedByMe());
+                            item.setLikedUsers(post.getLikedUsers());
                             tempList.add(item);
                         } else {
                             Log.e("GroupFeed", "단일 게시글 조회 실패: " + reviewResponse.message());
@@ -745,7 +746,7 @@ public class GroupFeedActivity extends BaseActivity {
             groupJoinRecyclerView.setVisibility(View.VISIBLE);
 
             // 어댑터 세팅
-            joinRequestAdapter = new GroupJoinRequestAdapter(this, joinRequestList, groupApi, token, groupId);
+            joinRequestAdapter = new GroupJoinRequestAdapter(this, joinRequestList, groupApi, token, groupId, memberAdapter);
             groupJoinRecyclerView.setLayoutManager(new LinearLayoutManager(this));
             groupJoinRecyclerView.setAdapter(joinRequestAdapter);
 
@@ -758,6 +759,7 @@ public class GroupFeedActivity extends BaseActivity {
                                 joinRequestList.clear();
                                 joinRequestList.addAll(response.body().getData().getContent());
                                 joinRequestAdapter.notifyDataSetChanged();
+
                             } else {
                                 Toast.makeText(GroupFeedActivity.this, "가입 요청 조회 실패", Toast.LENGTH_SHORT).show();
                             }
@@ -791,7 +793,6 @@ public class GroupFeedActivity extends BaseActivity {
     }
 
 
-
     private void fetchGroupInfo(GroupMemberAdapter memberAdapter) {
         GroupController groupController = new GroupController(this);
 
@@ -800,6 +801,21 @@ public class GroupFeedActivity extends BaseActivity {
             public void onResponse(Call<GroupPostResponse> call, Response<GroupPostResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
                     groupInfo = response.body().getData();
+                    // fragment에 전달
+                    int ownerId = groupInfo.getOwnerId();
+
+                    // Fragment에 groupId와 ownerId 전달
+                    Bundle args = new Bundle();
+                    args.putInt("groupId", groupId);
+                    args.putInt("ownerId", ownerId);
+
+                    GroupGoalFragment goalFragment = new GroupGoalFragment();
+                    goalFragment.setArguments(args);
+
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.group_goal_fragment, goalFragment)
+                            .commitNow();
+
                     // ownerId 업데이트
                     memberAdapter.setOwnerId(groupInfo.getOwnerId());
                     memberAdapter.notifyDataSetChanged();
@@ -849,43 +865,47 @@ public class GroupFeedActivity extends BaseActivity {
         });
     }
 
- // 그룹장 권한 위임
- private void delegateGroupOwner(int newOwnerId, GroupMemberAdapter memberAdapter) {
-     groupApi.delegateGroupOwner("Bearer " + token, groupId, newOwnerId)
-             .enqueue(new retrofit2.Callback<GroupCommonResponse>() {
-                 @Override
-                 public void onResponse(retrofit2.Call<GroupCommonResponse> call,
-                                        retrofit2.Response<GroupCommonResponse> response) {
-                     Log.d("API_DELEGATE_OWNER", "HTTP code: " + response.code());
-                     if (response.errorBody() != null) {
-                         try {
-                             Log.e("API_DELEGATE_OWNER", "Error body: " + response.errorBody().string());
-                         } catch (Exception e) {
-                             e.printStackTrace();
-                         }
-                     }
+    // 그룹장 권한 위임
+    private void delegateGroupOwner(int newOwnerId, GroupMemberAdapter memberAdapter) {
+        groupApi.delegateGroupOwner("Bearer " + token, groupId, newOwnerId)
+                .enqueue(new retrofit2.Callback<GroupCommonResponse>() {
+                    @Override
+                    public void onResponse(retrofit2.Call<GroupCommonResponse> call,
+                                           retrofit2.Response<GroupCommonResponse> response) {
+                        Log.d("API_DELEGATE_OWNER", "HTTP code: " + response.code());
+                        if (response.errorBody() != null) {
+                            try {
+                                Log.e("API_DELEGATE_OWNER", "Error body: " + response.errorBody().string());
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
 
-                     // 204 No Content도 성공으로 처리
-                     if (response.isSuccessful() || response.code() == 204) {
-                         Log.d("API_DELEGATE_OWNER", "위임 성공: " + response.body().toString());
-                         memberAdapter.setOwnerId(newOwnerId);
-                         Toast.makeText(GroupFeedActivity.this,
-                                 "그룹장 위임 완료", Toast.LENGTH_SHORT).show();
-                     } else {
-                         Toast.makeText(GroupFeedActivity.this,
-                                 "서버 오류: " + response.code(), Toast.LENGTH_SHORT).show();
-                     }
-                 }
+                        // 성공 처리 (204 포함)
+                        if (response.isSuccessful() || response.code() == 204) {
+                            if (response.body() != null) {
+                                Log.d("API_DELEGATE_OWNER", "위임 성공: " + response.body().toString());
+                            } else {
+                                Log.d("API_DELEGATE_OWNER", "위임 성공 (No Content)");
+                            }
+                            memberAdapter.setOwnerId(newOwnerId);
+                            Toast.makeText(GroupFeedActivity.this,
+                                    "그룹장 위임 완료", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(GroupFeedActivity.this,
+                                    "서버 오류: " + response.code(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
 
-                 @Override
-                 public void onFailure(retrofit2.Call<GroupCommonResponse> call, Throwable t) {
-                     Log.e("API_DELEGATE_OWNER", "onFailure", t);
-                     Toast.makeText(GroupFeedActivity.this,
-                             "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                 }
-             });
+                    @Override
+                    public void onFailure(retrofit2.Call<GroupCommonResponse> call, Throwable t) {
+                        Log.e("API_DELEGATE_OWNER", "onFailure", t);
+                        Toast.makeText(GroupFeedActivity.this,
+                                "네트워크 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
 
- }
 
     private void updateLeaderViews() {
         boolean isLeader = isGroupOwner();

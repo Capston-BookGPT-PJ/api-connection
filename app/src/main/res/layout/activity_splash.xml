@@ -13,7 +13,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="독서와 소통                 하나로 녹여내다."
+        android:text="독서와 소통\n하나로 녹여내다."
         android:textColor="@color/black"
         android:textSize="40sp"
         android:padding="8dp"

@@ -46,12 +46,12 @@
             android:id="@+id/ai_button"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:padding="10dp"
+            android:padding="5dp"
             android:layout_alignParentStart="true"
             android:background="@null"
             android:contentDescription="Settings Button"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_add_setgoal" />
+            android:src="@drawable/ai_btn2" />
     </RelativeLayout>
 
     <androidx.fragment.app.FragmentContainerView

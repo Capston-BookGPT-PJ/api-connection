@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.meltingbooks.R;
+import com.example.meltingbooks.feed.FeedDetailActivity;
 import com.example.meltingbooks.group.comment.GroupCommentAdapter;
 import com.example.meltingbooks.group.comment.GroupCommentItem;
 import com.example.meltingbooks.group.write.GroupWriteActivity;
@@ -64,11 +65,14 @@ public class GroupDetailActivity extends AppCompatActivity {
 
     private int postId;
     private int groupId;
+    private int userId;
     private GroupFeedItem currentFeed;
     private int currentUserId; // 현재 로그인된 사용자 ID
     private String token;
     private ApiService apiService;
     private GroupApi groupApi;
+
+    private int postOwnerId;
 
 
     @Override
@@ -134,6 +138,8 @@ public class GroupDetailActivity extends AppCompatActivity {
         groupId = currentFeed.getGroupId();
         postId = currentFeed.getPostId();
 
+        postOwnerId = currentFeed.getUserId(); // 게시글 작성자 ID
+
         Log.d("GroupDetail", "groupId=" + groupId + ", postId=" + postId);
 
         if (currentFeed == null) {
@@ -141,6 +147,20 @@ public class GroupDetailActivity extends AppCompatActivity {
             finish();
             return;
         }
+
+        // --- 본인 글일 때만 수정/삭제 버튼 보이기 ---
+        if (postOwnerId == currentUserId) {
+            Log.d("GroupDetail", "currentUserId=" + currentUserId + ", userId=" + postOwnerId);
+            btnEditPost.setVisibility(View.VISIBLE);
+            btnDeletePost.setVisibility(View.VISIBLE);
+        } else {
+            Log.d("GroupDetail", "currentUserId=" + currentUserId + ", userId=" + postOwnerId);
+            btnEditPost.setVisibility(View.GONE);
+            btnDeletePost.setVisibility(View.GONE);
+        }
+
+
+
         // 초기화
         setupRecyclerView();
         setupListeners();
@@ -158,8 +178,14 @@ public class GroupDetailActivity extends AppCompatActivity {
         commentRecyclerView = findViewById(R.id.commentRecyclerView);
 
         commentRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        commentAdapter = new GroupCommentAdapter(this, commentList);
+        commentAdapter = new GroupCommentAdapter(this, commentList, currentUserId);
         commentRecyclerView.setAdapter(commentAdapter);
+
+        // 댓글 삭제 리스너 설정
+        commentAdapter.setOnDeleteCommentListener((commentId, position) -> {
+            Log.d("FeedDetail", "삭제 클릭 - commentId=" + commentId + ", position=" + position);
+            deleteComment(commentId, position);
+        });
     }
 
 
@@ -250,13 +276,16 @@ public class GroupDetailActivity extends AppCompatActivity {
         // 게시글 이미지 (리뷰 게시글만)
         if ("REVIEW".equals(feed.getPostType()) && feed.getImageUrls() != null && !feed.getImageUrls().isEmpty()) {
             groupImage.setVisibility(View.VISIBLE);
+            List<String> images = feed.getImageUrls();
+            String latestImage = images.get(images.size() - 1); // ✅ 마지막 이미지 선택
             Glide.with(this)
-                    .load(feed.getFirstImageUrl()) // ✅ 첫 번째 이미지 사용
+                    .load(latestImage)
                     .centerCrop()
                     .into(groupImage);
         } else {
             groupImage.setVisibility(View.GONE);
         }
+
     }
 
 
@@ -272,6 +301,8 @@ public class GroupDetailActivity extends AppCompatActivity {
 
                             for (GroupCommentResponse c : responseList) {
                                 commentList.add(new GroupCommentItem(
+                                        c.getId(),
+                                        c.getUserId(),
                                         c.getNickname(),
                                         c.getContent(),
                                         c.getProfileImageUrl(),   // ✅ 서버 값 사용
@@ -340,12 +371,53 @@ public class GroupDetailActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * 댓글 삭제 처리
+     */
+    private void deleteComment(int commentId, int position) {
+        Log.d("FeedDetail", "deleteComment 호출 - commentId=" + commentId + ", position=" + position);
+
+        if (groupApi == null || token == null) return;
+
+        groupApi.deleteGroupComment("Bearer " + token, groupId, postId, commentId)
+                .enqueue(new Callback<ApiResponse<Void>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
+                        Log.d("GroupDetail", "삭제 응답 - commentId=" + commentId + ", code=" + response.code());
+
+                        if (response.isSuccessful()) {
+                            Toast.makeText(GroupDetailActivity.this, "댓글이 삭제되었습니다.", Toast.LENGTH_SHORT).show();
+
+                            commentList.remove(position);
+                            commentAdapter.notifyItemRemoved(position);
+
+                            if (currentFeed != null) {
+                                currentFeed.setCommentCount(currentFeed.getCommentCount() - 1);
+                                commentCount.setText(String.valueOf(currentFeed.getCommentCount()));
+                            }
+                        } else {
+                            Toast.makeText(GroupDetailActivity.this, "댓글 삭제 실패", Toast.LENGTH_SHORT).show();
+                            Log.e("deleteComment", "삭제 실패 - commentId=" + commentId + ", body=" + response.body());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
+                        Toast.makeText(GroupDetailActivity.this, "댓글 삭제 오류: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e("deleteComment", "삭제 에러 - commentId=" + commentId, t);
+                    }
+                });
+    }
+
 
     private void toggleLike() {
         if (currentFeed == null) return;
 
-        boolean newState = !currentFeed.isLikedByMe();
-        currentFeed.setLikedByMe(newState);
+        boolean oldState = currentFeed.isLikedByMe(); // ✅ 기존 상태
+        int oldCount = currentFeed.getLikeCount();    // ✅ 기존 카운트 저장
+
+        boolean newState = !oldState;
+        currentFeed.setLikedByMe(newState); // ✅ likedByMe로 변경
 
         // UI 즉시 반영
         likeButton.setImageResource(newState ? R.drawable.feed_like_full : R.drawable.feed_like_button);
@@ -387,20 +459,5 @@ public class GroupDetailActivity extends AppCompatActivity {
         likeCount.setText(String.valueOf(correctedCount));
     }
 
-    /*
-    //피드 갱신
-    private final ActivityResultLauncher<Intent> feedEditLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    GroupFeedPageResponse updatedFeed = (GroupFeedPageResponse) result.getData().getSerializableExtra("updatedFeed");
-                    if (updatedFeed != null) {
-                        // FeedActivity로 전달
-                        Intent resultIntent = new Intent();
-                        resultIntent.putExtra("updatedFeed", updatedFeed);
-                        setResult(RESULT_OK, resultIntent);
-                        finish();
-                    }
-                }
-            });*/
 
 }

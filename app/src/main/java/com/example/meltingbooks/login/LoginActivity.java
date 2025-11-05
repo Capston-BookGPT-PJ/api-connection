@@ -45,7 +45,6 @@ public class LoginActivity extends AppCompatActivity {
         googleLoginBtn = findViewById(R.id.googleLoginBtn);
 
         signupText = findViewById(R.id.signUp);
-        findAccountText = findViewById(R.id.findAccount);
 
         // 카카오 로그인 버튼 클릭 이벤트
         kakaoLoginBtn.setOnClickListener(v -> {
@@ -83,13 +82,6 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, "회원가입 클릭", Toast.LENGTH_SHORT).show();
             // 회원가입 화면으로 이동
             Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
-            startActivity(intent);
-        });
-
-        findAccountText.setOnClickListener(v -> {
-            Toast.makeText(this, "계정 찾기 클릭", Toast.LENGTH_SHORT).show();
-            // TODO: 계정 찾기 화면으로 이동
-            Intent intent = new Intent(LoginActivity.this, FeedActivity.class);
             startActivity(intent);
         });
     }

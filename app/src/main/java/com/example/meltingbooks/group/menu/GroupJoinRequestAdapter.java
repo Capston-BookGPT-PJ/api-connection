@@ -18,7 +18,8 @@ import com.example.meltingbooks.network.group.GroupApi;
 import com.example.meltingbooks.network.group.comment.GroupCommonResponse;
 import com.example.meltingbooks.network.group.GroupJoinRequestResponse;
 import com.google.android.material.button.MaterialButton;
-
+// 추가 (예시, 실제 Member 클래스 패키지 확인 필요)
+import com.example.meltingbooks.group.menu.GroupMemberItem;
 import java.util.List;
 
 import retrofit2.Call;
@@ -32,17 +33,22 @@ public class GroupJoinRequestAdapter extends RecyclerView.Adapter<GroupJoinReque
     private String token;
     private int groupId;
     private Context context;
+    // memberAdapter 선언 예시
+    private GroupMemberAdapter memberAdapter;
+
 
     public GroupJoinRequestAdapter(Context context,
                                    List<GroupJoinRequestResponse.JoinRequest> requests,
                                    GroupApi groupApi,
                                    String token,
-                                   int groupId) {
+                                   int groupId,
+                                   GroupMemberAdapter memberAdapter) {
         this.context = context;
         this.requests = requests;
         this.groupApi = groupApi;
         this.token = token;
         this.groupId = groupId;
+        this.memberAdapter = memberAdapter;
     }
 
     @NonNull
@@ -88,6 +94,18 @@ public class GroupJoinRequestAdapter extends RecyclerView.Adapter<GroupJoinReque
                                 Toast.makeText(context, currentRequest.getNickname() + " 승인 완료", Toast.LENGTH_SHORT).show();
                                 requests.remove(holder.getAdapterPosition());
                                 notifyItemRemoved(holder.getAdapterPosition());
+
+                                GroupMemberItem newMember = new GroupMemberItem(
+                                        currentRequest.getUserId(),
+                                        currentRequest.getNickname(),
+                                        currentRequest.getUsername(),
+                                        currentRequest.getProfileImageUrl(),
+                                        currentRequest.getJoinStatus(),
+                                        currentRequest.getJoinedAt()
+                                );
+                                memberAdapter.addMember(newMember);
+                                memberAdapter.notifyDataSetChanged();
+
                             } else {
                                 Toast.makeText(context, "승인 실패", Toast.LENGTH_SHORT).show();
                             }

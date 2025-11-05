@@ -1,6 +1,8 @@
 package com.example.meltingbooks.feed;
 
 import com.example.meltingbooks.network.book.Book;
+import com.example.meltingbooks.network.feed.FeedResponse;
+import com.example.meltingbooks.network.recommend.RecommendBookResponse;
 
 import java.io.Serializable;
 import java.util.List;
@@ -11,7 +13,7 @@ public class FeedItem implements Serializable {
     private String tagId;
     private String reviewContent;//감상문
     private String reviewDate;//작성 날짜
-    private boolean liked; //좋아요 하트 모양 표시
+    //private boolean liked; //좋아요 하트 모양 표시
 
     private String imageUrl;  // 이미지 URL 추가
 
@@ -25,6 +27,11 @@ public class FeedItem implements Serializable {
     private int postId;      // 댓글 조회/등록용 ID
     private String postType;    // "feed" 또는 "group"
 
+    public static final int TYPE_FEED = 0;
+    public static final int TYPE_RECOMMEND = 1;
+    private int viewType;                    // TYPE_FEED / TYPE_RECOMMEND
+    private long stableId;                   // setHasStableIds용
+    private List<String> recommendCovers;    // 추천 전용 데이터
 
     //책 정보 통째로 보관
     private Book book;
@@ -39,6 +46,13 @@ public class FeedItem implements Serializable {
     private Integer rating;
 
     private String shareUrl; //⭐추가
+
+    private boolean likedByMe;
+    private List<FeedResponse.LikedUser> likedUsers;
+
+    private List<RecommendBookResponse> recommendBooks;
+
+    private List<String> imageUrls; // 전체 이미지 리스트
 
 
     public FeedItem(String userName, String reviewContent, String reviewDate,
@@ -85,7 +99,7 @@ public class FeedItem implements Serializable {
     //별점 추가 버전
     public FeedItem(String userName, String reviewContent, String reviewDate,
                     String imageUrl, String profileImageUrl, Integer bookId,
-                    int commentCount, int likeCount, String tagId, List<String> hashtags, Integer rating) {
+                    int commentCount, int likeCount, String tagId, List<String> hashtags, Integer rating, int userId) {
         this.userName = userName;
         this.reviewContent = reviewContent;
         this.reviewDate = reviewDate;
@@ -97,6 +111,7 @@ public class FeedItem implements Serializable {
         this.tagId = tagId;
         this.hashtags = hashtags;
         this.rating = rating;
+        this.userId = userId;
     }
 
     // 브라우징 리뷰 생성자
@@ -125,6 +140,20 @@ public class FeedItem implements Serializable {
         this.shareUrl = shareUrl;
         this.userId = userId;
     }
+
+    // --- Getter/Setter ---
+    public int getViewType() { return viewType; }
+    public void setViewType(int viewType) { this.viewType = viewType; }
+
+    public long getStableId() { return stableId; }
+    public void setStableId(long stableId) { this.stableId = stableId; }
+
+    public List<String> getRecommendCovers() { return recommendCovers; }
+    public void setRecommendCovers(List<String> recommendCovers) { this.recommendCovers = recommendCovers; }
+
+    public List<RecommendBookResponse> getRecommendBooks() { return recommendBooks; }
+    public void setRecommendBooks(List<RecommendBookResponse> recommendBooks) { this.recommendBooks = recommendBooks; }
+
     //getter and setter
     public int getUserId() {
         return userId;
@@ -205,8 +234,8 @@ public class FeedItem implements Serializable {
         this.likeCount = likeCount;
     }
 
-    public boolean isLiked() { return liked; }
-    public void setLiked(boolean liked) { this.liked = liked; }
+    /*public boolean isLiked() { return liked; }
+    public void setLiked(boolean liked) { this.liked = liked; }*/
     public Book getBook() {
         return book;
     }
@@ -246,4 +275,19 @@ public class FeedItem implements Serializable {
         this.shareUrl = shareUrl;
     }
 
+    // ✅ likedByMe Getter/Setter
+    public boolean isLikedByMe() { return likedByMe; }
+    public void setLikedByMe(boolean likedByMe) { this.likedByMe = likedByMe; }
+
+    // ✅ likedUsers Getter/Setter
+    public List<FeedResponse.LikedUser> getLikedUsers() { return likedUsers; }
+    public void setLikedUsers(List<FeedResponse.LikedUser> likedUsers) { this.likedUsers = likedUsers; }
+
+    public List<String> getImageUrls() {
+        return imageUrls;
+    }
+
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
+    }
 }

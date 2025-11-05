@@ -1,5 +1,7 @@
 package com.example.meltingbooks.feed.comment;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -43,6 +45,9 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
 
     private int postId;
     private String postType;
+
+    private int currentUserId;
+
     public interface OnCommentAddedListener {
         void onCommentAdded(int commentCount);
     }
@@ -89,7 +94,12 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
             postId = getArguments().getInt("postId");
             postType = getArguments().getString("postType");
         }
+
+        SharedPreferences prefs = requireContext().getSharedPreferences("auth", MODE_PRIVATE);
+        currentUserId = prefs.getInt("userId", -1);
+
     }
+
 
     @Nullable
     @Override
@@ -105,8 +115,41 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
         commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         commentList = new ArrayList<>();
-        commentAdapter = new CommentAdapter(getContext(), commentList);
+        commentAdapter = new CommentAdapter(getContext(), commentList, currentUserId);
         commentRecyclerView.setAdapter(commentAdapter);
+
+        //댓글 삭제 리스너
+        commentAdapter.setOnDeleteCommentListener((commentId, position) -> {
+            SharedPreferences prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE);
+            String token = prefs.getString("jwt", null);
+            int userId = prefs.getInt("userId", -1);
+            if (token == null) return;
+
+            ApiService apiService = ApiClient.getClient(token).create(ApiService.class);
+            apiService.deleteComment("Bearer " + token, commentId, userId)
+                    .enqueue(new Callback<ApiResponse<Void>>() {
+                        @Override
+                        public void onResponse(Call<ApiResponse<Void>> call, Response<ApiResponse<Void>> response) {
+                            if (response.isSuccessful()) {
+                                commentList.remove(position);
+                                commentAdapter.notifyItemRemoved(position);
+
+                                //댓글 수 업데이트
+                                if (onCommentAddedListener != null) {
+                                    onCommentAddedListener.onCommentAdded(commentList.size());
+                                }
+
+                            } else {
+                                Log.e("Comment", "삭제 실패: " + response.code());
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
+                            Log.e("Comment", "삭제 에러: " + t.getMessage());
+                        }
+                    });
+        });
 
         if ("feed".equals(postType)) {
             loadCommentsFromServer();
@@ -115,11 +158,6 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
             commentList.add(new CommentItem("User1", "멋진 리뷰네요!", R.drawable.sample_profile));
             commentList.add(new CommentItem("User2", "저도 이 책 좋아해요!", R.drawable.sample_profile));
         }
-
-        // 테스트용 데이터 추가 나중에 서버 연결 필요.
-        //commentList.add(new CommentItem("User1", "멋진 리뷰네요!---------------------------------------------------------------------------------------------------------------", R.drawable.sample_profile));
-        //commentList.add(new CommentItem("User2", "저도 이 책 좋아해요!", R.drawable.sample_profile));
-        //commentList.add(new CommentItem("User1", "멋진 리뷰네요!", R.drawable.sample_profile));
 
         commentAdapter.notifyDataSetChanged();
 
@@ -145,7 +183,7 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
         postCommentButton.setOnClickListener(v -> {
             String commentText = commentEditText.getText().toString().trim();
             if (!commentText.isEmpty()) {
-                SharedPreferences prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE);
+                SharedPreferences prefs = requireContext().getSharedPreferences("auth", MODE_PRIVATE);
                 String token = prefs.getString("jwt", null);
                 int userId = prefs.getInt("userId", -1); // 기본값 -1
                 if (token == null) return;
@@ -163,6 +201,8 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
 
                                     // 리스트에 추가
                                     commentList.add(new CommentItem(
+                                            newComment.getCommentId(),
+                                            newComment.getUserId(),
                                             newComment.getNickname(),
                                             newComment.getContent(),
                                             newComment.getUserProfileImage(),
@@ -192,7 +232,7 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
     }
 
     private void loadCommentsFromServer() {
-        SharedPreferences prefs = requireContext().getSharedPreferences("auth", Context.MODE_PRIVATE);
+        SharedPreferences prefs = requireContext().getSharedPreferences("auth", MODE_PRIVATE);
         String token = prefs.getString("jwt", null);
         if (token == null) return;
 
@@ -209,7 +249,9 @@ public class CommentBottomSheet extends BottomSheetDialogFragment {
                             commentList.clear();
                             for (CommentResponse c : data) {
                                 commentList.add(new CommentItem(
-                                        c.getNickname(),  // TODO: 실제 username API로부터 가져오기
+                                        c.getCommentId(),                 // commentId
+                                        c.getUserId(),             // userId
+                                        c.getNickname(),
                                         c.getContent(),
                                         c.getUserProfileImage(),
                                         c.getFormattedCreatedAt()

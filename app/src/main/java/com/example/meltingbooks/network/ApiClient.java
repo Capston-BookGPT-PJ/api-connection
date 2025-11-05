@@ -4,6 +4,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 public class ApiClient {
     private static final String BASE_URL = "http://meltingbooks.o-r.kr:8080/";
@@ -26,6 +27,7 @@ public class ApiClient {
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .client(client)
+                    .addConverterFactory(ScalarsConverterFactory.create()) // <- 문자열 처리용
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }
