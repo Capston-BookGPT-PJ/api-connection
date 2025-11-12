@@ -118,12 +118,14 @@ public class CalendarContentFragment extends Fragment {
         view.findViewById(R.id.btnPrev).setOnClickListener(v -> {
             currentCalendar.add(Calendar.MONTH, -1);
             updateCalendar(view);
+            loadLoggedDaysOfMonth(view); // ← 기록 있는 날짜 다시 불러오기
         });
 
         // 다음 달
         view.findViewById(R.id.btnNext).setOnClickListener(v -> {
             currentCalendar.add(Calendar.MONTH, 1);
             updateCalendar(view);
+            loadLoggedDaysOfMonth(view); // ← 기록 있는 날짜 다시 불러오기
         });
 
         // detail_goal_button 클릭 시 DetailGoalFragment로 전환

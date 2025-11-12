@@ -111,7 +111,7 @@ public class FeedActivity extends BaseActivity {
                         if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount
                                 && firstVisibleItemPosition >= 0) {
                             if (!isLastPage) {
-                                currentPage++;
+                                //currentPage++;
                                 loadFeeds(false); // 다음 페이지 로드
                             }
                         }
@@ -267,7 +267,9 @@ public class FeedActivity extends BaseActivity {
                                 FeedItem reco = new FeedItem();
                                 reco.setPostType("recommend");
                                 reco.setViewType(FeedItem.TYPE_RECOMMEND);
-                                long recoId = System.currentTimeMillis();   // 고유 ID
+                                //long recoId = System.currentTimeMillis();   // 고유 ID
+                                //reco.setStableId(recoId);
+                                long recoId = -1000L - nextRecommendPage; // 음수로, 페이지마다 고유
                                 reco.setStableId(recoId);
                                 reco.setRecommendCovers(
                                         cachedRecommendedCovers != null ? new ArrayList<>(cachedRecommendedCovers) : new ArrayList<>()
@@ -292,8 +294,16 @@ public class FeedActivity extends BaseActivity {
                             }
                         }
 
+                        Log.d("FeedPaging", "요청 page=" + pageToLoad + ", size=" + PAGE_SIZE);
+
                         feedAdapter.notifyDataSetChanged(); // 또는 범위 삽입으로 최적화
-                        isLastPage = pg.isLast();
+                        //int start = feedList.size();
+                        //feedList.addAll(pageFeedItems);
+                        //feedAdapter.notifyItemRangeInserted(start, pageFeedItems.size());
+
+                        //isLastPage = pg.isLast();
+                        // 수정
+                        isLastPage = feeds.isEmpty(); // 받아온 데이터가 완전히 비었을 때만 멈춤
                         if (!isLastPage) currentPage++;
                         finishLoading(true);
 
